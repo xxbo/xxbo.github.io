@@ -11,7 +11,8 @@ function techLineChart(rows,lines,{height=220,range=null,bars=null,thresholds=[]
   let [lo,hi]=range||[Math.min(...values),Math.max(...values)];if(hi===lo){lo-=1;hi+=1;}const padding=range?0:(hi-lo)*.08;lo-=padding;hi+=padding;
   const x=i=>L+i/Math.max(rows.length-1,1)*plotW,y=v=>T+(hi-v)/(hi-lo)*plotH;
   const ticks=range?[0,30,70,100]:Array.from({length:4},(_,i)=>lo+(hi-lo)*i/3);
-  const grid=ticks.map(v=>`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="#e7eeea" stroke-dasharray="3 4"/><text x="${L-9}" y="${y(v)+3}" text-anchor="end" fill="#94a69b" font-size="10">${range?v:num(v)}</text>`).join('');
+  const axisValue=v=>Math.abs(v)>=1e8?(v/1e8).toFixed(1)+'亿':Math.abs(v)>=1e6?(v/1e4).toFixed(0)+'万':num(v);
+  const grid=ticks.map(v=>`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="#e7eeea" stroke-dasharray="3 4"/><text x="${L-9}" y="${y(v)+3}" text-anchor="end" fill="#94a69b" font-size="10">${range?v:axisValue(v)}</text>`).join('');
   const refs=thresholds.map(v=>`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="#c2cec7" stroke-dasharray="5 5"/>`).join('');
   const hist=bars?rows.map((r,i)=>{const v=bars(r);if(!Number.isFinite(v))return '';return `<rect x="${x(i)-plotW/rows.length*.28}" y="${Math.min(y(v),y(0))}" width="${Math.max(1,plotW/rows.length*.56)}" height="${Math.max(.7,Math.abs(y(v)-y(0)))}" fill="${v>=0?'#c77970':'#559e8d'}" opacity=".75"><title>${esc(r.date)}：${num(v)}</title></rect>`;}).join(''):'';
   const paths=lines.map(l=>{let d='',valid=false;rows.forEach((r,i)=>{const v=l.value(r);if(!Number.isFinite(v)){valid=false;return;}d+=(valid?' L':' M')+x(i).toFixed(2)+','+y(v).toFixed(2);valid=true;});return `<path d="${d}" fill="none" stroke="${l.color}" stroke-width="${l.width||1.7}" ${l.dashed?'stroke-dasharray="5 3"':''}/>`;}).join('');

@@ -202,7 +202,8 @@ def wallstreet_headlines():
     rows = []
     for item in root.findall('./channel/item')[:16]:
         title, link = clean(item.findtext('title')), item.findtext('link') or ''
-        if not title or not link.startswith('https://wallstreetcn.com/'):
+        promotional = any(word in title for word in ('见闻历', '早鸟', '最后优惠', '限时优惠', '免费领取', '报名通道', '会员专享'))
+        if not title or promotional or not link.startswith('https://wallstreetcn.com/'):
             continue
         try:
             published = email.utils.parsedate_to_datetime(item.findtext('pubDate')).isoformat()
