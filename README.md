@@ -4,7 +4,7 @@ A buildless personal finance and news dashboard hosted on GitHub Pages.
 
 - Quotes: Tencent Finance snapshot; each card retains the provider's quote time.
 - News: Google News RSS searches with The Verge, BBC Chinese RSS and EastMoney fast-news fallbacks. Titles and source links only; no generated summaries.
-- Economic calendar: EastMoney adapter; currently returns no valid report, so the UI explicitly shows unavailable and links to the source page.
+- Economic calendar: official NBS, BLS, BEA and FOMC schedules; known release times convert to Beijing time, date-only meetings retain their source dates. Independent source health and a 45-day window; no consensus or actual release values.
 - Watchlist, reading status and saved items: localStorage on the current browser. No private holdings are published.
 - Scheduled snapshot: `.github/workflows/refresh-dashboard.yml`, every 20 minutes at minutes 7/27/47, plus manual dispatch. GitHub scheduling can be delayed.
 
@@ -65,3 +65,16 @@ The update workflow is scheduled every 20 minutes. Daily history is cached for u
 - `data/dashboard.json` 中的事件历史保留最近七天，最多 300 个事件，每事件最多 12 篇精简报道及 24 次收录/内容变更记录。不保留全文历史；重新采集、来源列表顺序变化不算新进展。时间是本站观察时间，不能当作事件发生时间或事实核实。
 - 浏览器保存上次访问快照时间与六个指数报价。一次访问期间刷新仍使用进入页面前的对照；首次访问建立基线，超出保留范围会说明覆盖缺口。清除本机存储会重置。
 - 采集成功、最近内容变化、源端报价时间与完整日线日期分别展示。采集超过 45 分钟提示延迟，超过两小时提示过期；来源失败标记沿用旧数据。非交易时段不将报价年龄直接认定为故障。
+
+## 关注主线与官方经济日历
+默认关注 AI 与算力、半导体、双创、港股科技、国内宏观政策；可在首页管理关注。关注列表保存在本机。主线以标题和来源摘要关键词匹配七天事件记录，展示匹配理由、相对上次访问的新收录和变更，以及相关官方日程；并非语义事实核验或对指数的因果归因。独立路由为 `#/topics`、`#/topics/<id>`，报道继续浮窗阅读。
+
+日程采集由 `scripts/economic_calendar.py` 独立处理，公开来源包括：
+- 国家统计局发布日程索引 https://www.stats.gov.cn/xxgk/sjfb/fbrcb/ ：动态发现本年度表格，展开行列合并后对应日期和时刻。
+- BLS 官方 ICS https://www.bls.gov/schedule/news_release/bls.ics
+- BEA 官方 ICS https://www.bea.gov/news/schedule/ics/online-calendar-subscription.ics
+- FOMC 官方会议日期 https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
+
+保留今天至未来 45 天计划。BLS 的 US-Eastern 映射到 America/New_York，按夏令时规则换算；BEA UTC 同样换算到北京时间。FOMC 仅会议日期时不猜测声明发布时间，保留美国当地日期范围。取消的 ICS 事件剔除，折行及转义按日历格式解析。每个来源独立状态，失败只沿用该来源上次成功记录，过期日程清理，成功空窗口与抓取失败分开处理。
+
+日历为发布计划，不提供市场预期或实时公布值，时点已过也不认定数据已发布。不覆盖全球所有经济数据、公司财报及临时活动。主线与日程采用明确的宏观背景关联规则，可查看关联理由。

@@ -12,6 +12,7 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 from event_digest import build_events, fingerprint
+from economic_calendar import collect_calendar, SOURCES as CALENDAR_SOURCES
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 NOW = dt.datetime.now(dt.timezone.utc).isoformat()
@@ -300,31 +301,6 @@ def flash_feed():
     return rows
 
 
-def calendar_snapshot():
-    params = {'reportName': 'RPT_ECONOMICCALENDAR',
-              'columns': 'PUBLISH_DATE,TIME,COUNTRY,INDICATOR,STAR,FORECAST,PREVIOUS,ACTUAL,UNIT',
-              'pageSize': 500, 'pageNumber': 1, 'sortColumns': 'PUBLISH_DATE,TIME', 'sortTypes': '-1,-1',
-              'source': 'WEB', 'client': 'WEB'}
-    raw = json.loads(request('https://datacenter-web.eastmoney.com/api/data/v1/get?' + urllib.parse.urlencode(params)))
-    records = (raw.get('result') or {}).get('data')
-    if not isinstance(records, list):
-        raise ValueError('经济日历接口未返回有效列表')
-    today = dt.datetime.now(dt.timezone(dt.timedelta(hours=8))).date()
-    end = today + dt.timedelta(days=7)
-    rows = []
-    for r in records:
-        day = str(r.get('PUBLISH_DATE') or '')[:10]
-        if not today.isoformat() <= day <= end.isoformat():
-            continue
-        rows.append({'date': day, 'time': str(r.get('TIME') or ''),
-                     'country': str(r.get('COUNTRY') or ''), 'title': str(r.get('INDICATOR') or ''),
-                     'importance': number(r.get('STAR')), 'previous': r.get('PREVIOUS'),
-                     'forecast': r.get('FORECAST'), 'actual': r.get('ACTUAL'), 'unit': r.get('UNIT'),
-                     'source': '东方财富', 'url': 'https://data.eastmoney.com/cjrl/default.html',
-                     'fetched_at': NOW})
-    return sorted(rows, key=lambda x: (x['date'], x['time']))[:30]
-
-
 def main():
     path = ROOT / 'data/dashboard.json'
     try:
@@ -332,11 +308,13 @@ def main():
     except (OSError, ValueError):
         previous = {}
     result = {'generated_at': NOW, 'markets': previous.get('markets', []),
-              'news': [], 'calendar': previous.get('calendar', []), 'sources': []}
-    jobs = {'markets': market_snapshot, 'calendar': calendar_snapshot,
+              'news': [], 'calendar': [], 'sources': []}
+    jobs = {'markets': market_snapshot,
             'editorial:ifanr': lambda: publisher_feed('https://www.ifanr.com/feed', '爱范儿'),
             'editorial:geekpark': lambda: publisher_feed('https://www.geekpark.net/rss', '极客公园'),
             'editorial:cls': cls_headlines, 'editorial:wsc': wallstreet_headlines, 'wire:eastmoney': flash_feed}
+    for calendar_key in CALENDAR_SOURCES:
+        jobs['calendar:'+calendar_key] = lambda k=calendar_key: collect_calendar(k, request, NOW)
     queries = {'科技': '大模型 OR 半导体 OR OpenAI OR 英伟达', '金融': 'A股 OR 港股 OR 美股 OR 利率', '全球': '俄乌 OR 中东 OR 地缘政治', '政治': '国务院 OR 央行 OR 财政部 OR 中国政策'}
     for category, query in queries.items():
         jobs['news:' + category] = lambda c=category, q=query: news_feed(c, q)
@@ -351,6 +329,8 @@ def main():
                         row.setdefault('kind', 'search')
                         row['feed_id'] = key
                     result['news'].extend(rows)
+                elif key.startswith('calendar:'):
+                    result['calendar'].extend(rows)
                 else:
                     result[key] = rows
                 old = next((s for s in previous.get('sources', []) if s['id'] == key), {})
@@ -359,7 +339,7 @@ def main():
                 elif key == 'markets':
                     signature = hashlib.sha256(json.dumps([(m['id'], m.get('price'), m.get('quote_time')) for m in rows]).encode()).hexdigest()[:20]
                 else:
-                    signature = hashlib.sha256(json.dumps(rows, sort_keys=True).encode()).hexdigest()[:20]
+                    signature = hashlib.sha256(json.dumps(sorted((r['id'],r['date'],r['time'],r.get('end_date')) for r in rows), sort_keys=True).encode()).hexdigest()[:20]
                 changed = old.get('signature') != signature
                 result['sources'].append({'id': key, 'status': 'ok', 'last_success': NOW,
                                           'checked_at': NOW, 'signature': signature,
@@ -369,6 +349,8 @@ def main():
                 old = next((s for s in previous.get('sources', []) if s['id'] == key), {})
                 if key.startswith(('news:', 'editorial:', 'wire:')):
                     result['news'].extend(n for n in previous.get('news', []) if n.get('feed_id')==key)
+                if key.startswith('calendar:'):
+                    result['calendar'].extend(n for n in previous.get('calendar', []) if n.get('feed_id')==key)
                 result['sources'].append({**old, 'id': key, 'status': 'error', 'checked_at': NOW,
                                           'last_success': old.get('last_success'), 'error': str(e)[:160]})
                 print(f'{key}: unavailable ({type(e).__name__})', flush=True)
@@ -389,6 +371,10 @@ def main():
             unique[item['id']] = item
     result['news'] = list(unique.values())
     result['news'].sort(key=lambda n: n.get('published_at') or '', reverse=True)
+    today = dt.datetime.now(dt.timezone(dt.timedelta(hours=8))).date().isoformat()
+    result['calendar'] = sorted({r['id']:r for r in result['calendar'] if (r.get('end_date') or r['date'])>=today}.values(), key=lambda r:(r['date'],r['time'],r['id']))
+    result['calendar_coverage'] = {'days': 45, 'timezone': 'Asia/Shanghai', 'schedule_only': True,
+        'note': '已知时刻统一北京时间；仅日期的 FOMC 会议保留美国当地日期。官方计划可能调整。'}
     result['events'] = build_events(result['news'], previous, NOW)
     result['event_tracking_since'] = previous.get('event_tracking_since') or previous.get('generated_at') or NOW
     path.parent.mkdir(exist_ok=True)

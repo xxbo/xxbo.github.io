@@ -7,7 +7,7 @@ let chartPeriod = 60;
 let techPeriod = 120;
 let techOverlay = "ma";
 function navigate(path) { if(location.hash === path) renderRoute(); else location.hash=path; }
-function eventId(e) { return [e.date,e.time,e.country,e.title].join('|'); }
+function eventId(e) { return e.id||[e.date,e.time,e.country,e.title].join('|'); }
 function newsById(id) { return (state.data.news||[]).find(n=>n.id===id)||state.saved[id]||recentArticles[id]||(state.data.events||[]).flatMap(e=>e.articles).find(n=>n.id===id); }
 function routeCrumbs(items) { return '<nav class="detail-crumbs" aria-label="面包屑"><a href="#/overview">今日概览</a>'+items.map(i=>'<span>/</span>'+(i.href?`<a href="${esc(i.href)}">${esc(i.label)}</a>`:`<span aria-current="page">${esc(i.label)}</span>`)).join('')+'</nav>'; }
 function detailShell(crumbs,body) { return routeCrumbs(crumbs)+body; }
@@ -53,15 +53,10 @@ function marketPage(m,mode="overview") {
   }
   return detailShell(crumbs,`<div class="detail-grid"><article class="paper market-page"><a class="back-link" href="#/overview">← 返回市场概览</a>${marketHeader(m)}${tab}<section class="market-body">${main}</section><div class="market-source"><span>采集时间 ${esc(fmt(m.fetched_at))} · 北京时间</span><a href="${safeUrl(m.source_url)}" target="_blank" rel="noopener noreferrer">前往行情来源 ↗</a></div></article><aside class="detail-aside"><section class="paper related-panel"><h2>财经动态 <small>IN THE NEWS</small></h2><p class="panel-caption">财经类报道，未做个股关联推断</p>${related.map(articleCard).join('')}<a class="all-link" href="#/news/金融">进入财经新闻 →</a></section></aside></div>`);
 }
-function calendarPage(id) {
-  const events=state.data.calendar||[];const e=events.find(x=>eventId(x)===id);document.title='数据日历 · 观潮';
-  const content=e?`<h1>${esc(e.title)}</h1><p class="article-meta">${esc(e.country)} · ${esc(e.date)} ${esc(e.time)} · 来源时区未核验</p><div class="metric-grid"><div><small>前值</small><b>${esc(e.previous??'—')}</b></div><div><small>预测值</small><b>${esc(e.forecast??'—')}</b></div><div><small>公布值</small><b>${esc(e.actual??'—')}</b></div></div><a class="all-link" href="#/calendar">返回全部日程 →</a>`:`<h1>数据日历</h1><p>未来一周的重要数据与经济事件。</p>${events.length?events.map(x=>`<a class="related-item" href="#/calendar/${encodeURIComponent(eventId(x))}"><div class="news-meta">${esc(x.date)} ${esc(x.time)} · ${esc(x.country)}</div><h3>${esc(x.title)}</h3><span class="related-arrow">查看事件详情 →</span></a>`).join(''):'<div class="calendar-unavailable"><span>▦</span><h2>日历数据尚未接通</h2><p>来源接口目前未返回有效数据。这里会保留日历入口，不生成未经核实的事件或发布时间。</p></div>'}`;
-  return detailShell([{label:'数据日历',...(e?{href:'#/calendar'}:{})},...(e?[{label:'事件详情'}]:[])],`<article class="paper calendar-page"><a class="back-link" href="#/overview">← 返回今日概览</a>${content}<div class="market-source"><span>来源：东方财富经济日历</span><a href="https://data.eastmoney.com/cjrl/default.html" target="_blank" rel="noopener noreferrer">需要时打开原站 ↗</a></div></article>`);
-}
 function renderRoute(scroll=true) {
   let parts;try {parts=location.hash.replace(/^#\/?/,'').split('/').filter(Boolean).map(decodeURIComponent);}catch{parts=['missing'];}
   if(parts[0]==='main')return;
-  const root=parts[0]||'overview';const detail=(root==='news'&&parts[2]==='article')||root==='markets'||root==='calendar';
+  const root=parts[0]||'overview';const detail=(root==='news'&&parts[2]==='article')||root==='markets'||root==='calendar'||root==='topics';
   document.body.classList.toggle('detail-mode',detail);$('#detail-page').hidden=!detail;
   if(!detail) {
     if(!['overview','news','watch','saved'].includes(root)){document.body.classList.add('detail-mode');$('#detail-page').hidden=false;$('#detail-page').innerHTML='<div class="paper empty"><h2>没有找到这个页面</h2><a href="#/overview">返回今日概览 →</a></div>';return;}
@@ -69,13 +64,14 @@ function renderRoute(scroll=true) {
     setView(root);document.querySelectorAll('[data-category]').forEach(b=>{b.classList.toggle('selected',b.dataset.category===state.category);b.setAttribute('aria-pressed',String(b.dataset.category===state.category));});
     document.title=(root==='news'&&state.category!=='全部'?state.category+'新闻':'观潮')+' · XXBO 财经与新闻';return;
   }
-  $('#view-label').innerHTML=root==='markets'?'<a href="#/watch">市场观察</a> / 行情详情':root==='calendar'?'<a href="#/calendar">数据日历</a>':'<a href="#/news/全部">新闻雷达</a> / 报道详情';
-  document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.view===(root==='markets'?'watch':root==='news'?'news':'overview')));
+  $('#view-label').innerHTML=root==='markets'?'<a href="#/watch">市场观察</a> / 行情详情':root==='topics'?'<a href="#/topics">关注主线</a>':root==='calendar'?'<a href="#/calendar">经济日历</a>':'<a href="#/news/全部">新闻雷达</a> / 报道详情';
+  document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.view===(root==='topics'?'topics':root==='markets'?'watch':root==='news'?'news':'overview')));
   if(!state.loaded){$('#detail-page').innerHTML='<div class="paper empty">正在读取详情…</div>';return;}
   let content;
   if(root==='news') {const n=newsById(parts[3]);if(n){state.read[n.id]=true;persist('read',state.read);content=articlePage(n);}}
   if(root==='markets') {const m=(state.data.markets||[]).find(m=>m.id===parts[1]);if(m)content=marketPage(m,parts[2]||'overview');}
-  if(root==='calendar')content=calendarPage(parts[1]);
+  if(root==='calendar')content=calendarDetailPage(parts[1]);
+  if(root==='topics')content=topicsPage(parts[1]);
   $('#detail-page').innerHTML=content||'<div class="paper empty"><h2>这条内容已不在当前快照中</h2><p>定时更新可能替换旧条目。收藏或已打开过的报道会保留在当前浏览器。</p><a href="#/overview">返回今日概览 →</a></div>';
   $('#saved-count').textContent=Object.keys(state.saved).length;
   if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#detail-page').focus({preventScroll:true});}

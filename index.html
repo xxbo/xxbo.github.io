@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="XXBO 的个人财经与新闻工作台：关注市场，理解变化。">
 <meta name="color-scheme" content="light"><title>观潮 · XXBO 财经与新闻</title>
-<link rel="stylesheet" href="style.css?v=8">
+<link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
 <a class="skip" href="#main">跳到主要内容</a>
@@ -14,6 +14,7 @@
   <nav aria-label="主导航">
     <button class="nav active" data-view="overview"><span>◫</span> 今日概览 <i>01</i></button>
     <button class="nav" data-view="news"><span>▤</span> 新闻雷达 <i>02</i></button>
+    <button class="nav" data-view="topics"><span>⌁</span> 关注主线 <i>03</i></button>
     <button class="nav" data-view="watch"><span>◎</span> 我的自选 <i>03</i></button>
     <button class="nav" data-view="saved"><span>◇</span> 收藏夹 <i id="saved-count">0</i></button>
   </nav>
@@ -30,6 +31,7 @@
     <div id="data-notice" class="data-notice" role="status"></div>
     <section id="detail-page" hidden tabindex="-1" aria-label="详情内容"></section>
     <section id="home-technical" class="daily-only" aria-label="首页技术面总结"></section>
+    <section id="home-topics" class="daily-only" aria-label="我的关注主线"></section>
     <section id="headlines-section" aria-labelledby="headlines-title"><div class="section-heading"><h2 id="headlines-title">事件与进展 <small>DEVELOPING STORIES</small></h2><span class="subtle">相似标题聚合 · 保留各来源报道</span></div><div id="headlines-grid"></div></section>
     <div class="columns"><section class="news-panel" id="news-section" aria-labelledby="news-title">
       <div class="section-heading"><h2 id="news-title">值得关注 <small>NEWS RADAR</small></h2><span id="news-total" class="subtle"></span></div>
@@ -41,7 +43,7 @@
     <aside class="right-column">
       <section id="home-wire" class="daily-only paper" aria-label="最新快讯"></section>
       <section class="watch-panel"><div class="section-heading"><h2>自选观察 <small>WATCHLIST</small></h2><button id="edit-watch" class="text-button">编辑</button></div><p class="panel-caption">关注你的主线，而不是每一次波动。</p><div id="watch-list"></div><div id="watch-editor" hidden><p class="subtle">选择关注的市场</p><div id="watch-options"></div><button id="save-watch" class="solid-button">保存自选</button></div><div class="private-note">⌁ 自选与收藏仅保存在当前浏览器</div></section>
-      <section class="calendar-panel"><div class="section-heading"><h2>数据日历 <small>UP NEXT</small></h2><a class="calendar-icon" href="#/calendar" aria-label="查看完整数据日历">▦</a></div><p class="panel-caption">未来一周 · 来源时间，时区未核验</p><div id="calendar-list"><div class="empty">正在读取日历…</div></div></section>
+      <section class="calendar-panel"><div class="section-heading"><h2>数据日历 <small>UP NEXT</small></h2><a class="calendar-icon" href="#/calendar" aria-label="查看完整数据日历">▦</a></div><p class="panel-caption">官方发布安排 · 已知时刻为北京时间</p><div id="calendar-list"><div class="empty">正在读取日历…</div></div></section>
       <section class="reading-note"><span>给自己留一点空间</span><p>信息是用来帮助判断的，<br>不必每条都追，不必每次都动。</p><div>READ SLOWLY. THINK CLEARLY.</div></section>
     </aside></div>
     <footer><span><b>观潮</b> · A quieter view of a moving world.</span><span id="updated-at">数据准备中</span></footer>
@@ -50,11 +52,15 @@
 <dialog id="sources-dialog"><div class="dialog-heading"><div><span class="eyebrow">TRANSPARENCY</span><h2>数据来源与更新状态</h2></div><button id="close-sources" aria-label="关闭">×</button></div><p>页面展示公开来源的报价快照与新闻。点击标题可浮窗阅读来源提供的 RSS 内容或摘要。抓取时间不等于行情时间；失败时保留上次成功数据。</p><div id="source-status"></div><p class="subtle">定时任务计划每 20 分钟更新，实际运行可能延迟。新闻分类采用检索词及简单规则，可能有交叉；简报由固定规则与来源摘录整理，事件按相似标题聚合，可能漏合并或误合并；多来源不等于独立核实。历史观察保留最近七天。公开站点不保存个人持仓。</p><a href="https://github.com/xxbo/xxbo.github.io/actions" target="_blank" rel="noopener noreferrer">查看更新任务 ↗</a></dialog>
 <dialog id="reader-dialog" aria-labelledby="reader-title"><div class="reader-toolbar"><span>观潮 · 浮窗阅读</span><button id="reader-close" aria-label="关闭阅读窗口">关闭 ×</button></div><div id="reader-content"></div></dialog>
 <div id="toast" role="status"></div>
-<script src="technical.js?v=8" defer></script>
-<script src="brief.js?v=8" defer></script>
-<script src="home.js?v=8" defer></script>
-<script src="app.js?v=8" defer></script>
-<script src="analysis-pages.js?v=8" defer></script>
-<script src="pages.js?v=8" defer></script>
-<script src="reader.js?v=8" defer></script>
+<script src="technical.js?v=9" defer></script>
+<script src="brief.js?v=9" defer></script>
+<script src="topics.js?v=9" defer></script>
+<script src="calendar.js?v=9" defer></script>
+<script src="home.js?v=9" defer></script>
+<script src="topic-pages.js?v=9" defer></script>
+<script src="calendar-pages.js?v=9" defer></script>
+<script src="app.js?v=9" defer></script>
+<script src="analysis-pages.js?v=9" defer></script>
+<script src="pages.js?v=9" defer></script>
+<script src="reader.js?v=9" defer></script>
 </body></html>
