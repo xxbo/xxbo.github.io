@@ -56,7 +56,7 @@ function marketPage(m,mode="overview") {
 function renderRoute(scroll=true) {
   let parts;try {parts=location.hash.replace(/^#\/?/,'').split('/').filter(Boolean).map(decodeURIComponent);}catch{parts=['missing'];}
   if(parts[0]==='main')return;
-  const root=parts[0]||'overview';const detail=(root==='news'&&parts[2]==='article')||root==='markets'||root==='calendar'||root==='topics';
+  const root=parts[0]||'overview';const detail=(root==='news'&&parts[2]==='article')||root==='markets'||root==='calendar'||root==='topics'||root==='health';
   document.body.classList.toggle('detail-mode',detail);$('#detail-page').hidden=!detail;
   if(!detail) {
     if(!['overview','news','watch','saved'].includes(root)){document.body.classList.add('detail-mode');$('#detail-page').hidden=false;$('#detail-page').innerHTML='<div class="paper empty"><h2>没有找到这个页面</h2><a href="#/overview">返回今日概览 →</a></div>';return;}
@@ -64,7 +64,7 @@ function renderRoute(scroll=true) {
     setView(root);document.querySelectorAll('[data-category]').forEach(b=>{b.classList.toggle('selected',b.dataset.category===state.category);b.setAttribute('aria-pressed',String(b.dataset.category===state.category));});
     document.title=(root==='news'&&state.category!=='全部'?state.category+'新闻':'观潮')+' · XXBO 财经与新闻';return;
   }
-  $('#view-label').innerHTML=root==='markets'?'<a href="#/watch">市场观察</a> / 行情详情':root==='topics'?'<a href="#/topics">关注主线</a>':root==='calendar'?'<a href="#/calendar">经济日历</a>':'<a href="#/news/全部">新闻雷达</a> / 报道详情';
+  $('#view-label').innerHTML=root==='markets'?'<a href="#/watch">市场观察</a> / 行情详情':root==='health'?'<a href="#/health">数据健康</a>':root==='topics'?'<a href="#/topics">关注主线</a>':root==='calendar'?'<a href="#/calendar">经济日历</a>':'<a href="#/news/全部">新闻雷达</a> / 报道详情';
   document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.view===(root==='topics'?'topics':root==='markets'?'watch':root==='news'?'news':'overview')));
   if(!state.loaded){$('#detail-page').innerHTML='<div class="paper empty">正在读取详情…</div>';return;}
   let content;
@@ -72,6 +72,7 @@ function renderRoute(scroll=true) {
   if(root==='markets') {const m=(state.data.markets||[]).find(m=>m.id===parts[1]);if(m)content=marketPage(m,parts[2]||'overview');}
   if(root==='calendar')content=calendarDetailPage(parts[1]);
   if(root==='topics')content=topicsPage(parts[1]);
+  if(root==='health')content=dataHealthPage();
   $('#detail-page').innerHTML=content||'<div class="paper empty"><h2>这条内容已不在当前快照中</h2><p>定时更新可能替换旧条目。收藏或已打开过的报道会保留在当前浏览器。</p><a href="#/overview">返回今日概览 →</a></div>';
   $('#saved-count').textContent=Object.keys(state.saved).length;
   if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#detail-page').focus({preventScroll:true});}

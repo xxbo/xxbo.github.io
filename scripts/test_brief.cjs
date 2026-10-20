@@ -20,3 +20,8 @@ const a={id:'a',kind:'headline',featured:true,published_at:at},b={id:'b',kind:'h
 const selected=B.selectEvents({news:[a,b],events:[{id:'e',active:true,articles:[a,b]}]});assert.equal(selected.length,1);assert.equal(B.representative({news:[a,b]},selected[0]).id,'a');
 assert(B.technicalWatch({count:60,current:{close:90,ma20:100,hist:-1,rsi:25},previous:{hist:-2}}).conflict.includes('收窄'));
 console.log('Brief checks passed: source failure and age, visit deltas, history coverage, event selection, technical conflict.');
+
+assert.equal(B.sourceHealth({status:'ok',mode:'backup',last_success:at},null,now).label,'备用来源接管');
+assert.equal(B.sourceHealth({status:'error',mode:'cache',last_success:at},null,now).level,'error');
+assert.equal(B.sourceHealth({status:'ok',cache_reuse:true,last_success:'2026-10-20T03:00:00Z'},null,now).level,'ok');
+assert.equal(B.sourceHealth({status:'ok',quality:{issues:['warn']},last_success:at},null,now).label,'数据校验有提醒');

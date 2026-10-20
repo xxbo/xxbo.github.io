@@ -73,7 +73,7 @@ END:VCALENDAR'''
         with self.assertRaises(ValueError):parse_fed('<html>Missing</html>',NOW)
 
     def test_valid_schedule_with_no_window_events_is_success(self):
-        data=b'BEGIN:VCALENDAR\nBEGIN:VEVENT\nUID:x\nDTSTART:20250101T123000Z\nSUMMARY:Old\nEND:VEVENT\nEND:VCALENDAR'
+        data=b'BEGIN:VCALENDAR\nBEGIN:VEVENT\nUID:x\nDTSTART:20270101T123000Z\nSUMMARY:Future outside window\nEND:VEVENT\nEND:VCALENDAR'
         self.assertEqual(collect_calendar('bea',lambda url:data,NOW),[])
 
 if __name__=='__main__':unittest.main()

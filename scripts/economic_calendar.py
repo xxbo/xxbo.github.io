@@ -5,6 +5,7 @@ import html
 import re
 import urllib.parse
 from zoneinfo import ZoneInfo
+from data_health import DataInvalid
 
 SH = ZoneInfo('Asia/Shanghai')
 NY = ZoneInfo('America/New_York')
@@ -133,6 +134,9 @@ def table_grid(payload):
 
 
 def parse_nbs(payload, year, now, url):
+    text=payload.decode('utf-8') if isinstance(payload,bytes) else payload
+    title_year=re.search(r'(\d{4})年国家统计局主要统计信息发布日程表',text)
+    if title_year and int(title_year[1])!=year:raise DataInvalid('国家统计局表格年份与当前年度不符')
     rows,grid=[],table_grid(payload)
     for index,cells in enumerate(grid):
         if len(cells)!=14 or not cells[0].isdigit():
@@ -193,5 +197,116 @@ def collect_calendar(key, request, now):
         rows=parse_fed(request(url),now)
     today=dt.datetime.fromisoformat(now).astimezone(SH).date()
     end=today+dt.timedelta(days=45)
-    # A valid schedule can legitimately have zero releases in this window.
+    if rows and max(dt.date.fromisoformat(r.get('end_date') or r['date']) for r in rows)<today:
+        raise DataInvalid('官方日程已过覆盖期，拒绝把旧文件当有效空窗口')
+    # A valid future schedule can legitimately have zero releases in this window.
     return sorted({r['id']:r for r in rows if today<=dt.date.fromisoformat(r.get('end_date') or r['date']) and dt.date.fromisoformat(r['date'])<=end}.values(), key=lambda r:(r['date'],r['time'],r['id']))
+
+
+def filter_window(rows, now):
+    today=dt.datetime.fromisoformat(now).astimezone(SH).date();end=today+dt.timedelta(days=45)
+    return sorted({r['id']:r for r in rows if today<=dt.date.fromisoformat(r.get('end_date') or r['date']) and dt.date.fromisoformat(r['date'])<=end}.values(),key=lambda r:(r['date'],r['time'],r['id']))
+
+
+def collect_bea_json(request, now):
+    import json
+    url='https://apps.bea.gov/API/signup/release_dates.json'
+    data=json.loads(request(url))
+    if not isinstance(data,dict) or not data:raise ValueError('BEA JSON 结构异常')
+    rows=[]
+    for name,info in data.items():
+        if not isinstance(info,dict) or not isinstance(info.get('release_dates'),list):raise ValueError('BEA JSON 缺少日期字段')
+        for date in info['release_dates']:
+            local=dt.datetime.fromisoformat(date)
+            if not local.tzinfo:raise ValueError('BEA JSON 时间缺少时区')
+            rows.append(event(name,local,'bea',now,url,uid=name+'|'+local.isoformat()))
+    today=dt.datetime.fromisoformat(now).astimezone(SH).date()
+    if not rows or max(dt.date.fromisoformat(r['date']) for r in rows)<today:raise DataInvalid('BEA JSON 日程覆盖期已过')
+    return filter_window(rows,now)
+
+
+def parse_bls_html(payload, now, url):
+    text=payload.decode('utf-8') if isinstance(payload,bytes) else payload
+    rows=[];recognized=0
+    for tr in re.findall(r'<tr\b[^>]*class="release-list-[^"]+"[^>]*>(.*?)</tr>',text,re.S):
+        cells=[clean(c) for c in re.findall(r'<td[^>]*>(.*?)</td>',tr,re.S)]
+        if len(cells)!=3:raise ValueError('BLS HTML 表格字段变化')
+        recognized+=1
+        if not cells[1]:continue  # Holiday, not a timed economic release.
+        local=dt.datetime.strptime(cells[0]+' '+cells[1],'%A, %B %d, %Y %I:%M %p').replace(tzinfo=NY)
+        rows.append(event(cells[2],local,'bls',now,url))
+    if not recognized:raise ValueError('BLS HTML 无可核验日程行')
+    return rows
+
+
+def collect_bls_html(request,now):
+    from concurrent.futures import ThreadPoolExecutor
+    today=dt.datetime.fromisoformat(now).astimezone(SH).date();end=today+dt.timedelta(days=45)
+    months=sorted({((today+dt.timedelta(days=d)).year,(today+dt.timedelta(days=d)).month) for d in range(46)})
+    def one(pair):
+        year,month=pair;url=f'https://www.bls.gov/schedule/{year}/{month:02d}_sched_list.htm'
+        return parse_bls_html(request(url),now,url)
+    with ThreadPoolExecutor(max_workers=3) as pool:rows=[r for group in pool.map(one,months) for r in group]
+    return filter_window(rows,now)
+
+
+FRED_RELEASES={10:'Consumer Price Index',50:'Employment Situation',46:'Producer Price Index',192:'Job Openings and Labor Turnover Survey',11:'Employment Cost Index'}
+
+def parse_fred(payload, now, url, release_id):
+    text=payload.decode('utf-8') if isinstance(payload,bytes) else payload
+    if 'All times are US Central Time' not in text:raise ValueError('FRED 时区声明未找到')
+    table=re.search(r'<table[^>]*class="[^"]*release-calendar[^"]*".*?</table>',text,re.S)
+    # Providers currently identify the table with release-dates-table; constrain to the data tbody.
+    start=text.find('Sort By:')
+    area=text[start:] if start>=0 else text
+    rows=[];date=None
+    for tr in re.findall(r'<tr\b[^>]*>(.*?)</tr>',area,re.S):
+        date_match=re.search(r'(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+([A-Za-z]+)\s+(\d{1,2}),\s+(\d{4})',clean(tr))
+        if date_match:
+            date=dt.datetime.strptime(' '.join(date_match.groups()),'%A %B %d %Y').date();continue
+        if not re.search(r'href="/release\?rid='+str(release_id)+r'"',tr):continue
+        clock=re.search(r'(\d{1,2}:\d{2})\s*(am|pm)',clean(tr),re.I)
+        if not date or not clock:raise ValueError('FRED 日期或发布时间未找到')
+        local=dt.datetime.combine(date,dt.datetime.strptime(clock[1]+' '+clock[2].upper(),'%I:%M %p').time(),ZoneInfo('America/Chicago'))
+        row=event(FRED_RELEASES[release_id],local,'bls',now,url)
+        row['source']='圣路易斯联储 FRED（BLS 核心指标）'
+        row['coverage_note']='备用仅覆盖 CPI、PPI、非农、JOLTS 与雇佣成本，不包含全部 BLS 日程。'
+        rows.append(row)
+    if not rows and not re.search(r'(?:Releases\s+0\s*-\s*0|No releases|No release dates)',clean(area),re.I):
+        raise ValueError('FRED 未返回可识别日程')
+    return rows
+
+
+def collect_fred(request, now):
+    from concurrent.futures import ThreadPoolExecutor
+    today=dt.datetime.fromisoformat(now).astimezone(SH).date();end=today+dt.timedelta(days=45)
+    def one(ident):
+        url='https://fred.stlouisfed.org/releases/calendar?'+urllib.parse.urlencode({'rid':ident,'vs':today.isoformat(),'ve':end.isoformat()})
+        return parse_fred(request(url),now,url,ident)
+    with ThreadPoolExecutor(max_workers=5) as pool:rows=[r for group in pool.map(one,FRED_RELEASES) for r in group]
+    return filter_window(rows,now)
+
+
+def canonical_calendar(rows):
+    """Stable identities across ICS/HTML/JSON representations of the same release."""
+    for row in rows:
+        family=row['title'].split('（')[0] if 'GDP' in row['title'] else row['title']
+        ident='|'.join([row['feed_id'],family,row.get('source_date') or row['date']])
+        row['id']='cal:'+hashlib.sha256(ident.encode()).hexdigest()[:22]
+    return rows
+
+
+def calendar_candidates(key, request, now, previous):
+    primary=(SOURCES[key][0]+' / 官方日程',lambda:canonical_calendar(collect_calendar(key,request,now)))
+    if key=='bls':return [primary,('BLS 官方 HTML 日程',lambda:canonical_calendar(collect_bls_html(request,now))),('FRED / BLS 核心指标',lambda:canonical_calendar(collect_fred(request,now)))]
+    if key=='bea':return [primary,('BEA 官方 JSON 日程',lambda:canonical_calendar(collect_bea_json(request,now)))]
+    if key=='nbs':
+        targets=[r['url'] for r in previous if r.get('url','').startswith('https://www.stats.gov.cn/')]
+        if targets:
+            url=targets[0]
+            def direct():
+                year=dt.datetime.fromisoformat(now).astimezone(SH).year
+                return canonical_calendar(filter_window(parse_nbs(request(url),year,now,url),now))
+            return [primary,('国家统计局 / 上次官方表格直连',direct)]
+    # No unrelated source is substituted for the Fed meeting calendar.
+    return [primary]

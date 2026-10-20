@@ -10,99 +10,57 @@ import pathlib
 import re
 import urllib.parse
 import urllib.request
+import urllib.error
+import threading
+import socket
+import time
+import copy
 import xml.etree.ElementTree as ET
 from event_digest import build_events, fingerprint
-from economic_calendar import collect_calendar, SOURCES as CALENDAR_SOURCES
+from economic_calendar import calendar_candidates, SOURCES as CALENDAR_SOURCES
+from market_adapters import NAMES, quote_candidates, history_candidates, session_key, mark_partial
+from data_health import run_chain, validate_quote, validate_history, validate_news, validate_calendar, classify_news, date_time, finite
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 NOW = dt.datetime.now(dt.timezone.utc).isoformat()
 UA = 'Mozilla/5.0 (compatible; XXBOReader/1.0; personal dashboard)'
-MARKETS = [
-    ('sh000001', '上证指数', '1.000001', 'A股'),
-    ('sz399006', '创业板指', '0.399006', 'A股'),
-    ('sh000688', '科创50', '1.000688', 'A股'),
-    ('hkHSI', '恒生指数', '100.HSI', '港股'),
-    ('hkHSTECH', '恒生科技', '100.HSTECH', '港股'),
-    ('usIXIC', '纳斯达克', '100.NDX', '美股'),
-]
+_responses = {}
+_response_lock = threading.Lock()
 
 
 def request(url):
-    req = urllib.request.Request(url, headers={'User-Agent': UA, 'Referer': 'https://gu.qq.com/' if 'gtimg.cn' in url else 'https://finance.eastmoney.com/'})
-    with urllib.request.urlopen(req, timeout=18) as res:
-        return res.read()
-
-
-def number(value):
+    # One request per distinct URL per collection, including concurrent quote adapters.
+    with _response_lock:
+        future = _responses.get(url)
+        owner = future is None
+        if owner:
+            future = concurrent.futures.Future()
+            _responses[url] = future
+    if not owner:
+        return future.result()
     try:
-        n = float(value)
-        return n if abs(n) < 1e16 else None
-    except (TypeError, ValueError):
-        return None
-
-
-def market_snapshot():
-    # Fetch a single batch, following CNEquity's snapshot reuse approach.
-    url = 'https://qt.gtimg.cn/q=' + ','.join(m[0] for m in MARKETS)
-    text = request(url).decode('gb18030', errors='replace')
-    result = []
-    for code, name, secid, region in MARKETS:
-        match = re.search(r'v_' + re.escape(code) + r'="([^"]*)"', text)
-        fields = match.group(1).split('~') if match else []
-        row = {'id': code, 'name': name, 'region': region, 'secid': secid,
-               'source': '腾讯财经', 'source_url': 'https://gu.qq.com/' + code,
-               'fetched_at': NOW, 'status': 'unavailable', 'history': []}
-        if len(fields) > 33 and number(fields[3]) is not None:
-            row.update(price=number(fields[3]), change=number(fields[31]),
-                       change_pct=number(fields[32]), quote_time=fields[30], status='ok')
-        result.append(row)
-    if not any(x['status'] == 'ok' for x in result):
-        raise ValueError('行情接口未返回有效报价')
-    return result
-
-
-def history(market):
-    from zoneinfo import ZoneInfo
-    code = market['id']
-    history_code = 'us.IXIC' if code=='usIXIC' else code
-    url = f'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={history_code},day,,,320,qfq'
-    prior = market.get('history', [])
-    local = dt.datetime.now(ZoneInfo('America/New_York') if market['region']=='美股' else ZoneInfo('Asia/Shanghai'))
-    close_hour = 15 if market['region']=='A股' else 16
-    for bar in prior:
-        bar['partial'] = bar['date']==local.date().isoformat() and local.hour<close_hour
-    session_key = local.date().isoformat() + ('-closed' if local.hour>=close_hour else '-open')
-    try:
-        fetched = dt.datetime.fromisoformat(market.get('history_fetched_at', ''))
-        age = (dt.datetime.now(dt.timezone.utc)-fetched).total_seconds()
-        if len(prior)>=120 and market.get('history_session_key')==session_key and 0<=age<6*3600 and market.get('history_status')=='ok':
-            return market
-    except (TypeError, ValueError):
-        pass
-    try:
-        payload = json.loads(request(url))
-        data = payload.get('data', {}).get(history_code, {})
-        bars = data.get('day') or data.get('qfqday') or []
-        local = dt.datetime.now(ZoneInfo('America/New_York') if market['region']=='美股' else ZoneInfo('Asia/Shanghai'))
-        close_hour = 15 if market['region']=='A股' else 16
-        parsed = []
-        for b in bars:
-            if len(b)<6 or not number(b[2]) or number(b[2])<=0:
-                continue
-            parsed.append({'date': b[0], 'open': number(b[1]), 'close': number(b[2]),
-                           'high': number(b[3]), 'low': number(b[4]), 'volume': number(b[5]),
-                           'partial': b[0]==local.date().isoformat() and local.hour<close_hour})
-        if not parsed or len(parsed)<min(len(prior),20):
-            raise ValueError('daily history is incomplete')
-        market['history'] = sorted({b['date']:b for b in parsed}.values(), key=lambda b:b['date'])[-320:]
-        market['history_status'] = 'ok'
-        market['history_fetched_at'] = NOW
-        market['history_session_key'] = session_key
-        market['volume_basis'] = '来源原始单位，仅做同指数内相对比较'
-    except Exception:
-        market['history'] = prior
-        market['history_status'] = 'unavailable' if not prior else 'stale'
-    return market
+        host = urllib.parse.urlparse(url).hostname or ''
+        referer = 'https://finance.sina.com.cn/' if 'sina' in host else 'https://gu.qq.com/' if 'gtimg' in host or 'qq.com' in host else url
+        req = urllib.request.Request(url, headers={'User-Agent': UA, 'Referer': referer})
+        for attempt in range(2):
+            try:
+                with urllib.request.urlopen(req, timeout=10) as res:
+                    body = res.read(8*1024*1024+1)
+                    if len(body)>8*1024*1024:
+                        raise ValueError('来源响应超过 8 MB 上限')
+                future.set_result(body)
+                return body
+            except urllib.error.HTTPError as exc:
+                if exc.code not in (500,502,503,504) or attempt:
+                    raise
+                time.sleep(.2)
+            except (urllib.error.URLError, TimeoutError, socket.timeout):
+                if attempt:
+                    raise
+                time.sleep(.2)
+    except Exception as exc:
+        future.set_exception(exc)
+        raise
 
 
 def clean(value):
@@ -172,7 +130,7 @@ def rss_rows(payload, category):
         link = next((x.get('href', '') for x in links if x.get('rel', 'alternate') == 'alternate'), '')
         rows.append({'id': hashlib.sha256(link.encode()).hexdigest()[:20], 'title': title,
                      'url': link, 'source': 'The Verge', 'category': category,
-                     'published_at': entry.findtext('a:published', namespaces=atom), 'fetched_at': NOW})
+                     'published_at': entry.findtext('a:published', namespaces=atom) or entry.findtext('a:updated', namespaces=atom), 'fetched_at': NOW, **reader_fields(entry.findtext('a:content', namespaces=atom) or entry.findtext('a:summary', namespaces=atom), '')})
     for item in root.findall('./channel/item')[:24]:
         title = clean(item.findtext('title'))
         source = clean(item.findtext('source')) or 'BBC 中文'
@@ -187,40 +145,25 @@ def rss_rows(payload, category):
             published = None
         rows.append({'id': hashlib.sha256(link.encode()).hexdigest()[:20], 'title': title,
                      'url': link, 'source': source, 'category': category,
-                     'published_at': published, 'fetched_at': NOW})
+                     'published_at': published, 'fetched_at': NOW, 'summary':clean(item.findtext('description'))[:180]})
     return rows
 
 
-def news_feed(category, query):
+def google_news(category, query):
     url = 'https://news.google.com/rss/search?' + urllib.parse.urlencode({
         'q': query + ' when:2d', 'hl': 'zh-CN', 'gl': 'CN', 'ceid': 'CN:zh-Hans'})
-    try:
-        rows = rss_rows(request(url), category)
-        if rows:
-            return rows
-    except Exception:
-        pass
-    if category == '科技':
-        rows = rss_rows(request('https://www.theverge.com/rss/index.xml'), category)
-    elif category == '金融':
-        url = 'https://np-listapi.eastmoney.com/comm/web/getFastNewsList?client=web&biz=web_724&fastColumn=102&pageSize=18&sortEnd=&req_trace=1'
-        data = json.loads(request(url))
-        rows = []
-        for item in (data.get('data') or {}).get('fastNewsList', []):
-            code = str(item.get('code') or '')
-            if not code:
-                continue
-            rows.append({'id': 'em:' + code, 'title': clean(item.get('title')),
-                         'url': 'https://finance.eastmoney.com/a/' + code + '.html',
-                         'source': '东方财富快讯', 'category': category,
-                         'published_at': str(item.get('showTime') or '').replace(' ', 'T') + '+08:00',
-                         'fetched_at': NOW})
-    else:
-        rows = rss_rows(request('https://feeds.bbci.co.uk/zhongwen/simp/rss.xml'), category)
-        politics = ('政府', '选举', '总统', '政策', '习近平', '特朗普', '议会', '中国', '政治')
-        rows = [n for n in rows if any(k in n['title'] for k in politics) == (category == '政治')]
-    if not rows:
-        raise ValueError('新闻源未返回条目')
+    rows = rss_rows(request(url), category)
+    for row in rows:
+        row.update(distribution='search_index',kind='search',selection='检索聚合')
+    return rows
+
+
+def bbc_world(category):
+    rows = rss_rows(request('https://feeds.bbci.co.uk/news/world/rss.xml'), category)
+    if category=='政治':
+        rows=[r for r in rows if re.search(r'government|election|president|minister|parliament|policy|Trump|China',r['title'],re.I)]
+    for row in rows:
+        row.update(source='BBC World',distribution='rss',kind='search',selection='国际报道备用（英文）')
     return rows
 
 
@@ -301,86 +244,129 @@ def flash_feed():
     return rows
 
 
-def main():
-    path = ROOT / 'data/dashboard.json'
-    try:
-        previous = json.loads(path.read_text())
-    except (OSError, ValueError):
-        previous = {}
-    result = {'generated_at': NOW, 'markets': previous.get('markets', []),
-              'news': [], 'calendar': [], 'sources': []}
-    jobs = {'markets': market_snapshot,
-            'editorial:ifanr': lambda: publisher_feed('https://www.ifanr.com/feed', '爱范儿'),
-            'editorial:geekpark': lambda: publisher_feed('https://www.geekpark.net/rss', '极客公园'),
-            'editorial:cls': cls_headlines, 'editorial:wsc': wallstreet_headlines, 'wire:eastmoney': flash_feed}
-    for calendar_key in CALENDAR_SOURCES:
-        jobs['calendar:'+calendar_key] = lambda k=calendar_key: collect_calendar(k, request, NOW)
-    queries = {'科技': '大模型 OR 半导体 OR OpenAI OR 英伟达', '金融': 'A股 OR 港股 OR 美股 OR 利率', '全球': '俄乌 OR 中东 OR 地缘政治', '政治': '国务院 OR 央行 OR 财政部 OR 中国政策'}
-    for category, query in queries.items():
-        jobs['news:' + category] = lambda c=category, q=query: news_feed(c, q)
+def news_candidates():
+    result = {}
+    publishers = {
+        'editorial:ifanr': ('爱范儿 RSS', lambda: publisher_feed('https://www.ifanr.com/feed', '爱范儿'), 'site:ifanr.com', '科技'),
+        'editorial:geekpark': ('极客公园 RSS', lambda: publisher_feed('https://www.geekpark.net/rss', '极客公园'), 'site:geekpark.net', '科技'),
+        'editorial:cls': ('财联社首页', cls_headlines, 'site:cls.cn', '金融'),
+        'editorial:wsc': ('华尔街见闻 RSS', wallstreet_headlines, 'site:wallstreetcn.com', '金融')}
+    for key,(name,fn,query,category) in publishers.items():
+        result[key]=[(name,fn),('Google 新闻 / 原媒体报道索引',lambda c=category,q=query:google_news(c,q))]
+    result['wire:eastmoney']=[('东方财富快讯',flash_feed),('华尔街见闻财经报道（非快讯）',wallstreet_headlines)]
+    queries={'科技':'大模型 OR 半导体 OR OpenAI OR 英伟达','金融':'A股 OR 港股 OR 美股 OR 利率','全球':'俄乌 OR 中东 OR 地缘政治','政治':'国务院 OR 央行 OR 财政部 OR 中国政策'}
+    for category,query in queries.items():
+        chain=[('Google 新闻检索',lambda c=category,q=query:google_news(c,q))]
+        if category=='科技':
+            chain += [('爱范儿 RSS',lambda:publisher_feed('https://www.ifanr.com/feed','爱范儿')),('The Verge RSS',lambda:rss_rows(request('https://www.theverge.com/rss/index.xml'),'科技'))]
+        elif category=='金融':chain += [('东方财富快讯',flash_feed),('华尔街见闻 RSS',wallstreet_headlines)]
+        else:chain += [('BBC World RSS（英文）',lambda c=category:bbc_world(c))]
+        result['news:'+category]=chain
+    return result
+
+
+def collect_dashboard(previous,now):
+    old_states={s['id']:s for s in previous.get('sources',[])}
+    old_markets={m['id']:m for m in previous.get('markets',[])}
+    result={'generated_at':now,'markets':[],'news':[],'calendar':[],'sources':[]}
+    jobs={}
+    for code in NAMES:
+        old=old_markets.get(code,{})
+        key='quote:'+code
+        if key not in old_states and old.get('fetched_at'):
+            old_states[key]={'status':old.get('quote_status',old.get('status','ok')),'mode':'primary','selected_source':old.get('source'),'last_success':old.get('fetched_at')}
+        jobs[key]=(quote_candidates(code,request,now),[old] if finite(old.get('price')) and old['price']>0 else [],lambda rows,o=old:validate_quote(rows,now,o),lambda rows:[{k:r.get(k) for k in ('id','price','change','change_pct','quote_at')} for r in rows])
+    for key,chain in news_candidates().items():
+        prior=[r for r in previous.get('news',[]) if r.get('feed_id')==key]
+        jobs[key]=(chain,prior,lambda rows:validate_news(rows,now),lambda rows:sorted((n['id'],fingerprint(n)) for n in rows))
+    for cal in CALENDAR_SOURCES:
+        key='calendar:'+cal;prior=[r for r in previous.get('calendar',[]) if r.get('feed_id')==key]
+        jobs[key]=(calendar_candidates(cal,request,now,prior),prior,lambda rows:validate_calendar(rows,now),lambda rows:sorted((r['id'],r['date'],r['time'],r.get('end_date')) for r in rows))
+    def collect(key,job):
+        chain,prior,validator,signature=job
+        return run_chain(key,chain,prior,old_states.get(key,{}),now,validator,signature)
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
-        futures = {pool.submit(fn): key for key, fn in jobs.items()}
+        futures={pool.submit(collect,key,job):key for key,job in jobs.items()}
         for future in concurrent.futures.as_completed(futures):
-            key = futures[future]
+            key=futures[future];rows,status=future.result()
+            if key.startswith('quote:'):
+                if rows:
+                    row=rows[0];row['quote_status']='ok' if status['status']=='ok' else 'stale'
+                    result['markets'].append(row)
+                else:
+                    code=key.split(':',1)[1];name,region=NAMES[code]
+                    result['markets'].append({'id':code,'name':name,'region':region,'status':'unavailable','quote_status':'unavailable','history':[]})
+            elif key.startswith('calendar:'):
+                # Expiry is housekeeping, not a successful source check.
+                rows,_=validate_calendar(rows,now)
+                status['count']=len(rows)
+                result['calendar'].extend(rows)
+                notes=sorted({r['coverage_note'] for r in rows if r.get('coverage_note')})
+                status['coverage_note']=' '.join(notes)
+            else:
+                for row in rows:classify_news(row)
+                result['news'].extend(rows)
+            result['sources'].append(status)
+            print(f"{key}: {status['mode']} ({status['selected_source'] or 'none'}, {len(rows)})",flush=True)
+    result['markets'].sort(key=lambda m:list(NAMES).index(m['id']))
+    # Each index is evaluated independently. Reuse valid history only within its collection window/session.
+    def collect_history(market):
+        code=market['id'];key='history:'+code;old=old_markets.get(code,{})
+        prior=old.get('history',[]);prior_state=old_states.get(key) or {'status':old.get('history_status','ok'),'mode':'primary','selected_source':old.get('history_source') or '腾讯日线','last_success':old.get('history_fetched_at')}
+        fetched=date_time(old.get('history_fetched_at'));age=(date_time(now)-fetched).total_seconds() if fetched else float('inf')
+        if len(prior)>=120 and old.get('history_session_key')==session_key(code,now) and 0<=age<6*3600 and old.get('history_status')=='ok':
             try:
-                rows = future.result()
-                if key.startswith(('news:', 'editorial:', 'wire:')):
-                    for row in rows:
-                        row.setdefault('kind', 'search')
-                        row['feed_id'] = key
-                    result['news'].extend(rows)
-                elif key.startswith('calendar:'):
-                    result['calendar'].extend(rows)
-                else:
-                    result[key] = rows
-                old = next((s for s in previous.get('sources', []) if s['id'] == key), {})
-                if key.startswith(('news:', 'editorial:', 'wire:')):
-                    signature = hashlib.sha256(json.dumps(sorted((n['id'], fingerprint(n)) for n in rows)).encode()).hexdigest()[:20]
-                elif key == 'markets':
-                    signature = hashlib.sha256(json.dumps([(m['id'], m.get('price'), m.get('quote_time')) for m in rows]).encode()).hexdigest()[:20]
-                else:
-                    signature = hashlib.sha256(json.dumps(sorted((r['id'],r['date'],r['time'],r.get('end_date')) for r in rows), sort_keys=True).encode()).hexdigest()[:20]
-                changed = old.get('signature') != signature
-                result['sources'].append({'id': key, 'status': 'ok', 'last_success': NOW,
-                                          'checked_at': NOW, 'signature': signature,
-                                          'last_changed': NOW if changed else old.get('last_changed', NOW),
-                                          'count': len(rows), 'error': None})
-            except Exception as e:
-                old = next((s for s in previous.get('sources', []) if s['id'] == key), {})
-                if key.startswith(('news:', 'editorial:', 'wire:')):
-                    result['news'].extend(n for n in previous.get('news', []) if n.get('feed_id')==key)
-                if key.startswith('calendar:'):
-                    result['calendar'].extend(n for n in previous.get('calendar', []) if n.get('feed_id')==key)
-                result['sources'].append({**old, 'id': key, 'status': 'error', 'checked_at': NOW,
-                                          'last_success': old.get('last_success'), 'error': str(e)[:160]})
-                print(f'{key}: unavailable ({type(e).__name__})', flush=True)
+                rows,issues=validate_history(copy.deepcopy(prior),now)
+                status={**prior_state,'id':key,'status':'ok','mode':prior_state.get('mode','primary'),'cache_reuse':True,'reused_at':now,
+                        'last_success':old.get('history_fetched_at'),'selected_source':prior_state.get('selected_source') or old.get('history_source') or '腾讯日线',
+                        'count':len(rows),'quality':{'status':'warning' if issues else 'ok','issues':issues}}
+            except ValueError:
+                rows,status=run_chain(key,history_candidates(code,request),prior,prior_state,now,lambda r:validate_history(r,now,prior))
+        else:
+            rows,status=run_chain(key,history_candidates(code,request),prior,prior_state,now,lambda r:validate_history(r,now,prior),lambda rows:[{k:r.get(k) for k in ('date','open','close','high','low','volume')} for r in rows])
+        for bar in rows:
+            for field in ('feed_id','adapter','data_state'):bar.pop(field,None)
+        market['history']=mark_partial(rows,code,now)
+        market['history_status']='ok' if status['status']=='ok' else 'stale' if rows else 'unavailable'
+        market['history_source']=status.get('selected_source');market['history_fetched_at']=status.get('last_success')
+        market['history_session_key']=session_key(code,now) if status['status']=='ok' else old.get('history_session_key')
+        market['volume_basis']='来源原始单位；整段日线使用同一家来源，不拼接跨源量能'
+        return status
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
-        for market in result['markets']:
-            old_market = next((m for m in previous.get('markets', []) if m['id']==market['id']), {})
-            if not market.get('history'):
-                market['history'] = old_market.get('history', [])
-                for key in ('history_fetched_at', 'history_status', 'history_session_key', 'volume_basis'):
-                    if key in old_market:
-                        market[key] = old_market[key]
-        result['markets'] = list(pool.map(history, result['markets']))
-    unique = {}
-    priority = {'headline': 3, 'flash': 2, 'search': 1}
-    for item in result['news']:
-        old = unique.get(item['id'])
-        if old is None or priority.get(item.get('kind'), 0)>priority.get(old.get('kind'), 0):
-            unique[item['id']] = item
-    result['news'] = list(unique.values())
-    result['news'].sort(key=lambda n: n.get('published_at') or '', reverse=True)
-    today = dt.datetime.now(dt.timezone(dt.timedelta(hours=8))).date().isoformat()
-    result['calendar'] = sorted({r['id']:r for r in result['calendar'] if (r.get('end_date') or r['date'])>=today}.values(), key=lambda r:(r['date'],r['time'],r['id']))
-    result['calendar_coverage'] = {'days': 45, 'timezone': 'Asia/Shanghai', 'schedule_only': True,
-        'note': '已知时刻统一北京时间；仅日期的 FOMC 会议保留美国当地日期。官方计划可能调整。'}
-    result['events'] = build_events(result['news'], previous, NOW)
-    result['event_tracking_since'] = previous.get('event_tracking_since') or previous.get('generated_at') or NOW
+        result['sources'].extend(pool.map(collect_history,result['markets']))
+    quotes=[s for s in result['sources'] if s['id'].startswith('quote:')]
+    dates=[s.get('last_success') for s in quotes if s.get('last_success')]
+    result['sources'].append({'id':'markets','status':'ok' if all(s['status']=='ok' for s in quotes) else 'error',
+        'mode':'backup' if any(s['mode']=='backup' for s in quotes) else 'primary',
+        'last_success':min(dates) if len(dates)==len(NAMES) else None,'checked_at':now,'count':sum(s['status']=='ok' for s in quotes),
+        'error':'部分指数报价暂不可用，已逐项标明' if any(s['status']!='ok' for s in quotes) else None,'aggregate':True})
+    unique={};priority={'headline':3,'flash':2,'search':1}
+    for row in result['news']:
+        old=unique.get(row['id'])
+        if old is None or (row.get('data_state')!='cached',priority.get(row.get('kind'),0))>(old.get('data_state')!='cached',priority.get(old.get('kind'),0)):
+            unique[row['id']]=row
+    result['news']=sorted(unique.values(),key=lambda n:n.get('published_at') or '',reverse=True)
+    result['calendar']=sorted({r['id']:r for r in result['calendar']}.values(),key=lambda r:(r['date'],r['time'],r['id']))
+    result['calendar_coverage']={'days':45,'timezone':'Asia/Shanghai','schedule_only':True,
+        'note':'已知时刻统一北京时间；仅日期的 FOMC 会议保留美国当地日期。备用源覆盖范围可能不同，逐项标明。'}
+    result['events']=build_events(result['news'],previous,now)
+    result['event_tracking_since']=previous.get('event_tracking_since') or previous.get('generated_at') or now
+    result['source_policy_version']=1
+    return result
+
+
+def main():
+    path=ROOT/'data/dashboard.json'
+    try:previous=json.loads(path.read_text())
+    except (OSError,ValueError):previous={}
+    _responses.clear()
+    result=collect_dashboard(previous,NOW)
     path.parent.mkdir(exist_ok=True)
-    path.write_text(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False) + '\n')
-    print(f"Snapshot: {len(result['markets'])} markets, {len(result['news'])} headlines, {len(result['calendar'])} calendar events", flush=True)
+    # Atomic replacement prevents a partially-written snapshot becoming a published success.
+    temporary=path.with_suffix('.tmp')
+    temporary.write_text(json.dumps(result,ensure_ascii=False,indent=2,allow_nan=False)+'\n')
+    temporary.replace(path)
+    print(f"Snapshot: {len(result['markets'])} markets, {len(result['news'])} headlines, {len(result['calendar'])} calendar events",flush=True)
 
 
-if __name__ == '__main__':
-    main()
+if __name__=='__main__':main()

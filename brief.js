@@ -12,9 +12,18 @@ const Brief = (()=>{
   return {level:'ok',label:'最近采集正常',minutes};
  }
  function sourceFor(data,id){return (data.sources||[]).find(s=>s.id===id);}
+ function sourceHealth(source,fallbackDate,now=Date.now()){
+  const health=freshness(source?.last_success||fallbackDate,source?.status||'ok',now);
+  if(source?.cache_reuse&&source.status==='ok'&&health.minutes!==null&&health.minutes<360)return {level:'ok',label:'日线按计划复用',minutes:health.minutes};
+  if(health.level!=='ok')return health;
+  if(source?.mode==='backup')return {...health,level:'warn',label:'备用来源接管'};
+  if(source?.quality?.issues?.length)return {...health,level:'warn',label:'数据校验有提醒'};
+  return health;
+ }
  function articleHealth(data,n,now=Date.now()){
   const source=sourceFor(data,n.feed_id);
-  return freshness(source?.last_success||n.fetched_at,source?.status||'ok',now);
+  if(n.data_state==='cached')return freshness(n.fetched_at,'error',now);
+  return sourceHealth(source,n.fetched_at,now);
  }
  function events(data){return data.events?.length?data.events:(data.news||[]).map(n=>({id:n.event_id||'fallback:'+n.id,title:n.title,category:n.category,first_seen:n.first_seen,last_activity:n.updated_at,active:true,articles:[n],sources:[n.source],changes:[]}));}
  function eventFor(data,n){return events(data).find(e=>e.id===n.event_id||e.articles.some(a=>a.id===n.id));}
@@ -40,6 +49,6 @@ const Brief = (()=>{
   const below=c.close<c.ma20,shrinking=Number.isFinite(c.hist)&&Number.isFinite(p?.hist)&&c.hist<0&&Math.abs(c.hist)<Math.abs(p.hist);
   return {condition:below?'观察后续完整日线能否收回 MA20，并检查 MACD 动能是否同步改善。':'观察后续完整日线能否继续守住 MA20，并检查动能与量能是否配合。',conflict:below&&shrinking?'价格仍在 MA20 下方，但 MACD 负柱正在收窄：动能减弱与趋势转强需要分别验证。':c.rsi<=30?'RSI 处于弱势区；这一状态本身不能确认底部。':c.rsi>=70?'RSI 处于强势区；这一状态本身不能确认见顶。':''};
  }
- return {time,age,freshness,sourceFor,articleHealth,events,eventFor,representative,selectEvents,changes,technicalWatch};
+ return {time,age,freshness,sourceHealth,sourceFor,articleHealth,events,eventFor,representative,selectEvents,changes,technicalWatch};
 })();
 if(typeof module!=='undefined')module.exports=Brief;
