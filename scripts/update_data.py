@@ -143,6 +143,8 @@ def publisher_feed(url, source, limit=8):
     root = ET.fromstring(request(url))
     for item in root.findall('./channel/item')[:limit]:
         title, link = clean(item.findtext('title')), (item.findtext('link') or '').strip()
+        if link.startswith('http://'):
+            link = 'https://' + link[7:]
         if not title or not link.startswith('https://'):
             continue
         try:
