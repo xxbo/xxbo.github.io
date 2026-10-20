@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-20T03:50:03.268757+00:00",
+  "generated_at": "2026-10-20T03:52:45.414222+00:00",
   "markets": [
     {
       "id": "sh000001",
@@ -8,7 +8,7 @@
       "secid": "1.000001",
       "source": "腾讯财经",
       "source_url": "https://gu.qq.com/sh000001",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "status": "ok",
       "history": [
         {
@@ -2895,11 +2895,11 @@
       "price": 3727.75,
       "change": -3.17,
       "change_pct": -0.08,
-      "quote_time": "20261020115000",
+      "quote_time": "20261020115200",
       "history_fetched_at": "2026-10-20T03:50:03.268757+00:00",
       "history_status": "ok",
-      "volume_basis": "来源原始单位，仅做同指数内相对比较",
-      "history_session_key": "2026-10-20-open"
+      "history_session_key": "2026-10-20-open",
+      "volume_basis": "来源原始单位，仅做同指数内相对比较"
     },
     {
       "id": "sz399006",
@@ -2908,7 +2908,7 @@
       "secid": "0.399006",
       "source": "腾讯财经",
       "source_url": "https://gu.qq.com/sz399006",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "status": "ok",
       "history": [
         {
@@ -5795,11 +5795,11 @@
       "price": 2753.81,
       "change": 7.52,
       "change_pct": 0.27,
-      "quote_time": "20261020114948",
+      "quote_time": "20261020115148",
       "history_fetched_at": "2026-10-20T03:50:03.268757+00:00",
       "history_status": "ok",
-      "volume_basis": "来源原始单位，仅做同指数内相对比较",
-      "history_session_key": "2026-10-20-open"
+      "history_session_key": "2026-10-20-open",
+      "volume_basis": "来源原始单位，仅做同指数内相对比较"
     },
     {
       "id": "sh000688",
@@ -5808,7 +5808,7 @@
       "secid": "1.000688",
       "source": "腾讯财经",
       "source_url": "https://gu.qq.com/sh000688",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "status": "ok",
       "history": [
         {
@@ -8695,11 +8695,11 @@
       "price": 1339.66,
       "change": 10.47,
       "change_pct": 0.79,
-      "quote_time": "20261020115000",
+      "quote_time": "20261020115200",
       "history_fetched_at": "2026-10-20T03:50:03.268757+00:00",
       "history_status": "ok",
-      "volume_basis": "来源原始单位，仅做同指数内相对比较",
-      "history_session_key": "2026-10-20-open"
+      "history_session_key": "2026-10-20-open",
+      "volume_basis": "来源原始单位，仅做同指数内相对比较"
     },
     {
       "id": "hkHSI",
@@ -8708,7 +8708,7 @@
       "secid": "100.HSI",
       "source": "腾讯财经",
       "source_url": "https://gu.qq.com/hkHSI",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "status": "ok",
       "history": [
         {
@@ -11592,14 +11592,14 @@
           "partial": true
         }
       ],
-      "price": 23959.18,
-      "change": -227.65,
-      "change_pct": -0.94,
-      "quote_time": "2026/10/20 11:34:57",
+      "price": 23963.52,
+      "change": -223.31,
+      "change_pct": -0.92,
+      "quote_time": "2026/10/20 11:37:39",
       "history_fetched_at": "2026-10-20T03:50:03.268757+00:00",
       "history_status": "ok",
-      "volume_basis": "来源原始单位，仅做同指数内相对比较",
-      "history_session_key": "2026-10-20-open"
+      "history_session_key": "2026-10-20-open",
+      "volume_basis": "来源原始单位，仅做同指数内相对比较"
     },
     {
       "id": "hkHSTECH",
@@ -11608,7 +11608,7 @@
       "secid": "100.HSTECH",
       "source": "腾讯财经",
       "source_url": "https://gu.qq.com/hkHSTECH",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "status": "ok",
       "history": [
         {
@@ -14492,14 +14492,14 @@
           "partial": true
         }
       ],
-      "price": 4060.97,
-      "change": -47.27,
-      "change_pct": -1.15,
-      "quote_time": "2026/10/20 11:34:56",
+      "price": 4062.96,
+      "change": -45.28,
+      "change_pct": -1.1,
+      "quote_time": "2026/10/20 11:37:38",
       "history_fetched_at": "2026-10-20T03:50:03.268757+00:00",
       "history_status": "ok",
-      "volume_basis": "来源原始单位，仅做同指数内相对比较",
-      "history_session_key": "2026-10-20-open"
+      "history_session_key": "2026-10-20-open",
+      "volume_basis": "来源原始单位，仅做同指数内相对比较"
     },
     {
       "id": "usIXIC",
@@ -14508,7 +14508,7 @@
       "secid": "100.NDX",
       "source": "腾讯财经",
       "source_url": "https://gu.qq.com/usIXIC",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "status": "ok",
       "history": [
         {
@@ -17398,11 +17398,76 @@
       "quote_time": "2026-10-19 17:15:59",
       "history_fetched_at": "2026-10-20T03:50:03.268757+00:00",
       "history_status": "ok",
-      "volume_basis": "来源原始单位，仅做同指数内相对比较",
-      "history_session_key": "2026-10-19-closed"
+      "history_session_key": "2026-10-19-closed",
+      "volume_basis": "来源原始单位，仅做同指数内相对比较"
     }
   ],
   "news": [
+    {
+      "id": "em:202610203901142031",
+      "title": "第六届RISC-V中国峰会产学合作与创新创业分论坛在深举行",
+      "summary": "【第六届RISC-V中国峰会产学合作与创新创业分论坛在深举行】10月20日，第六届RISC-V中国峰会产学合作与创新创业分论坛在深圳会展中心（福田）举行。香港城市大学、芯来科技、麒麟软件、上海闵行区先进封装与集成系统研究院等产学研界代表参会分享。论坛聚焦RISC-V人才培养、共建RISC-VAI开源创新与人才生态、RISC-V产学研用协同创新生态实践等话题。",
+      "url": "https://finance.eastmoney.com/a/202610203901142031.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T11:41:00+08:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
+      "kind": "flash",
+      "selection": "即时快讯",
+      "feed_id": "wire:eastmoney"
+    },
+    {
+      "id": "em:202610203901141312",
+      "title": "半日主力资金丨加仓电子板块 抛售银行板块",
+      "summary": "【半日主力资金丨加仓电子板块 抛售银行板块】主力资金早间净流入电子、机械设备、计算机等板块，净流出银行、非银金融、公用事业等板块。",
+      "url": "https://finance.eastmoney.com/a/202610203901141312.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T11:40:42+08:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
+      "kind": "flash",
+      "selection": "即时快讯",
+      "feed_id": "wire:eastmoney"
+    },
+    {
+      "id": "em:202610203901142167",
+      "title": "第六届RISC-V中国峰会芯片设计与验证分论坛在深举行",
+      "summary": "【第六届RISC-V中国峰会芯片设计与验证分论坛在深举行】10月20日，第六届RISC-V中国峰会芯片设计与验证分论坛在深圳会展中心（福田）举行。Tenstorrent、中兴微电子、北京开源芯片研究院、新思科技、东南大学等产学研界代表参会分享。论坛聚焦高性能RISC-V芯片的安全架构设计与实现、RISC-V定制SoC高效研发、基于RISC-V构建领域专用芯片",
+      "url": "https://finance.eastmoney.com/a/202610203901142167.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T11:40:00+08:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
+      "kind": "flash",
+      "selection": "即时快讯",
+      "feed_id": "wire:eastmoney"
+    },
+    {
+      "id": "em:202610203901141443",
+      "title": "日本20年期国债收益率下跌6个基点至3.71%",
+      "summary": "【日本20年期国债收益率下跌6个基点至3.71%】日本20年期国债收益率下跌6个基点至3.71%。日本20年期国债发行吸引的需求比率指标创历史最强。",
+      "url": "https://finance.eastmoney.com/a/202610203901141443.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T11:38:50+08:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
+      "kind": "flash",
+      "selection": "即时快讯",
+      "feed_id": "wire:eastmoney"
+    },
+    {
+      "id": "em:202610203901140930",
+      "title": "优必选在惠州成立具身智能科技公司",
+      "summary": "【优必选在惠州成立具身智能科技公司】企查查APP显示，近日，惠州市观复具身智能科技有限公司成立，法定代表人为郝宝玉，注册资本为2000万元，经营范围包含：人工智能应用软件开发；智能机器人的研发；人工智能基础软件开发；数据处理和存储支持服务等。企查查股权穿透显示，该公司由优必选间接全资持股。",
+      "url": "https://finance.eastmoney.com/a/202610203901140930.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T11:37:05+08:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
+      "kind": "flash",
+      "selection": "即时快讯",
+      "feed_id": "wire:eastmoney"
+    },
     {
       "id": "em:202610203901140057",
       "title": "超纯应材：5nm及以下制程刻蚀设备核心零部件已稳定量产",
@@ -17411,7 +17476,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:36:39+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17424,7 +17489,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:36:09+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17437,7 +17502,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:30:52+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17450,7 +17515,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:30:25+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17463,7 +17528,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:29:45+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17476,7 +17541,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:29:31+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17489,7 +17554,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:29:10+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17502,7 +17567,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:28:39+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17515,7 +17580,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:28:14+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17528,7 +17593,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:25:26+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17541,7 +17606,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:23:55+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17554,7 +17619,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:23:48+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17567,7 +17632,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:23:10+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17580,7 +17645,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:21:24+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17593,7 +17658,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:21:00+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17606,7 +17671,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:20:38+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17619,7 +17684,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:20:26+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17632,7 +17697,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:20:02+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17645,7 +17710,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:19:00+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17658,7 +17723,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:18:29+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17671,7 +17736,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:18:23+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17684,7 +17749,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:17:29+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17697,7 +17762,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:16:28+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17710,7 +17775,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:15:31+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17723,72 +17788,7 @@
       "source": "东方财富快讯",
       "category": "金融",
       "published_at": "2026-10-20T11:14:00+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
-      "kind": "flash",
-      "selection": "即时快讯",
-      "feed_id": "wire:eastmoney"
-    },
-    {
-      "id": "em:202610203901124139",
-      "title": "基金业热议证监会最新发声：政策信号积极 看好资本市场长期健康发展",
-      "summary": "【基金业热议证监会最新发声：政策信号积极 看好资本市场长期健康发展】证监会主席吴清近日在2026金融街论坛年会上发表讲话，定调了下一阶段资本市场的改革任务。多位基金公司人士普遍认为，监管层进一步明确了稳市场、深化改革、提升上市公司质量、完善长期投资生态的积极信号，与此前的改革举措一脉相承又有所深化，体现了资本市场政策的稳定性、连续性，资本市场改革的各项部署正",
-      "url": "https://finance.eastmoney.com/a/202610203901124139.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T11:13:00+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
-      "kind": "flash",
-      "selection": "即时快讯",
-      "feed_id": "wire:eastmoney"
-    },
-    {
-      "id": "em:202610203901125317",
-      "title": "国家发展改革委：多措并举加大力度扩大内需",
-      "summary": "【国家发展改革委：多措并举加大力度扩大内需】10月20日，国家发展改革委召开10月份新闻发布会。国家发展改革委国民经济综合司副司长左刚表示，下一步，国家发展改革委将会同有关部门以更大力度更实举措有效扩大内需。",
-      "url": "https://finance.eastmoney.com/a/202610203901125317.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T11:12:00+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
-      "kind": "flash",
-      "selection": "即时快讯",
-      "feed_id": "wire:eastmoney"
-    },
-    {
-      "id": "em:202610203901123357",
-      "title": "国家发展改革委：推动存量政策与增量政策协同发力",
-      "summary": "【国家发展改革委：推动存量政策与增量政策协同发力】国家发展改革委今天举行新闻发布会，相关负责人表示，将会同有关部门及时出台实施增量政策，推动存量政策与增量政策协同发力，发挥好宏观政策集成效应，努力实现“十五五”良好开局。",
-      "url": "https://finance.eastmoney.com/a/202610203901123357.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T11:11:41+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
-      "kind": "flash",
-      "selection": "即时快讯",
-      "feed_id": "wire:eastmoney"
-    },
-    {
-      "id": "em:202610203901124824",
-      "title": "签下近375亿大单 千亿算力龙头股价却直线下跌！协创数据回应",
-      "summary": "【签下近375亿大单 千亿算力龙头股价却直线下跌！协创数据回应】记者以投资者身份致电协创数据，接线工作人员表示，合同信息严格按照监管规定披露，二级市场股价波动受多重因素影响，上市公司无法预判。公司此前签署的算力订单均处于正常交付阶段，本次订单涉及定金、违约补偿等细节属于商业机密，投资者需持续关注后续公告。",
-      "url": "https://finance.eastmoney.com/a/202610203901124824.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T11:11:00+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
-      "kind": "flash",
-      "selection": "即时快讯",
-      "feed_id": "wire:eastmoney"
-    },
-    {
-      "id": "em:202610203901122321",
-      "title": "润本股份第三季度营收增速降至2.89% 驱蚊产品收入下滑",
-      "summary": "【润本股份第三季度营收增速降至2.89% 驱蚊产品收入下滑】润本股份发布2026年第三季度报告。公司第三季度实现营业收入3.52亿元，同比增长2.89%，增速较2025年同期的16.67%和2024年同期的20.1%明显放缓；归母净利润约7500万元，同比下降4.49%。",
-      "url": "https://finance.eastmoney.com/a/202610203901122321.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T11:08:12+08:00",
-      "fetched_at": "2026-10-20T03:39:30.626850+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "flash",
       "selection": "即时快讯",
       "feed_id": "wire:eastmoney"
@@ -17801,7 +17801,7 @@
       "source": "华尔街见闻",
       "category": "金融",
       "published_at": "2026-10-20T11:00:12+08:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "媒体资讯",
       "featured": false,
@@ -17815,7 +17815,7 @@
       "source": "华尔街见闻",
       "category": "科技",
       "published_at": "2026-10-20T10:45:38+08:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "媒体资讯",
       "featured": false,
@@ -17829,7 +17829,7 @@
       "source": "华尔街见闻",
       "category": "科技",
       "published_at": "2026-10-20T10:36:01+08:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "媒体资讯",
       "featured": false,
@@ -17843,7 +17843,7 @@
       "source": "华尔街见闻",
       "category": "科技",
       "published_at": "2026-10-20T10:30:44+08:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "媒体资讯",
       "featured": false,
@@ -17857,7 +17857,7 @@
       "source": "华尔街见闻",
       "category": "金融",
       "published_at": "2026-10-20T10:30:04+08:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "媒体资讯",
       "featured": false,
@@ -17871,7 +17871,7 @@
       "source": "华尔街见闻",
       "category": "金融",
       "published_at": "2026-10-20T10:13:56+08:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "媒体资讯",
       "featured": false,
@@ -17885,7 +17885,7 @@
       "source": "华尔街见闻",
       "category": "科技",
       "published_at": "2026-10-20T09:45:57+08:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "媒体资讯",
       "featured": false,
@@ -17899,7 +17899,7 @@
       "source": "华尔街见闻",
       "category": "科技",
       "published_at": "2026-10-20T09:43:17+08:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "媒体资讯",
       "featured": false,
@@ -17913,7 +17913,7 @@
       "source": "华尔街见闻",
       "category": "金融",
       "published_at": "2026-10-20T09:39:15+08:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "媒体资讯",
       "featured": false,
@@ -17927,7 +17927,7 @@
       "source": "华尔街见闻",
       "category": "科技",
       "published_at": "2026-10-20T09:16:59+08:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "媒体资讯",
       "featured": false,
@@ -17941,7 +17941,7 @@
       "source": "华尔街见闻",
       "category": "金融",
       "published_at": "2026-10-20T09:00:55+08:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "媒体资讯",
       "featured": false,
@@ -17955,7 +17955,7 @@
       "source": "华尔街见闻",
       "category": "科技",
       "published_at": "2026-10-20T08:51:55+08:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "媒体资讯",
       "featured": false,
@@ -17969,7 +17969,7 @@
       "source": "华尔街见闻",
       "category": "政治",
       "published_at": "2026-10-20T08:51:39+08:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "媒体资讯",
       "featured": false,
@@ -17983,7 +17983,7 @@
       "source": "华尔街见闻",
       "category": "金融",
       "published_at": "2026-10-20T08:32:12+08:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "媒体资讯",
       "featured": false,
@@ -17997,7 +17997,7 @@
       "source": "华尔街见闻",
       "category": "金融",
       "published_at": "2026-10-20T08:15:29+08:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "媒体资讯",
       "featured": false,
@@ -18010,7 +18010,7 @@
       "source": "观点网",
       "category": "政治",
       "published_at": "2026-10-20T03:42:45+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:政治"
     },
@@ -18021,7 +18021,7 @@
       "source": "同花顺",
       "category": "金融",
       "published_at": "2026-10-20T03:33:45+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
     },
@@ -18032,7 +18032,7 @@
       "source": "天津大学新闻网",
       "category": "科技",
       "published_at": "2026-10-20T03:28:41+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
     },
@@ -18043,7 +18043,7 @@
       "source": "证券之星",
       "category": "科技",
       "published_at": "2026-10-20T03:28:10+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
     },
@@ -18054,7 +18054,7 @@
       "source": "新华网",
       "category": "金融",
       "published_at": "2026-10-20T03:24:55+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
     },
@@ -18066,22 +18066,11 @@
       "source": "财联社",
       "category": "政治",
       "published_at": "2026-10-20T03:21:41+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "首页头条",
       "featured": true,
       "feed_id": "editorial:cls"
-    },
-    {
-      "id": "8dc1a8e7b1df56113c66",
-      "title": "每日操作量不超过1万亿！央行将开展隔夜逆回购操作",
-      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTFByR1RCUXRvdzJXdko3eDhTNzJoTkk3dU9yczRUTTRVaFl0ZFRnNF9mZHBtQkp6d3BNMXQ3TDRyTlFCcGxkWUxNbXF1X1VQWEdNX1JHbmdPbURVWFhoVENCNUp5SVJBRm80UVpzRzRhNA?oc=5",
-      "source": "新浪财经",
-      "category": "政治",
-      "published_at": "2026-10-20T03:18:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
-      "kind": "search",
-      "feed_id": "news:政治"
     },
     {
       "id": "9bd3bf477e2acae62e95",
@@ -18090,7 +18079,7 @@
       "source": "21财经",
       "category": "金融",
       "published_at": "2026-10-20T03:14:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
     },
@@ -18101,7 +18090,7 @@
       "source": "同花顺",
       "category": "金融",
       "published_at": "2026-10-20T03:11:48+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
     },
@@ -18112,7 +18101,7 @@
       "source": "21财经",
       "category": "科技",
       "published_at": "2026-10-20T03:10:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
     },
@@ -18123,7 +18112,7 @@
       "source": "同花顺",
       "category": "政治",
       "published_at": "2026-10-20T03:05:47+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:政治"
     },
@@ -18134,7 +18123,7 @@
       "source": "见道网",
       "category": "全球",
       "published_at": "2026-10-20T03:04:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     },
@@ -18145,9 +18134,20 @@
       "source": "同花顺",
       "category": "科技",
       "published_at": "2026-10-20T03:02:15+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
+    },
+    {
+      "id": "47ca1f818be83dcc65e4",
+      "title": "每日看盘｜压力边际放缓，A股或将震荡筑底",
+      "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTE9hLUFjRE5JQmR5OGxtSllvdnBGSUpiNjF0Y0x2YllaM3lQSXA3LWV4dHdwYTZ0MUVXVFBBbmc5MHNSSlBLUFBlMXU2ZFNXelBpYjdCRm1OUUFQZEEzd2F1emRGOGZwY2dfYnZjLWhGSXVSbkxucGozVA?oc=5",
+      "source": "新浪财经",
+      "category": "金融",
+      "published_at": "2026-10-20T02:57:14+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
+      "kind": "search",
+      "feed_id": "news:金融"
     },
     {
       "id": "e7f91e0b49e3487754df",
@@ -18156,7 +18156,7 @@
       "source": "ThePaper.cn",
       "category": "政治",
       "published_at": "2026-10-20T02:56:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:政治"
     },
@@ -18168,7 +18168,7 @@
       "source": "财联社",
       "category": "金融",
       "published_at": "2026-10-20T02:53:24+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "首页头条",
       "featured": true,
@@ -18181,18 +18181,7 @@
       "source": "ThePaper.cn",
       "category": "政治",
       "published_at": "2026-10-20T02:51:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
-      "kind": "search",
-      "feed_id": "news:政治"
-    },
-    {
-      "id": "0f7201e494715cc1c88e",
-      "title": "央行行长潘功胜：重点做好人工智能三方面工作",
-      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE5feVM0TXBPRWM3QnRBUjl6NkNTblV3NzB0Z0lyTDJ0aVRiaGphQkRidW1JdDAtVk1rUDZZLW5iX24zZTI1a0Q3Ymxla0NfZ1hoN3Qtb1FxeDllQ1lNQnc?oc=5",
-      "source": "中国电子银行网",
-      "category": "政治",
-      "published_at": "2026-10-20T02:47:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:政治"
     },
@@ -18204,7 +18193,7 @@
       "source": "财联社",
       "category": "金融",
       "published_at": "2026-10-20T02:40:16+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "首页头条",
       "featured": true,
@@ -18217,31 +18206,9 @@
       "source": "新浪财经",
       "category": "政治",
       "published_at": "2026-10-20T02:37:30+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:政治"
-    },
-    {
-      "id": "9b9fd7837bd20b4c2539",
-      "title": "金融街论坛六大信号：政策利率“换锚”在即，流动性工具落地",
-      "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxPdldHWmtMbWtDeGw4M25jeTAzU1cxWG1hZXY2T3k3aFpIMFNjazFUeU1uNlNIeFI3c1VkYlFRTUF0Zm9WR01VXy1yZ1c5dWd5Rm5DSHFhandtVkJXa0lrZzhzdEtUQXEzX0xkZ3gxNGZHS2pZcGVfbENrS1pXeDA2V0VUOEMtRlpFOWFMMlBKVGE0cS1VclE3c2dhR0V5QQ?oc=5",
-      "source": "新浪财经",
-      "category": "金融",
-      "published_at": "2026-10-20T02:35:56+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
-      "kind": "search",
-      "feed_id": "news:金融"
-    },
-    {
-      "id": "872fa3d9da7deb5bf05c",
-      "title": "半导体三季报业绩大面积预增，科创芯片设计指数逆市涨0.59%，天弘科创芯片设计ETF联接基金一键布局芯片龙头",
-      "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTFBvd0lhQV8zMGFHaExiMlhMUnFUdWJmOVFObWpPeXZPaXMwckRZN1RKeU1DR3kxbXdrZmNWSlJVX2xJSnlYOVVXc19XVkFMb2UwS0xjX2hvTnNEd051NDc4TjJWRUI4SVJtaHZ1X2d2eUNXeGRhZ1VBOQ?oc=5",
-      "source": "新浪财经",
-      "category": "科技",
-      "published_at": "2026-10-20T02:33:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
-      "kind": "search",
-      "feed_id": "news:科技"
     },
     {
       "id": "f30fc8c4054886f5b838",
@@ -18250,7 +18217,7 @@
       "source": "东方财富",
       "category": "科技",
       "published_at": "2026-10-20T02:28:58+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
     },
@@ -18261,7 +18228,7 @@
       "source": "搜狐网",
       "category": "全球",
       "published_at": "2026-10-20T02:28:25+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     },
@@ -18272,18 +18239,29 @@
       "source": "中国新闻网",
       "category": "全球",
       "published_at": "2026-10-20T02:28:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     },
     {
-      "id": "6d150799f98e26979cdb",
-      "title": "央行：境外央行类机构回购工具的操作对象纳入外资人民币业务清算行",
-      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTFBDRVptMFZwWkVoRnNOMVhWOC1fMmFQc3RGMnRLVF9lM0M0Vk90X25sd0VSWmVFS3FmZk5rRUNEcjNjTUVvNWhqeEp2ZzI5OTBiUXNBWXNnc3d5UnpDZnc?oc=5",
-      "source": "同花顺",
+      "id": "75d938c7452c7794c36c",
+      "title": "央行宣布，多项政策措施要来了",
+      "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxOUllvbDJ3aHVFdnliS3FDbE5NZ3BLcW9rUHNLa0tra1pZTDUzbnQwalI4bUZqVy1VZWZRTVJhRG5adDFzMHcyTHNZcVo1dE1TSHhVdTBxZEY3SjdILVUyeTA3UDZ3bVlHdk0xeW4tUDd0ZHJ0dVlmRHdjeG9qQnZvN1hUM0pJamJkaF9TZVduMA?oc=5",
+      "source": "新浪财经",
       "category": "政治",
-      "published_at": "2026-10-20T02:17:43+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "published_at": "2026-10-20T02:25:10+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
+      "kind": "search",
+      "feed_id": "news:政治"
+    },
+    {
+      "id": "e2778ff29a5acbe0ca9e",
+      "title": "白川方明：“通胀目标制”成功表象下暗藏失衡风险",
+      "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxPbUtOQXFRRXItZGdybDN5ejlHUzNib29PUlVaNDUteU10YV80TjRBc0dGYkR0cnFSQWVLN285WFhSU2x1T0Y1OFFUQ2hMc3ZxVzhDQzE4d2JQYmI2R2xQdG80ZjNvV0VnLTNPaGI1bFNJb29sOGc1NV9ZYjVyLXJCSnRzQWVXV09xcDY0eURSaw?oc=5",
+      "source": "21财经",
+      "category": "政治",
+      "published_at": "2026-10-20T02:17:00+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:政治"
     },
@@ -18294,18 +18272,7 @@
       "source": "财新",
       "category": "金融",
       "published_at": "2026-10-20T02:15:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
-      "kind": "search",
-      "feed_id": "news:金融"
-    },
-    {
-      "id": "57e8608d78a79937d951",
-      "title": "港股速报 | 港股早盘低开走弱 人形机器人概念逆势爆发",
-      "url": "https://news.google.com/rss/articles/CBMiZkFVX3lxTFBNNmxZanpOLWUxM0RCeTFYWmUxY2NsUGJ0N1VYcFVZMWVRVXVITWpvaXBZUzA4UmNDYXFVbzNUSnZ1OXhYR1AzbmpCSjUyQ1BqN3ZJdm1lczk0Nm9aRU5xdHdOUTBVQQ?oc=5",
-      "source": "每日经济新闻",
-      "category": "金融",
-      "published_at": "2026-10-20T02:14:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
     },
@@ -18316,7 +18283,7 @@
       "source": "东方财富",
       "category": "金融",
       "published_at": "2026-10-20T02:13:02+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
     },
@@ -18327,7 +18294,7 @@
       "source": "经济观察网",
       "category": "科技",
       "published_at": "2026-10-20T02:12:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
     },
@@ -18338,20 +18305,9 @@
       "source": "观点网",
       "category": "金融",
       "published_at": "2026-10-20T02:07:42+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
-    },
-    {
-      "id": "af0031ee452d3b360db3",
-      "title": "央行将在10月21日至11月2日开展隔夜逆回购操作",
-      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTFBJNDZKVGFtckM1bzFrVlR5eUE2NVpmdU0zY2Uxb19md3dNaTgzNEh5NlFudkdGOENNU1YwLUh0TVoyZi1TcjZma0I4VnlpbEp4SUU3U2JDNlZnWExhd3c3VQ?oc=5",
-      "source": "证券之星",
-      "category": "政治",
-      "published_at": "2026-10-20T02:07:33+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
-      "kind": "search",
-      "feed_id": "news:政治"
     },
     {
       "id": "6de4ed2d2db1d6a732db",
@@ -18360,18 +18316,29 @@
       "source": "东方财富",
       "category": "科技",
       "published_at": "2026-10-20T02:04:36+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
     },
     {
-      "id": "d153c494939e2ae848eb",
-      "title": "财政部将通过香港金管局发行人民币国债155亿元_公司新闻_财经",
-      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1sY0pvSnNCU2RndWt5RmxUblo5cXdzcmF0Z2s0UHliWHE2dTlndXdoOWY2N3gxTXFxUGlqX2g2TUNRdjZLZm9BVm5vYU4zeHdLWDROdjlOSk5IcDBzWXVIbA?oc=5",
-      "source": "证券之星",
+      "id": "ba574ea166ce7e75717d",
+      "title": "财政部将通过香港金管局发行人民币国债155亿元",
+      "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE80VmVSTU5QWk03Yi1RbHVnQk1CRU1LRTBEck5oZFE5R2NCQlUxcXBFSXdaRWI0TXJwU3drN20zMl9pWE1ObWhWczI4S2Jxdnl5d2cxZWt0bE9wUy1pbkJxaWVR?oc=5",
+      "source": "观点网",
       "category": "政治",
-      "published_at": "2026-10-20T02:02:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "published_at": "2026-10-20T02:02:39+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
+      "kind": "search",
+      "feed_id": "news:政治"
+    },
+    {
+      "id": "bf9dbb3f0beeb75dfda8",
+      "title": "荷兰央行因“地缘政治动荡”撤走纽约黄金：逾78吨转往伦敦-市场参考",
+      "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTFBSc0VKZ2J2Z1ZselQzVDJIY29zeU1FX0dzZkdFNEZrNUZwYVdGdVdHa3UzcGd5TkgwOGRndmJuOWVodzVTcnROWHNJRFlnLVU?oc=5",
+      "source": "金十数据",
+      "category": "政治",
+      "published_at": "2026-10-20T01:53:26+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:政治"
     },
@@ -18382,7 +18349,7 @@
       "source": "凤凰网",
       "category": "科技",
       "published_at": "2026-10-20T01:48:02+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
     },
@@ -18393,7 +18360,7 @@
       "source": "证券之星",
       "category": "金融",
       "published_at": "2026-10-20T01:44:39+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
     },
@@ -18404,7 +18371,7 @@
       "source": "中国新闻网",
       "category": "政治",
       "published_at": "2026-10-20T01:37:44+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:政治"
     },
@@ -18415,9 +18382,31 @@
       "source": "东方财富",
       "category": "金融",
       "published_at": "2026-10-20T01:35:22+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
+    },
+    {
+      "id": "2edcb4fcfd9991c0f53c",
+      "title": "传OpenAI加速推进约300亿美元融资抢跑Anthropic上市_滚动新闻_财经",
+      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTFBPd3VJTmtJc1BGbFBjNkNoVXRFVnNWMWdYdURoelRTM1NjYnhKa0RWMzBXX1RZcXFXV3F1QnZIMWhaTTFIU0ZZcjctNkd0Z0o0dndDY0JCV1lHN1hSaEdTTw?oc=5",
+      "source": "证券之星",
+      "category": "科技",
+      "published_at": "2026-10-20T01:31:46+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
+      "kind": "search",
+      "feed_id": "news:科技"
+    },
+    {
+      "id": "5f239f0559a031df8c1d",
+      "title": "【券商聚焦】华泰证券：中东冲突时间持续超预期 能源定价重塑有望带来煤炭及风光储板块的结构性机会",
+      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1yaURqdHBlcmt2bzdCRFZwU2VWeVBOSVRqd2FOS0toZHdPcGt6eVFvb1BZQkhUSWpVdGsxa0kyOXFPVnpwY3VQWnctaFlnQWVPNk9FaEZjYU1ZRVAwT1BjUQ?oc=5",
+      "source": "证券之星",
+      "category": "全球",
+      "published_at": "2026-10-20T01:24:05+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
+      "kind": "search",
+      "feed_id": "news:全球"
     },
     {
       "id": "c11bbfc56b90bc017976",
@@ -18426,7 +18415,7 @@
       "source": "新浪网",
       "category": "金融",
       "published_at": "2026-10-20T01:23:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
     },
@@ -18437,7 +18426,7 @@
       "source": "东方财富",
       "category": "金融",
       "published_at": "2026-10-20T01:20:14+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
     },
@@ -18448,7 +18437,7 @@
       "source": "证券之星",
       "category": "金融",
       "published_at": "2026-10-20T01:18:09+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
     },
@@ -18459,7 +18448,7 @@
       "source": "新浪新闻_手机新浪网",
       "category": "政治",
       "published_at": "2026-10-20T01:17:09+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:政治"
     },
@@ -18470,18 +18459,7 @@
       "source": "华尔街见闻",
       "category": "科技",
       "published_at": "2026-10-20T01:16:59+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
-      "kind": "search",
-      "feed_id": "news:科技"
-    },
-    {
-      "id": "f56c28969cff2645e5bb",
-      "title": "半导体三季报业绩大面积预增 PCB与存储芯片“你追我赶”",
-      "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTE9CZ2U5WWdRMjhQemZpOGlQd09lM3VvMVQ3dERRdDRNN1FhMDV6eHJtaFZYd0ZzSUt2c05KLUQwcG54YnpHdzJBYnFsZGpHQ3k5eVlfMlotU3QyYmdjS1ZXMEh1dGJlT2xyal9tRTdyVm45V3hyYkZ1cA?oc=5",
-      "source": "新浪财经",
-      "category": "科技",
-      "published_at": "2026-10-20T01:07:56+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
     },
@@ -18492,7 +18470,7 @@
       "source": "搜狐",
       "category": "全球",
       "published_at": "2026-10-20T01:06:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     },
@@ -18503,7 +18481,7 @@
       "source": "浙江在线",
       "category": "金融",
       "published_at": "2026-10-20T01:04:06+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
     },
@@ -18514,7 +18492,7 @@
       "source": "观点网",
       "category": "科技",
       "published_at": "2026-10-20T00:59:49+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
     },
@@ -18525,7 +18503,7 @@
       "source": "观点网",
       "category": "科技",
       "published_at": "2026-10-20T00:59:08+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
     },
@@ -18536,7 +18514,7 @@
       "source": "观察者网",
       "category": "科技",
       "published_at": "2026-10-20T00:59:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
     },
@@ -18547,7 +18525,7 @@
       "source": "新浪财经",
       "category": "全球",
       "published_at": "2026-10-20T00:55:06+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     },
@@ -18558,7 +18536,7 @@
       "source": "新浪财经",
       "category": "政治",
       "published_at": "2026-10-20T00:55:06+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:政治"
     },
@@ -18569,7 +18547,7 @@
       "source": "21财经",
       "category": "金融",
       "published_at": "2026-10-20T00:51:57+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
     },
@@ -18580,7 +18558,7 @@
       "source": "华尔街见闻",
       "category": "科技",
       "published_at": "2026-10-20T00:51:55+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
     },
@@ -18591,7 +18569,7 @@
       "source": "华尔街见闻",
       "category": "政治",
       "published_at": "2026-10-20T00:51:39+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:政治"
     },
@@ -18602,7 +18580,7 @@
       "source": "新浪财经",
       "category": "政治",
       "published_at": "2026-10-20T00:51:22+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:政治"
     },
@@ -18613,9 +18591,20 @@
       "source": "证券之星",
       "category": "金融",
       "published_at": "2026-10-20T00:48:55+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
+    },
+    {
+      "id": "cb95f1b4fe3d5a59410e",
+      "title": "10月20日证券之星早间消息汇总：央行将出台一系列政策措施_证券要闻",
+      "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE1FQ2g4ZThPN1lEWXNlZ21QYnRHdldzbnA1eXVGSXFQZXJQV1lHemZMWlZUc0NnWEcyRUVNSUlUN1czR2tlYlZqT0lQNlJvYldwUUFCMThwX1k1R0NWWkxUR3ZR?oc=5",
+      "source": "证券之星",
+      "category": "政治",
+      "published_at": "2026-10-20T00:41:08+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
+      "kind": "search",
+      "feed_id": "news:政治"
     },
     {
       "id": "2a1120f9cf76645f71ac",
@@ -18624,7 +18613,7 @@
       "source": "凤凰网",
       "category": "全球",
       "published_at": "2026-10-20T00:40:36+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     },
@@ -18635,7 +18624,7 @@
       "source": "观点网",
       "category": "科技",
       "published_at": "2026-10-20T00:31:33+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
     },
@@ -18646,7 +18635,7 @@
       "source": "财联社",
       "category": "政治",
       "published_at": "2026-10-20T00:25:47+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:政治"
     },
@@ -18657,7 +18646,7 @@
       "source": "21财经",
       "category": "金融",
       "published_at": "2026-10-20T00:25:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
     },
@@ -18668,7 +18657,7 @@
       "source": "新浪财经",
       "category": "全球",
       "published_at": "2026-10-20T00:23:47+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     },
@@ -18679,7 +18668,7 @@
       "source": "证券之星",
       "category": "政治",
       "published_at": "2026-10-20T00:22:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:政治"
     },
@@ -18690,7 +18679,7 @@
       "source": "财联社",
       "category": "科技",
       "published_at": "2026-10-20T00:13:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
     },
@@ -18701,9 +18690,20 @@
       "source": "财联社",
       "category": "金融",
       "published_at": "2026-10-20T00:07:21+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
+    },
+    {
+      "id": "946ec7150a05591f623e",
+      "title": "央行：中国货币政策框架的转型和完善工作取得积极进展",
+      "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTE5VTGN2aFpsRmQ3ZnhRTVp4ZkNHNHBwUXVIRDdDS1JPRFUwLXJwbDJlVUlWbkhJVW05MXZkWWxkWDRmTUgyVjhWVWdoRnpxWG40ZEtzSFRQTGwzS3FMVTg5czB3Ny0yUHZqVzNCYzhFZDdKNnliUUstVw?oc=5",
+      "source": "新浪财经",
+      "category": "政治",
+      "published_at": "2026-10-20T00:06:13+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
+      "kind": "search",
+      "feed_id": "news:政治"
     },
     {
       "id": "d90efd0092650054b8d2",
@@ -18712,7 +18712,7 @@
       "source": "新浪新闻_手机新浪网",
       "category": "全球",
       "published_at": "2026-10-20T00:00:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     },
@@ -18723,7 +18723,7 @@
       "source": "东方财富",
       "category": "科技",
       "published_at": "2026-10-19T23:57:45+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
     },
@@ -18734,7 +18734,18 @@
       "source": "TradingView",
       "category": "科技",
       "published_at": "2026-10-19T23:54:03+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
+      "kind": "search",
+      "feed_id": "news:科技"
+    },
+    {
+      "id": "f43c57614f888e730691",
+      "title": "半导体三季报业绩大面积预增 PCB与存储芯片“你追我赶”",
+      "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxQbW9PQ1dQM3pFSXVkbFpaTHhPcXlGejgzY2tPYjVoU045NzNtTVM5UGo5Z3dsZERSMEtIOG02b2x0UmxUWEhBMDNBNGtEU2p2ZzQ1a1R4b19YV09NcjZMQ3ZQZWc3UXUxbTlmY2tVMmU0YUtHcHMyZGRoYlctLXFmRnNDUW9YTzB4MmRPNkdfUQ?oc=5",
+      "source": "搜狐网",
+      "category": "科技",
+      "published_at": "2026-10-19T23:51:36+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
     },
@@ -18745,7 +18756,7 @@
       "source": "新浪财经",
       "category": "政治",
       "published_at": "2026-10-19T23:48:45+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:政治"
     },
@@ -18756,7 +18767,7 @@
       "source": "东方财富",
       "category": "科技",
       "published_at": "2026-10-19T23:37:51+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
     },
@@ -18767,7 +18778,7 @@
       "source": "凤凰网",
       "category": "全球",
       "published_at": "2026-10-19T23:29:56+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     },
@@ -18778,7 +18789,18 @@
       "source": "新浪财经",
       "category": "政治",
       "published_at": "2026-10-19T23:29:56+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
+      "kind": "search",
+      "feed_id": "news:政治"
+    },
+    {
+      "id": "7b3b982fc3df6498ad71",
+      "title": "日本央行原行长白川方明分析央行独立性困境：政策工具需匹配对应的调控目标",
+      "url": "https://news.google.com/rss/articles/CBMimgRBVV95cUxPYmxBUjRtdkNvc3ZxRnFVSFBHREhUUnYzUHpuWERmNjM0Y1Q0djFSRVJkOGljVElwbTNGQU5KeU90aGlyeDkydG5kYVowYXJ2bFBPc21FY295bkZIcW1sLWY0LVZsXy1taHdpcGlqbU1raWRSMkFjRk45Rjc0YVNMZHVkNUttS3VNT1lqOXlhTGZLVnZROV9leld5WGxBNkpNQXRMSUF1UGduR3ZQYUZib2ktcnpEaWVQVlhJLTJuVjVrSjJXb0oxUTZWTXdQZkFZMVdpRHZTTEJnbVdMSzBLaG54QmFZZ0EwWVJSdFlHNm54OGloVVA2SXAzcFVJSmxXUk1zMnFMd1hBWW1qM1JFdUlwRndpN0tsS0x4VVZDa3lzcmhpUGRjTWJkWGZXUDBoc2t4QmZhajNVTGkzOXBmdFlnTFdxZXZ6ekl2MmlGY0xaMW9SQ3cxbVo2c1d6X044ZTJBYlJlMzNoU1RfS25kVjBmSXlQRGpId0dIRkRRWHMxTV9vLVktNkVSUXRwclhwSDNpU3hWUmhCU3QtTi11enB6ZjFRcjBEN3RBTDRUZUpmczhsSXJUeV9pR2h3YXVTSHVpamNZT1BLYjdvajh4RVlYbjFpZEY1bXhPSk9JNXYyYWcteXZSSDhOMlVUMS1FM2ppSC1DdS0yX0dVdXpqUFpPN0RRN0pfNHZaem9Fc0Y4R0hGdW11NXBn?oc=5",
+      "source": "新浪财经",
+      "category": "政治",
+      "published_at": "2026-10-19T23:28:23+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:政治"
     },
@@ -18789,7 +18811,7 @@
       "source": "财联社",
       "category": "金融",
       "published_at": "2026-10-19T23:27:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
     },
@@ -18800,7 +18822,7 @@
       "source": "东方财富",
       "category": "金融",
       "published_at": "2026-10-19T23:16:14+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
     },
@@ -18812,22 +18834,36 @@
       "source": "财联社",
       "category": "金融",
       "published_at": "2026-10-19T23:15:13+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "热门报道",
       "featured": false,
       "feed_id": "editorial:cls"
     },
     {
-      "id": "554b890acb3cca583be2",
-      "title": "潘功胜：国际市场对人民币使用需求明显增强，央行将强化高质量政策供给",
-      "url": "https://news.google.com/rss/articles/CBMigAVBVV95cUxNX1k5b3VkTkJDb3lZeFR3d1V4YVRqTEpfRWhyYk45b0xIS1FpbTFKX090UWI5Sjk0eVJ6RkFHYUZEeEpQSWIyVGhvVV9NRXhldEsxSmlIY3hCOFZKTTlrb1E0Tk41UTQ4TzJyZ2VsdlRkVnI2cGEzamNsQUNqbVVGRUJCOHVDZENHT2tfSnkyelAwT050QlBXTjd6VlhlRHpocEZkdjhFb2FFN3JxamhqTnVzY0o5Zk1yek1RMUZUSVhtUlRWNXZhamc3UWpURVRIQ0hOTjg1dGlwa04zXzQ5Q0I3MXRGY1FMUUxlVkw4cjR6ZzhBX3hVWS1LdWlSWGs1QnNQVEVFY3pGdVNmSHkzcWNWQ3VtdkUwUUJWYVI2TW5pbzVjelZfcVpPSXFncHNLcHFVSFRYengtX2pmV2o4ZFRTUWZHNFZtdTBrZEpsZ29RRlQxWjM0X243cGE5M3Z6OFlmQ2tQTm9RMEdCNi1nTjFmbm5qTjJWaTY2OFlWd3VzN2xZY0pJRTlwdVFtTERyZXREZXF1RDduV05LVWgwYVY4MnkxVklHTkpMUlpOcnV3NHZrSzRsRUh4SFBtcDNYVnp4YUo1SnZNZ1RNMFNNWjV3M0xNUUpZcW52R1lCWDNGTng0Nm1wUDZiZXg5YlpKRkdjR1ZLMmVIRlh5Ynp5RUNXby11U3pzVlhYbVRDamlrQUdfNzI1dVREVmwxX1phSGd6Qmtpbm9OaF9VMlQtcjdfcVl0RERmYms3TjJEbTJxMHZoY194YTFtTWZjTFpNY19WZi1MMDhQWURqbTFsbHhISkpJZ01kNTFxejVGT0JrY1FKSUo1UEY3OC1IekNw?oc=5",
-      "source": "新浪财经",
-      "category": "政治",
-      "published_at": "2026-10-19T23:01:47+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "id": "cls:2509123",
+      "title": "特朗普称该换人代表乌克兰谈判 以色列总理下令推翻伊朗政权 | 环球市场",
+      "summary": "①伊朗革命卫队: 敌人应知晓霍尔木兹海峡有7条主要海底光缆；②五角大楼官员：如果美国的AI实验室不配合政府 将实施出口管制；③高盛：对冲基金以至少十年来最快速度减持科技股；④Nscale与Anthropic洽谈价值450亿美元云计算合作协议‌。",
+      "url": "https://www.cls.cn/detail/2509123",
+      "source": "财联社",
+      "category": "全球",
+      "published_at": "2026-10-19T23:09:23+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
+      "kind": "headline",
+      "selection": "热门报道",
+      "featured": false,
+      "feed_id": "editorial:cls"
+    },
+    {
+      "id": "fe2643ba4dea08e6d962",
+      "title": "政策利率官宣“换锚”隔夜回购利率 潘功胜明确货币政策框架转型方向",
+      "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxPWS1VWjNzUWJRWDl5cXNqVm5fVHlrQmxrVXkzZXdYLVdGOVVQSGh0WTFsbEFhbGp1US15X1Y2S1hEbFR6U3dzbUFHR2YtVGhBUzk3d2IwZkVtdTRDcmJsLVpSLWtia1hKdGxlRFUwYjFtOUNDWkVTM2l3TU9IWlVXZE5GVm9HQQ?oc=5",
+      "source": "21财经",
+      "category": "金融",
+      "published_at": "2026-10-19T23:00:00+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
-      "feed_id": "news:政治"
+      "feed_id": "news:金融"
     },
     {
       "id": "f182da17e85ecda77667",
@@ -18836,7 +18872,7 @@
       "source": "凤凰网",
       "category": "全球",
       "published_at": "2026-10-19T23:00:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     },
@@ -18848,7 +18884,7 @@
       "source": "财联社",
       "category": "科技",
       "published_at": "2026-10-19T23:00:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "热门报道",
       "featured": false,
@@ -18861,7 +18897,7 @@
       "source": "新浪财经",
       "category": "政治",
       "published_at": "2026-10-19T22:58:22+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:政治"
     },
@@ -18872,7 +18908,7 @@
       "source": "证券时报网",
       "category": "政治",
       "published_at": "2026-10-19T22:52:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:政治"
     },
@@ -18883,7 +18919,7 @@
       "source": "证券时报网",
       "category": "金融",
       "published_at": "2026-10-19T22:50:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
     },
@@ -18895,22 +18931,11 @@
       "source": "财联社",
       "category": "科技",
       "published_at": "2026-10-19T22:37:20+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "热门报道",
       "featured": false,
       "feed_id": "editorial:cls"
-    },
-    {
-      "id": "01a6781b9bb489556a60",
-      "title": "SHEIN中东第三方平台上线十个月 签约卖家突破600家",
-      "url": "https://news.google.com/rss/articles/CBMiWEFVX3lxTE82LXJCOFV3NFRmY0tDUXdRak8xb1dtdERZdTRKOHNHb2ZGVGgtQzBNRTlUZ0Q1d2lMZU5rTXNxN1UwRkdqaDh2YVc0Q2dNTTUzVTlxTlFWZl8?oc=5",
-      "source": "亿邦动力",
-      "category": "全球",
-      "published_at": "2026-10-19T22:31:17+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
-      "kind": "search",
-      "feed_id": "news:全球"
     },
     {
       "id": "cls:2509104",
@@ -18920,7 +18945,7 @@
       "source": "财联社",
       "category": "科技",
       "published_at": "2026-10-19T22:08:51+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "热门报道",
       "featured": false,
@@ -18933,20 +18958,9 @@
       "source": "东方财富",
       "category": "科技",
       "published_at": "2026-10-19T21:35:58+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
-    },
-    {
-      "id": "d56faacfe9bd9d13b731",
-      "title": "日本央行原行长白川方明分析央行独立性困境：政策工具需匹配对应的调控目标",
-      "url": "https://news.google.com/rss/articles/CBMinAJBVV95cUxNd1ZSQVB5a2JkRmdZT0tKcTNpT2hBakdZaVBBVWhLU0F0UGVCZlRJdlpuNFJPNC0yX2NyN3AtazhoNHAwSzU3VTFmMllFc0pyTEg1d3hkMndxYUZyRFdXd3dCbE1BTG9EZFp3bjczSkRnVmNUcHRFR1E3RVZSZmNwTVd4dXNObW5vVDVLTmFmMU9OaE92OEM0SldPVmc4YWYzRG1oaEN1MEh2VGg1WGgyOGREN0hwMlFhQjlVbGl1YjRqNGpsWkZsaGtrQU8zU1k4bzJCZElYLW0zMWtlVDFDblVwZTc5alhPd1hyWHNCT2RBbU9CTk43MlFGbmpELXRwdVhhb05ndVh5UTlxYjhTeHhOVW12aEp2V3Mycw?oc=5",
-      "source": "新浪财经",
-      "category": "政治",
-      "published_at": "2026-10-19T21:27:15+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
-      "kind": "search",
-      "feed_id": "news:政治"
     },
     {
       "id": "7e7078dbba6f59557b9c",
@@ -18955,7 +18969,7 @@
       "source": "新浪财经",
       "category": "全球",
       "published_at": "2026-10-19T21:03:46+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     },
@@ -18966,7 +18980,7 @@
       "source": "RFI",
       "category": "科技",
       "published_at": "2026-10-19T20:36:13+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
     },
@@ -18977,7 +18991,7 @@
       "source": "东方财富",
       "category": "金融",
       "published_at": "2026-10-19T20:08:52+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
     },
@@ -18989,7 +19003,7 @@
       "source": "财联社",
       "category": "科技",
       "published_at": "2026-10-19T19:49:38+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "热门报道",
       "featured": false,
@@ -19002,7 +19016,7 @@
       "source": "财联社",
       "category": "全球",
       "published_at": "2026-10-19T19:20:15+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     },
@@ -19013,7 +19027,7 @@
       "source": "新浪网",
       "category": "全球",
       "published_at": "2026-10-19T18:45:50+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     },
@@ -19025,7 +19039,7 @@
       "source": "财联社",
       "category": "金融",
       "published_at": "2026-10-19T18:26:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "热门报道",
       "featured": false,
@@ -19038,7 +19052,7 @@
       "source": "东方财富",
       "category": "金融",
       "published_at": "2026-10-19T17:48:45+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:金融"
     },
@@ -19049,7 +19063,7 @@
       "source": "中国科技网",
       "category": "科技",
       "published_at": "2026-10-19T17:45:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
     },
@@ -19060,7 +19074,7 @@
       "source": "财联社",
       "category": "科技",
       "published_at": "2026-10-19T17:16:43+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:科技"
     },
@@ -19071,7 +19085,7 @@
       "source": "美国之音",
       "category": "全球",
       "published_at": "2026-10-19T16:42:42+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     },
@@ -19082,7 +19096,7 @@
       "source": "36氪出海",
       "category": "全球",
       "published_at": "2026-10-19T15:40:35+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     },
@@ -19093,7 +19107,7 @@
       "source": "东方财富",
       "category": "全球",
       "published_at": "2026-10-19T15:09:46+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     },
@@ -19105,7 +19119,7 @@
       "source": "财联社",
       "category": "金融",
       "published_at": "2026-10-19T13:47:33+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "热门报道",
       "featured": false,
@@ -19118,7 +19132,7 @@
       "source": "共同网",
       "category": "全球",
       "published_at": "2026-10-19T13:08:27+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     },
@@ -19130,7 +19144,7 @@
       "source": "财联社",
       "category": "金融",
       "published_at": "2026-10-19T13:02:04+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "headline",
       "selection": "热门报道",
       "featured": false,
@@ -19143,23 +19157,9 @@
       "source": "国际在线",
       "category": "全球",
       "published_at": "2026-10-19T12:57:43+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
-    },
-    {
-      "id": "cls:2508914",
-      "title": "美股科技题材集体反弹 关键半导体指数有望结束连跌 | 今夜看点",
-      "summary": "①马斯克要让每个美国儿童都成SpaceX股东； ②美银：存储股估值已现周期底部特征； ③机器人、导弹...摩根大通国防投资布局亮相； ④电供不上！微软退出英国数据中心项目。",
-      "url": "https://www.cls.cn/detail/2508914",
-      "source": "财联社",
-      "category": "科技",
-      "published_at": "2026-10-19T12:56:12+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
-      "kind": "headline",
-      "selection": "热门报道",
-      "featured": false,
-      "feed_id": "editorial:cls"
     },
     {
       "id": "194a1dc5fdacc450bda1",
@@ -19168,7 +19168,7 @@
       "source": "央视网",
       "category": "全球",
       "published_at": "2026-10-19T12:55:40+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     },
@@ -19179,7 +19179,7 @@
       "source": "财新",
       "category": "政治",
       "published_at": "2026-10-19T12:51:00+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:政治"
     },
@@ -19190,7 +19190,7 @@
       "source": "凤凰网",
       "category": "全球",
       "published_at": "2026-10-19T12:12:51+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     },
@@ -19201,7 +19201,7 @@
       "source": "华尔街见闻",
       "category": "全球",
       "published_at": "2026-10-19T08:27:30+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     },
@@ -19212,7 +19212,7 @@
       "source": "华尔街见闻",
       "category": "全球",
       "published_at": "2026-10-19T08:26:32+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     },
@@ -19223,7 +19223,7 @@
       "source": "新华网",
       "category": "全球",
       "published_at": "2026-10-19T05:02:46+00:00",
-      "fetched_at": "2026-10-20T03:50:03.268757+00:00",
+      "fetched_at": "2026-10-20T03:52:45.414222+00:00",
       "kind": "search",
       "feed_id": "news:全球"
     }
@@ -19233,7 +19233,7 @@
     {
       "id": "news:科技",
       "status": "ok",
-      "last_success": "2026-10-20T03:50:03.268757+00:00",
+      "last_success": "2026-10-20T03:52:45.414222+00:00",
       "count": 24,
       "error": null
     },
@@ -19246,50 +19246,51 @@
     {
       "id": "news:金融",
       "status": "ok",
-      "last_success": "2026-10-20T03:50:03.268757+00:00",
-      "count": 24,
-      "error": null
-    },
-    {
-      "id": "news:全球",
-      "status": "ok",
-      "last_success": "2026-10-20T03:50:03.268757+00:00",
-      "count": 24,
-      "error": null
-    },
-    {
-      "id": "news:政治",
-      "status": "ok",
-      "last_success": "2026-10-20T03:50:03.268757+00:00",
+      "last_success": "2026-10-20T03:52:45.414222+00:00",
       "count": 24,
       "error": null
     },
     {
       "id": "markets",
       "status": "ok",
-      "last_success": "2026-10-20T03:50:03.268757+00:00",
+      "last_success": "2026-10-20T03:52:45.414222+00:00",
       "count": 6,
+      "error": null
+    },
+    {
+      "id": "wire:eastmoney",
+      "status": "ok",
+      "last_success": "2026-10-20T03:52:45.414222+00:00",
+      "count": 30,
+      "error": null
+    },
+    {
+      "id": "news:全球",
+      "status": "ok",
+      "last_success": "2026-10-20T03:52:45.414222+00:00",
+      "count": 24,
+      "error": null
+    },
+    {
+      "id": "news:政治",
+      "status": "ok",
+      "last_success": "2026-10-20T03:52:45.414222+00:00",
+      "count": 24,
       "error": null
     },
     {
       "id": "editorial:cls",
       "status": "ok",
-      "last_success": "2026-10-20T03:50:03.268757+00:00",
+      "last_success": "2026-10-20T03:52:45.414222+00:00",
       "count": 12,
       "error": null
     },
     {
       "id": "editorial:wsc",
       "status": "ok",
-      "last_success": "2026-10-20T03:50:03.268757+00:00",
+      "last_success": "2026-10-20T03:52:45.414222+00:00",
       "count": 15,
       "error": null
-    },
-    {
-      "id": "wire:eastmoney",
-      "status": "error",
-      "last_success": "2026-10-20T03:39:30.626850+00:00",
-      "error": "<urlopen error _ssl.c:993: The handshake operation timed out>"
     }
   ]
 }
