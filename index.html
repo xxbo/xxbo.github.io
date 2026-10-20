@@ -9,7 +9,7 @@
 <body>
 <a class="skip" href="#main">跳到主要内容</a>
 <aside class="sidebar">
-  <a class="brand" href="./" aria-label="观潮首页"><span class="brand-icon">≈</span><span>观潮<small>THE DAILY CURRENT</small></span></a>
+  <a class="brand" href="#/overview" aria-label="观潮首页"><span class="brand-icon">≈</span><span>观潮<small>THE DAILY CURRENT</small></span></a>
   <div class="workspace">XXBO / PERSONAL DESK</div>
   <nav aria-label="主导航">
     <button class="nav active" data-view="overview"><span>◫</span> 今日概览 <i>01</i></button>
@@ -26,15 +26,16 @@
     <section class="intro"><div><div class="eyebrow" id="date">THE DAILY BRIEF</div><h1 id="page-title">把握变化，保持自己的节奏<span>。</span></h1><p id="page-description">市场有起伏，世界在流动。在这里，找到值得关注的线索。</p></div><div class="edition">观潮日报<span>PERSONAL EDITION</span></div></section>
     <section id="market-section" aria-labelledby="market-title"><div class="section-heading"><h2 id="market-title">市场温度 <small>MARKET PULSE</small></h2><span class="subtle">各市场最近报价 · 非实时</span></div><div class="markets" id="markets"><div class="empty">正在读取行情快照…</div></div></section>
     <div id="data-notice" class="data-notice" role="status"></div>
+    <section id="detail-page" hidden tabindex="-1" aria-label="详情内容"></section>
     <div class="columns"><section class="news-panel" id="news-section" aria-labelledby="news-title">
       <div class="section-heading"><h2 id="news-title">值得关注 <small>NEWS RADAR</small></h2><span id="news-total" class="subtle"></span></div>
       <div class="news-tools"><div class="tabs" role="group" aria-label="新闻分类"><button class="selected" data-category="全部">全部</button><button data-category="科技">科技</button><button data-category="金融">金融</button><button data-category="全球">全球</button><button data-category="政治">政治</button></div><label class="search"><span>⌕</span><input id="search" type="search" placeholder="搜索新闻" aria-label="搜索新闻标题或来源"></label></div>
-      <div class="filter-line"><span id="filter-note">按发布时间排序 · 点击标题阅读原文</span><label><input id="unread" type="checkbox"> 只看未读</label></div>
+      <div class="filter-line"><span id="filter-note">按发布时间排序 · 点击标题查看站内详情</span><label><input id="unread" type="checkbox"> 只看未读</label></div>
       <div id="news-list" aria-live="polite"><div class="empty">正在读取新闻…</div></div><button id="load-more" class="load-more" hidden>查看更多新闻 ↓</button>
     </section>
     <aside class="right-column">
       <section class="watch-panel"><div class="section-heading"><h2>自选观察 <small>WATCHLIST</small></h2><button id="edit-watch" class="text-button">编辑</button></div><p class="panel-caption">关注你的主线，而不是每一次波动。</p><div id="watch-list"></div><div id="watch-editor" hidden><p class="subtle">选择关注的市场</p><div id="watch-options"></div><button id="save-watch" class="solid-button">保存自选</button></div><div class="private-note">⌁ 自选与收藏仅保存在当前浏览器</div></section>
-      <section class="calendar-panel"><div class="section-heading"><h2>数据日历 <small>UP NEXT</small></h2><span class="calendar-icon">▦</span></div><p class="panel-caption">未来一周 · 来源时间，时区未核验</p><div id="calendar-list"><div class="empty">正在读取日历…</div></div></section>
+      <section class="calendar-panel"><div class="section-heading"><h2>数据日历 <small>UP NEXT</small></h2><a class="calendar-icon" href="#/calendar" aria-label="查看完整数据日历">▦</a></div><p class="panel-caption">未来一周 · 来源时间，时区未核验</p><div id="calendar-list"><div class="empty">正在读取日历…</div></div></section>
       <section class="reading-note"><span>给自己留一点空间</span><p>信息是用来帮助判断的，<br>不必每条都追，不必每次都动。</p><div>READ SLOWLY. THINK CLEARLY.</div></section>
     </aside></div>
     <footer><span><b>观潮</b> · A quieter view of a moving world.</span><span id="updated-at">数据准备中</span></footer>
@@ -43,4 +44,5 @@
 <dialog id="sources-dialog"><div class="dialog-heading"><div><span class="eyebrow">TRANSPARENCY</span><h2>数据来源与更新状态</h2></div><button id="close-sources" aria-label="关闭">×</button></div><p>页面展示公开来源的报价快照与新闻标题，点击前往来源阅读。抓取时间不等于行情时间；失败时保留上次成功数据。</p><div id="source-status"></div><p class="subtle">定时任务计划每两小时更新，实际运行可能延迟。新闻分类采用检索词及简单规则，可能有交叉；第一版不生成 AI 摘要或投资建议。公开站点不保存个人持仓。</p><a href="https://github.com/xxbo/xxbo.github.io/actions" target="_blank" rel="noopener noreferrer">查看更新任务 ↗</a></dialog>
 <div id="toast" role="status"></div>
 <script src="app.js" defer></script>
+<script src="pages.js" defer></script>
 </body></html>

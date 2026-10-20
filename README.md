@@ -20,8 +20,21 @@ Successful sources replace their own snapshot. Failed sources preserve prior dat
 
 ## Deployment
 
-Set Pages source to **GitHub Actions**. The workflow uploads only `index.html`, `style.css`, `app.js` and `data/` as the Pages artifact. Script/workflow changes trigger a refresh; manual dispatch also publishes changes to the UI.
+Set Pages source to **GitHub Actions**. The workflow uploads only `index.html`, `style.css`, `app.js`, `pages.js` and `data/` as the Pages artifact. Script/workflow changes trigger a refresh; manual dispatch also publishes changes to the UI.
 
 ## References
 
 The data-source mapping, explicit provenance and cached-snapshot design were informed by [CNEquity](https://github.com/rootSunc/CNEquity). This project uses its own small collector rather than copying CNEquity's code or distributing its data lake. Source availability, formats and usage conditions are controlled by their respective providers. News categories are based on search queries and simple keyword rules, not editorial fact checking.
+
+
+## Internal pages
+
+Hash routes remain on GitHub Pages and work with refresh, direct links and browser back/forward:
+
+- `#/overview`, `#/news/全部`, `#/news/科技`, `#/watch`, `#/saved`
+- `#/news/<category>/article/<id>`: source metadata, available source excerpt, related articles, local personal notes and an explicit external full-article link
+- `#/markets/<id>`: quote, daily close chart, period selector, watchlist action
+- `#/markets/<id>/history`: daily close records
+- `#/calendar`, `#/calendar/<event-id>`: calendar and individual event information when provided
+
+Most feeds supply only titles and links; the site clearly indicates when no excerpt/body is available. It does not embed or claim to host source articles. The most recent 100 opened articles and personal notes are retained only in the current browser.
