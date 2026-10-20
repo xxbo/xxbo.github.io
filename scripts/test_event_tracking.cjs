@@ -1,0 +1,10 @@
+const assert=require('node:assert/strict'),E=require('../events.js'),T=require('../topics.js');
+const a={id:'a',title:'英伟达新型 AI 芯片正式发布',source:'甲'},b={id:'b',title:'英伟达新型AI芯片正式发布',source:'乙'},c={id:'c',title:'英伟达新型芯片进入批量供货',source:'丙'};
+const event={id:'canonical',aliases:['legacy'],last_activity:'2026-10-20T08:00:00Z',articles:[a,b,c]};
+assert.equal(E.resolve([event],'legacy'),event);assert.equal(E.groups(event).length,2);assert.equal(E.groups(event)[0].length,2);
+assert(E.unread(event,{}));assert(!E.unread(event,{legacy:'2026-10-20T09:00:00Z'}));assert(E.unread(event,{legacy:'2026-10-19T09:00:00Z'}));
+assert.notEqual(E.title('利率1.5%'),E.title('利率15%'));assert.notEqual(E.title('下跌1-3%'),E.title('下跌13%'));
+const other={id:'other',articles:[{title:'芯片供给趋紧',id:'z'}]};
+const allocation=E.allocate({events:[event,other]},[T.byId('ai'),T.byId('chips')],T.entries);
+const ids=allocation.flatMap(x=>x.picked.map(x=>x.event.id));assert.equal(ids.length,new Set(ids).size);assert.equal(ids.length,2);assert.equal(T.entries({events:[event]},T.byId('chips')).length,1);
+console.log('Event tracking checks passed: aliases, unread checkpoints, source folding, decimal precision, cross-topic deduplication.');

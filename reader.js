@@ -27,11 +27,26 @@ document.addEventListener('click',e=>{
   const n=newsById(id);if(!n)return;
   e.preventDefault();openReader(n);
 },true);
+function openEventReader(event){
+ if(!readerDialog.open)readerFocus=document.activeElement;
+ readerArticle=null;markEventSeen(event);
+ document.querySelector('#reader-content').innerHTML=eventDossier(event,true);
+ document.body.classList.add('reader-open');if(!readerDialog.open)readerDialog.showModal();readerDialog.scrollTop=0;
+ document.querySelector('#reader-close').focus({preventScroll:true});
+ renderTopicsHome();
+}
+document.addEventListener('click',e=>{
+ if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey||e.target.closest('[data-event-permalink]'))return;
+ const a=e.target.closest('a[href^="#/events/"]');if(!a)return;
+ const match=a.getAttribute('href').match(/^#\/events\/([^/]+)$/);if(!match)return;
+ let id;try{id=decodeURIComponent(match[1]);}catch{return;}
+ const event=trackedEvent(id);if(!event)return;e.preventDefault();openEventReader(event);
+},true);
 document.querySelector('#reader-close').addEventListener('click',()=>readerDialog.close());
 readerDialog.addEventListener('click',e=>{
   if(e.target===readerDialog){const r=readerDialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)readerDialog.close();}
   if(e.target.closest('#reader-save')&&readerArticle){const n=readerArticle;if(state.saved[n.id])delete state.saved[n.id];else state.saved[n.id]=n;persist('saved',state.saved);const button=document.querySelector('#reader-save');button.textContent=state.saved[n.id]?'◆ 已收藏':'◇ 收藏报道';button.setAttribute('aria-pressed',String(!!state.saved[n.id]));document.querySelector('#saved-count').textContent=Object.keys(state.saved).length;}
 });
 readerDialog.addEventListener('input',e=>{if(e.target.id==='reader-note'&&readerArticle){notes[readerArticle.id]=e.target.value;persist('notes',notes);document.querySelector('#reader-note-status').textContent='已保存到当前浏览器 ✓';}});
-readerDialog.addEventListener('close',()=>{document.body.classList.remove('reader-open');document.querySelectorAll('[data-open]').forEach(a=>{const item=a.closest('article');item?.classList.toggle('read',!!state.read[a.dataset.open]);const b=item?.querySelector('[data-read]');if(b)b.textContent=state.read[a.dataset.open]?'已读 ✓':'标记已读';});if(readerFocus?.isConnected)readerFocus.focus({preventScroll:true});});
+readerDialog.addEventListener('close',()=>{if(location.hash==='#/events')renderRoute(false);document.body.classList.remove('reader-open');document.querySelectorAll('[data-open]').forEach(a=>{const item=a.closest('article');item?.classList.toggle('read',!!state.read[a.dataset.open]);const b=item?.querySelector('[data-read]');if(b)b.textContent=state.read[a.dataset.open]?'已读 ✓':'标记已读';});if(readerFocus?.isConnected)readerFocus.focus({preventScroll:true});else if(location.hash.startsWith('#/events'))$('#detail-page').focus({preventScroll:true});});
 window.addEventListener('hashchange',()=>{if(readerDialog.open)readerDialog.close();});

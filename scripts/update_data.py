@@ -16,7 +16,7 @@ import socket
 import time
 import copy
 import xml.etree.ElementTree as ET
-from event_digest import build_events, fingerprint
+from event_digest import build_events, fingerprint, RETENTION_DAYS, MAX_EVENTS
 from economic_calendar import calendar_candidates, SOURCES as CALENDAR_SOURCES
 from market_adapters import NAMES, quote_candidates, history_candidates, session_key, mark_partial
 from data_health import run_chain, validate_quote, validate_history, validate_news, validate_calendar, classify_news, date_time, finite
@@ -350,6 +350,8 @@ def collect_dashboard(previous,now):
     result['calendar_coverage']={'days':45,'timezone':'Asia/Shanghai','schedule_only':True,
         'note':'已知时刻统一北京时间；仅日期条目保留来源当地日期。备用源覆盖范围可能不同，逐项标明。'}
     result['events']=build_events(result['news'],previous,now)
+    result['event_retention']={'days':RETENTION_DAYS,'max_events':MAX_EVENTS,'max_reports':24,'max_changes':48,
+        'truncated': bool(previous.get('event_retention',{}).get('truncated')) or len(result['events']) >= MAX_EVENTS or (not previous.get('event_retention') and len(previous.get('events',[])) >= 300)}
     result['event_tracking_since']=previous.get('event_tracking_since') or previous.get('generated_at') or now
     result['source_policy_version']=1
     return result

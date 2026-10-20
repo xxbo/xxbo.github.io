@@ -26,7 +26,7 @@ const Brief = (()=>{
   return sourceHealth(source,n.fetched_at,now);
  }
  function events(data){return data.events?.length?data.events:(data.news||[]).map(n=>({id:n.event_id||'fallback:'+n.id,title:n.title,category:n.category,first_seen:n.first_seen,last_activity:n.updated_at,active:true,articles:[n],sources:[n.source],changes:[]}));}
- function eventFor(data,n){return events(data).find(e=>e.id===n.event_id||e.articles.some(a=>a.id===n.id));}
+ function eventFor(data,n){return events(data).find(e=>e.id===n.event_id||e.aliases?.includes(n.event_id)||e.articles.some(a=>a.id===n.id));}
  function representative(data,event){const rows=event.articles.map(a=>(data.news||[]).find(n=>n.id===a.id)||a);return rows.sort((a,b)=>Number(!!b.featured)-Number(!!a.featured)||Number(b.kind==='headline')-Number(a.kind==='headline')||(time(b.published_at)||0)-(time(a.published_at)||0))[0];}
  function selectEvents(data,limit=6){
   const rows=events(data).filter(e=>e.active&&e.articles.some(a=>a.kind==='headline'));
@@ -42,7 +42,7 @@ const Brief = (()=>{
   const all=events(data),newEvents=all.filter(e=>(time(e.first_seen)||0)>since),updatedEvents=all.filter(e=>(time(e.first_seen)||0)<=since&&(time(e.last_activity)||0)>since);
   const quoteChanges=(data.markets||[]).flatMap(m=>{const old=(baseline.markets||[]).find(x=>x.id===m.id);if(!old||!Number.isFinite(old.price)||!Number.isFinite(m.price)||old.price===0||old.quote_time===m.quote_time||old.price===m.price)return [];return [{id:m.id,name:m.name,pct:(m.price/old.price-1)*100,from:old.quote_time,to:m.quote_time}];});
   const start=time(data.event_tracking_since);
-  return {first:false,newEvents,updatedEvents,quoteChanges,partial:asof-since>7*864e5||(start!==null&&start>since)};
+  return {first:false,newEvents,updatedEvents,quoteChanges,partial:!!data.event_retention?.truncated||asof-since>(data.event_retention?.days||7)*864e5||(start!==null&&start>since)};
  }
  function technicalWatch(t){
   const c=t?.current,p=t?.previous;if(!c||!Number.isFinite(c.ma20)||t.count<35)return {condition:'样本不足，暂不生成验证条件。',conflict:''};

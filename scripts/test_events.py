@@ -1,6 +1,6 @@
 import copy
 import unittest
-from event_digest import build_events, similar
+from event_digest import build_events, similar, same_event, canonical_url
 
 T0 = '2026-10-19T08:00:00+00:00'
 T1 = '2026-10-19T08:20:00+00:00'
@@ -53,7 +53,34 @@ class EventTests(unittest.TestCase):
         self.assertEqual(previous, original)
         carried = build_events([], {'events':events}, T2)
         self.assertFalse(carried[0]['active'])
-        self.assertEqual(build_events([], {'events':events}, '2026-10-28T08:00:00+00:00'), [])
+        self.assertEqual(build_events([], {'events':events}, '2026-11-20T08:00:00+00:00'), [])
+
+    def test_reconcile_old_clusters_preserves_identity_and_observation_times(self):
+        a, b = article(), article('b', '央行宣布下调存款准备金率，释放长期流动性')
+        one, two = build_events([a],{},T0), build_events([b],{},T1)
+        original = copy.deepcopy(one+two)
+        merged = build_events([article(),article('b',b['title'])],{'events':one+two},T2)
+        self.assertEqual(len(merged),1)
+        self.assertEqual(merged[0]['id'],one[0]['id'])
+        self.assertIn(two[0]['id'],merged[0]['aliases'])
+        self.assertEqual(merged[0]['first_seen'],T0)
+        self.assertEqual(merged[0]['last_activity'],T1)
+        self.assertEqual(len(merged[0]['changes']),2)
+        self.assertEqual(one+two,original)
+        again=build_events([article(),article('b',b['title'])],{'events':merged},T2)
+        self.assertEqual(again,merged)
+
+    def test_suffix_reprint_url_and_recurring_bulletins(self):
+        self.assertTrue(similar('财政部：国库现金定存中标利率1个月期1.44% 3个月期1.50%', '财政部：国库现金定存中标利率1个月期1.44% 3个月期1.50%_公司新闻_财经'))
+        a=article(title='1 分钟售罄、发货排到明年，iPhone Duo 卖爆背后的真相')
+        b=article('b',a['title']);b['published_at']='2026-10-16T08:00:00Z'
+        self.assertTrue(same_event(a,b))
+        b=article('b','欧洲半导体股下跌1-3%');a=article('a',b['title']);b['published_at']='2026-10-20T08:00:00Z'
+        self.assertFalse(same_event(a,b))
+        a=article(title='央行宣布政策利率调整至1.5%以维护流动性稳定')
+        self.assertFalse(same_event(a,article('b','央行宣布政策利率调整至15%以维护流动性稳定')))
+        self.assertEqual(canonical_url('https://EXAMPLE.com/a?utm_source=x&id=7#top'),'https://example.com/a?id=7')
+        self.assertNotEqual(canonical_url('https://example.com/a?id=7'),canonical_url('https://example.com/a?id=8'))
 
 if __name__ == '__main__':
     unittest.main()
