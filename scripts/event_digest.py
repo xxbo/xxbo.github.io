@@ -22,13 +22,17 @@ def normalized(title):
 
 
 def similar(a, b):
+    raw_a, raw_b = unicodedata.normalize('NFKC', a or '').lower(), unicodedata.normalize('NFKC', b or '').lower()
+    # Check before removing punctuation: 1.5% and 15% must remain distinct.
+    if set(re.findall(r'\d+(?:\.\d+)?', raw_a)) != set(re.findall(r'\d+(?:\.\d+)?', raw_b)):
+        return False
+    for positive, negative in [('上调', '下调'), ('上涨', '下跌'), ('加息', '降息'), ('盈利', '亏损')]:
+        if (positive in raw_a and negative in raw_b) or (negative in raw_a and positive in raw_b):
+            return False
     a, b = normalized(a), normalized(b)
     if a == b and a:
         return True
     if min(len(a), len(b)) < 12:
-        return False
-    # Distinct numerical claims (rate, quarter, model version) should stay separate.
-    if set(re.findall(r'\d+(?:\.\d+)?', a)) != set(re.findall(r'\d+(?:\.\d+)?', b)):
         return False
     x = {a[i:i+3] for i in range(len(a)-2)}
     y = {b[i:i+3] for i in range(len(b)-2)}

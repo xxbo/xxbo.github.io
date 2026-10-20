@@ -41,6 +41,8 @@ class EventTests(unittest.TestCase):
 
     def test_no_transitive_topic_chain_or_different_numbers(self):
         self.assertFalse(similar('央行今日宣布下调政策利率25基点以支持经济增长', '央行今日宣布下调政策利率50基点以支持经济增长'))
+        self.assertFalse(similar('央行宣布政策利率调整至1.5%以维护流动性稳定', '央行宣布政策利率调整至15%以维护流动性稳定'))
+        self.assertFalse(similar('机构上调某公司股票目标价至100元并维持评级', '机构下调某公司股票目标价至100元并维持评级'))
         self.assertFalse(similar('苹果新款手机正式发布', '苹果新款电脑正式发布'))
 
     def test_migration_archive_expiry_and_no_mutation(self):
