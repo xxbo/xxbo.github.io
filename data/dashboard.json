@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-20T03:11:01.261237+00:00",
+  "generated_at": "2026-10-20T03:13:07.962868+00:00",
   "markets": [
     {
       "id": "sh000001",
@@ -8,7 +8,7 @@
       "secid": "1.000001",
       "source": "腾讯财经",
       "source_url": "https://gu.qq.com/sh000001",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00",
       "status": "ok",
       "history": [
         {
@@ -129,13 +129,13 @@
         },
         {
           "date": "2026-10-20",
-          "close": 3729.01
+          "close": 3729.08
         }
       ],
-      "price": 3729.2,
-      "change": -1.72,
+      "price": 3729.08,
+      "change": -1.84,
       "change_pct": -0.05,
-      "quote_time": "20261020111106"
+      "quote_time": "20261020111306"
     },
     {
       "id": "sz399006",
@@ -144,7 +144,7 @@
       "secid": "0.399006",
       "source": "腾讯财经",
       "source_url": "https://gu.qq.com/sz399006",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00",
       "status": "ok",
       "history": [
         {
@@ -265,13 +265,13 @@
         },
         {
           "date": "2026-10-20",
-          "close": 2759.3
+          "close": 2760.43
         }
       ],
-      "price": 2759.96,
-      "change": 13.67,
-      "change_pct": 0.5,
-      "quote_time": "20261020111106"
+      "price": 2760.63,
+      "change": 14.34,
+      "change_pct": 0.52,
+      "quote_time": "20261020111303"
     },
     {
       "id": "sh000688",
@@ -280,13 +280,134 @@
       "secid": "1.000688",
       "source": "腾讯财经",
       "source_url": "https://gu.qq.com/sh000688",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00",
       "status": "ok",
-      "history": [],
-      "price": 1343.69,
-      "change": 14.5,
-      "change_pct": 1.09,
-      "quote_time": "20261020111106"
+      "history": [
+        {
+          "date": "2026-09-01",
+          "close": 1647.53
+        },
+        {
+          "date": "2026-09-02",
+          "close": 1617.6
+        },
+        {
+          "date": "2026-09-03",
+          "close": 1611.17
+        },
+        {
+          "date": "2026-09-04",
+          "close": 1577.36
+        },
+        {
+          "date": "2026-09-07",
+          "close": 1615.53
+        },
+        {
+          "date": "2026-09-08",
+          "close": 1591.0
+        },
+        {
+          "date": "2026-09-09",
+          "close": 1580.06
+        },
+        {
+          "date": "2026-09-10",
+          "close": 1569.22
+        },
+        {
+          "date": "2026-09-11",
+          "close": 1553.39
+        },
+        {
+          "date": "2026-09-14",
+          "close": 1528.27
+        },
+        {
+          "date": "2026-09-15",
+          "close": 1551.96
+        },
+        {
+          "date": "2026-09-16",
+          "close": 1616.19
+        },
+        {
+          "date": "2026-09-17",
+          "close": 1606.29
+        },
+        {
+          "date": "2026-09-18",
+          "close": 1652.63
+        },
+        {
+          "date": "2026-09-21",
+          "close": 1657.48
+        },
+        {
+          "date": "2026-09-22",
+          "close": 1665.04
+        },
+        {
+          "date": "2026-09-23",
+          "close": 1660.85
+        },
+        {
+          "date": "2026-09-24",
+          "close": 1621.87
+        },
+        {
+          "date": "2026-09-28",
+          "close": 1555.98
+        },
+        {
+          "date": "2026-09-29",
+          "close": 1569.34
+        },
+        {
+          "date": "2026-09-30",
+          "close": 1530.01
+        },
+        {
+          "date": "2026-10-08",
+          "close": 1456.32
+        },
+        {
+          "date": "2026-10-09",
+          "close": 1457.27
+        },
+        {
+          "date": "2026-10-12",
+          "close": 1426.72
+        },
+        {
+          "date": "2026-10-13",
+          "close": 1427.18
+        },
+        {
+          "date": "2026-10-14",
+          "close": 1380.26
+        },
+        {
+          "date": "2026-10-15",
+          "close": 1359.52
+        },
+        {
+          "date": "2026-10-16",
+          "close": 1358.65
+        },
+        {
+          "date": "2026-10-19",
+          "close": 1329.19
+        },
+        {
+          "date": "2026-10-20",
+          "close": 1342.28
+        }
+      ],
+      "price": 1342.63,
+      "change": 13.44,
+      "change_pct": 1.01,
+      "quote_time": "20261020111306"
     },
     {
       "id": "hkHSI",
@@ -295,13 +416,13 @@
       "secid": "100.HSI",
       "source": "腾讯财经",
       "source_url": "https://gu.qq.com/hkHSI",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00",
       "status": "ok",
       "history": [],
-      "price": 23959.77,
-      "change": -227.06,
-      "change_pct": -0.94,
-      "quote_time": "2026/10/20 10:56:06"
+      "price": 23948.65,
+      "change": -238.18,
+      "change_pct": -0.98,
+      "quote_time": "2026/10/20 10:58:02"
     },
     {
       "id": "hkHSTECH",
@@ -310,13 +431,13 @@
       "secid": "100.HSTECH",
       "source": "腾讯财经",
       "source_url": "https://gu.qq.com/hkHSTECH",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00",
       "status": "ok",
       "history": [],
-      "price": 4074.55,
-      "change": -33.69,
-      "change_pct": -0.82,
-      "quote_time": "2026/10/20 10:56:06"
+      "price": 4068.69,
+      "change": -39.55,
+      "change_pct": -0.96,
+      "quote_time": "2026/10/20 10:58:02"
     },
     {
       "id": "usIXIC",
@@ -325,7 +446,7 @@
       "secid": "100.NDX",
       "source": "腾讯财经",
       "source_url": "https://gu.qq.com/usIXIC",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00",
       "status": "ok",
       "history": [],
       "price": 26430.89,
@@ -336,476 +457,882 @@
   ],
   "news": [
     {
-      "id": "em:202610203901122321",
-      "title": "润本股份第三季度营收增速降至2.89% 驱蚊产品收入下滑",
-      "url": "https://finance.eastmoney.com/a/202610203901122321.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T11:08:12+08:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "em:202610203901117961",
-      "title": "首批场外科创债指基获批",
-      "url": "https://finance.eastmoney.com/a/202610203901117961.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T11:07:21+08:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "em:202610203901120538",
-      "title": "450亿美元算力云大单洽谈中，云计算50ETF东方红（562110）标的指数连续两日上涨",
-      "url": "https://finance.eastmoney.com/a/202610203901120538.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T11:06:53+08:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "em:202610203901120989",
-      "title": "政策催化叠加算力网定位，云计算50ETF东方红（562110）再度活跃于市场",
-      "url": "https://finance.eastmoney.com/a/202610203901120989.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T11:06:25+08:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "em:202610203901121264",
-      "title": "国家发展改革委：引导地方在关键核心技术攻关、可再生能源制氢示范应用场景开拓中找准自身定位 实现错位发展",
-      "url": "https://finance.eastmoney.com/a/202610203901121264.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T11:06:21+08:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "em:202610203901118639",
-      "title": "英矽智能与施维雅达成首个研发里程碑 将获得里程碑付款",
-      "url": "https://finance.eastmoney.com/a/202610203901118639.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T11:06:12+08:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "em:202610203901116660",
-      "title": "泡泡玛特跌超5%",
-      "url": "https://finance.eastmoney.com/a/202610203901116660.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T11:05:26+08:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "em:202610203900873451",
-      "title": "“表外幽灵”虎视眈眈？标普重磅警示：科技巨头还有大量未披露AI负债！",
-      "url": "https://finance.eastmoney.com/a/202610203900873451.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T11:05:02+08:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "em:202610203900882742",
-      "title": "中期选举前关键民调！特朗普支持率创历史新低：31%",
-      "url": "https://finance.eastmoney.com/a/202610203900882742.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T11:04:31+08:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "em:202610203901117153",
-      "title": "国家发展改革委：发展新质生产力要实事求是 避免遍地开花",
-      "url": "https://finance.eastmoney.com/a/202610203901117153.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T11:03:36+08:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "em:202610203901110923",
-      "title": "白宫官员解读9月CPI：通胀反弹与经济繁荣并存 尊重FED独立性！",
-      "url": "https://finance.eastmoney.com/a/202610203901110923.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T11:02:22+08:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "em:202610203901115140",
-      "title": "芯片产业链震荡反弹 科创芯片设计ETF易方达涨3.65%",
-      "url": "https://finance.eastmoney.com/a/202610203901115140.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T11:01:16+08:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "em:202610203901113968",
-      "title": "科创200ETF易方达盘中涨超4% +4.26%",
-      "url": "https://finance.eastmoney.com/a/202610203901113968.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T11:00:44+08:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "em:202610203901113811",
-      "title": "中国AI大模型周调用量连续25周领跑全球，科创AIETF博时(588790)跟踪指数探底回升涨超4.8%",
-      "url": "https://finance.eastmoney.com/a/202610203901113811.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T11:00:27+08:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "em:202610203901113583",
-      "title": "隔夜美股芯片反弹，AI终端政策再添催化，科创创业人工智能ETF永赢盘中涨超2%！",
-      "url": "https://finance.eastmoney.com/a/202610203901113583.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T10:59:07+08:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "em:202610203901112616",
-      "title": "不等同降息！权威解读央行货币政策目标利率择机“换锚”",
-      "url": "https://finance.eastmoney.com/a/202610203901112616.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T10:58:15+08:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "em:202610203901112028",
-      "title": "直击长鑫科技股东会：高管称“订单饱满” 有能力应对市场变化",
-      "url": "https://finance.eastmoney.com/a/202610203901112028.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T10:57:10+08:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "em:202610203901087521",
-      "title": "SpaceX财报前瞻：Q3有望实现首个季度盈利 股价或现大幅波动",
-      "url": "https://finance.eastmoney.com/a/202610203901087521.html",
-      "source": "东方财富快讯",
-      "category": "金融",
-      "published_at": "2026-10-20T10:56:16+08:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "b3e56de32de5ef500e8e",
-      "title": "法國騷亂：巴黎局部宵禁 被劫商品現身二手平台",
-      "url": "https://www.bbc.com/zhongwen/articles/cwp9g811d5ydo/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
-      "category": "全球",
-      "published_at": "2026-10-20T02:47:44+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "9bdca7ec971e83c922ae",
-      "title": "俄羅斯境內反普京破壞行動的隱秘世界",
-      "url": "https://www.bbc.com/zhongwen/articles/c6d09dpdn294o/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
-      "category": "全球",
-      "published_at": "2026-10-20T01:14:38+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "b44a6d14686f0af1fa59",
-      "title": "香港演員鍾雪瑩、袁澧林發聲之後，她們分享親歷的性別冒犯",
-      "url": "https://www.bbc.com/zhongwen/articles/cqly0v0xnxdvo/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
-      "category": "全球",
-      "published_at": "2026-10-20T00:26:42+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "1d960afcbf15efa440d8",
-      "title": "Elon Musk’s proposed SpaceX stock giveaway would go into ‘Trump Accounts’",
-      "url": "https://www.theverge.com/tech/1014115/elon-musk-spacex-trump-account",
-      "source": "The Verge",
-      "category": "科技",
-      "published_at": "2026-10-19T18:30:42-04:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "fe71d377ee244b059584",
-      "title": "The fossil fuel comeback is here",
-      "url": "https://www.theverge.com/science/1013954/fossil-fuel-power-infrastructure-data-centers-report",
-      "source": "The Verge",
-      "category": "科技",
-      "published_at": "2026-10-19T17:48:01-04:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "85ed69736e92d20ff74d",
-      "title": "CoreWeave’s debt is becoming the whole AI industry’s problem",
-      "url": "https://www.theverge.com/ai-artificial-intelligence/1014045/coreweave-stock-debt-sector-ai",
-      "source": "The Verge",
-      "category": "科技",
-      "published_at": "2026-10-19T17:28:20-04:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "43c9106709af315f25fc",
-      "title": "I tried a $99 plug that promises to track your car and send help when needed — without selling your data",
-      "url": "https://www.theverge.com/tech/1013918/miles-plug-vehicle-tracking-data-privacy-specs-price-launch-date",
-      "source": "The Verge",
-      "category": "科技",
-      "published_at": "2026-10-19T17:00:17-04:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "e6e234bc172dfbe94dc6",
-      "title": "Sony’s best noise-canceling earbuds are nearly $100 off today only",
-      "url": "https://www.theverge.com/gadgets/1013911/sonys-best-noise-canceling-earbuds-are-nearly-100-off-today-only",
-      "source": "The Verge",
-      "category": "科技",
-      "published_at": "2026-10-19T14:52:41-04:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "8e8803bda3628fd46fdb",
-      "title": "Apple teases MacBook Pro event next week",
-      "url": "https://www.theverge.com/tech/1013028/apple-second-october-product-launch-announcement",
-      "source": "The Verge",
-      "category": "科技",
-      "published_at": "2026-10-19T12:04:29-04:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "b0ef1cc24d7131641e5d",
-      "title": "Amazon is funding a new nuclear plant in Indiana",
-      "url": "https://www.theverge.com/tech/1013735/amazon-x-energy-aep-nuclear-indiana",
-      "source": "The Verge",
-      "category": "科技",
-      "published_at": "2026-10-19T11:44:20-04:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "4c14ea4cdc714e96e939",
-      "title": "Apple’s last-gen Mac Mini with the M4 is $150 off",
-      "url": "https://www.theverge.com/gadgets/1013645/apple-mac-mini-m4-lg-c6-oled-deal-sale",
-      "source": "The Verge",
-      "category": "科技",
-      "published_at": "2026-10-19T10:41:48-04:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "7bf27ea750e3c7638bdb",
-      "title": "JB Pritzker thinks AI could help us live to 100 — or threaten us like nukes",
-      "url": "https://www.theverge.com/podcast/1012839/pritzker-ai-privacy-data-centers-flock-congress-laws",
-      "source": "The Verge",
-      "category": "科技",
-      "published_at": "2026-10-19T10:30:00-04:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "ced358144305e84803a6",
-      "title": "Major European mobile carriers are teaming up for a ‘direct’ satellite program without Starlink",
-      "url": "https://www.theverge.com/policy/1013680/european-mobile-carriers-mobile-satellite-starlink",
-      "source": "The Verge",
-      "category": "科技",
-      "published_at": "2026-10-19T10:24:42-04:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "61c836c7fe014cf2f783",
-      "title": "《孤獨的美食家》：一個人吃飯，為什麼能紅遍全亞洲？",
-      "url": "https://www.bbc.com/zhongwen/watch/c6x2wvlxqjr8o/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
-      "category": "全球",
-      "published_at": "2026-10-19T09:37:41+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "d08d9d1d729d435f222e",
-      "title": "中國三季度增長4.5% 但出口暴增，樓市新開工面積暴跌",
-      "url": "https://www.bbc.com/zhongwen/articles/cqdjv2vw9n4po/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
-      "category": "全球",
-      "published_at": "2026-10-19T09:19:13+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "59efee14d65d5bcb6849",
-      "title": "BBC暫停公務員借調計劃",
-      "url": "https://www.bbc.com/zhongwen/articles/cq0mel7ep01xo/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
-      "category": "全球",
-      "published_at": "2026-10-19T06:54:50+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "90d77ced75da2b2d8c2c",
-      "title": "烏克蘭鋼企老闆稱：歐盟對華關稅殃及本國",
-      "url": "https://www.bbc.com/zhongwen/articles/cw0k0z264d0jo/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
-      "category": "全球",
-      "published_at": "2026-10-19T04:33:11+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "5f881090f570cb63a71b",
-      "title": "尊界V800「煞車門」：從產品安全之爭到「恨國」論戰",
-      "url": "https://www.bbc.com/zhongwen/articles/cmje5y4254qdo/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
-      "category": "全球",
-      "published_at": "2026-10-19T03:22:46+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "0dcf7f19b1609e5d73fc",
-      "title": "矽谷這座城市垃圾太臭居民受不了 就讓科技來幫忙",
-      "url": "https://www.bbc.com/zhongwen/articles/c5kgl32d8443o/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
-      "category": "全球",
-      "published_at": "2026-10-19T00:08:13+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "c32e91ab55b2971d8a41",
-      "title": "我們的廣告提到了「懷孕」 結果給 Instagram 下架了",
-      "url": "https://www.bbc.com/zhongwen/articles/cr1ex0l8l9z5o/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
-      "category": "全球",
-      "published_at": "2026-10-19T00:08:09+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "657a0d83de2b66036f19",
-      "title": "「我申請了200份工作」——用AI「撒網」求職為何易弄巧成拙？",
-      "url": "https://www.bbc.com/zhongwen/articles/crz65gwv8gv5o/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
-      "category": "全球",
-      "published_at": "2026-10-18T00:32:02+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "cdb291b8461ce1707001",
-      "title": "在美中國研究生涉毒害越南同學：大學與家屬怎麼說？",
-      "url": "https://www.bbc.com/zhongwen/articles/c6vg08d0glp7o/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
-      "category": "全球",
-      "published_at": "2026-10-18T00:31:53+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "0bc0150d063ef97c5ff1",
-      "title": "遊艇上的水上滑梯、泳池：衛星影像揭示的金正恩「夏宮」生活",
-      "url": "https://www.bbc.com/zhongwen/articles/cm9dzq7z7vw8o/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
-      "category": "全球",
-      "published_at": "2026-10-18T00:31:34+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "f0359e5428ca3d17df36",
-      "title": "「我擔心得不敢去中國了」：韓國脫北者接連收到警方赴華警告",
-      "url": "https://www.bbc.com/zhongwen/articles/cmd6dgj9jwp8o/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
-      "category": "全球",
-      "published_at": "2026-10-17T12:54:47+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "b8428d15e6617ed75576",
-      "title": "上任僅五天便下台，特朗普的白宮新聞秘書出了甚麼問題？",
-      "url": "https://www.bbc.com/zhongwen/articles/ck5yng42z0dlo/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
+      "id": "8ab4d24c46b7a611703b",
+      "title": "央行打出金融政策“组合拳” 更好服务实体经济高质量发展和金融高水平开放",
+      "url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxOeFFmRHBKc3lOUmltZFhjeTZGX00wRzBXamM0MW5zbnlQN0hxWmt4YWFEakVVS25ySzVIaFBEMnZ6RE5QN194eWs2QXJQdnVmZjQwTFVGUk41OTdNNFBBTWF3d1JxMHVaQmtnV1lZYTVsN25EREFRRlBocGFFeHpmMEtuai1xZ211cFo2eA?oc=5",
+      "source": "搜狐",
       "category": "政治",
-      "published_at": "2026-10-17T05:43:01+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+      "published_at": "2026-10-20T03:08:06+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
     },
     {
-      "id": "3e0e93250f10f3ae5c13",
-      "title": "美沙冬是毒還是藥？從香港經驗看台灣選戰戒毒爭議",
-      "url": "https://www.bbc.com/zhongwen/watch/cmwyq699de35o/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
+      "id": "fac251b2404e8949ecd5",
+      "title": "共话智慧教育与教育技术创新 ，第九届教育技术管理国际会议（ICETM 2026）在深圳举行",
+      "url": "https://news.google.com/rss/articles/CBMifEFVX3lxTE1kR1hQSlFUOHBZcDA4NVRzc0M5dDFXZXlwZFBiUnExSEhBRkIydEY3bVBYMWpMckVGa2dkREM0LVVJUDhoSmppSHNhNE9sZkx5allQbkJJeDhtTWt0dEs4VGtxNDM2SXdmRnNXZEx4dzFCckR0Nm9KVEFhREI?oc=5",
+      "source": "中国日报网",
+      "category": "科技",
+      "published_at": "2026-10-20T02:56:28+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "c2f0665e682fe4454167",
+      "title": "网龙携手九州文化成立合资公司",
+      "url": "https://news.google.com/rss/articles/CBMiV0FVX3lxTE9WbVJ6X0F2VmZTcnlJZzNzVWNPdUdEU3ZsZGhOajVvd0FCUmtpdTAzdURNZkhPVjF4bk5uZUdaamlPR2xHNkgyRDNiMHJBaGNucUxET2o1VQ?oc=5",
+      "source": "美通社",
+      "category": "科技",
+      "published_at": "2026-10-20T02:40:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "337970e479d145cb5934",
+      "title": "国际锐评丨读懂中国经济“三季报”的含金量",
+      "url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxPc29KcGdvcDd3cHl6alRNTGVTRXM5WUVERnNNZ0VQM1AtVEtPZ1NzZWlkLW9jTXBRNmlQY0E2Z0tyaHVpNjZVei1XVWU2WUVwMGlkRmFoQjZBQ19sSTBWNWpob3FIbzdQWkZ3TUFvVG5Bb09jZnR4dU1MMkFVZU5Rc25CM0JfV0xYZjZzLQ?oc=5",
+      "source": "搜狐",
       "category": "全球",
-      "published_at": "2026-10-16T08:57:18+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+      "published_at": "2026-10-20T02:39:17+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
     },
     {
-      "id": "fac779159e2dc6d7f2ae",
-      "title": "新鴨綠江大橋閒置12年終開通：中朝關係回暖？",
-      "url": "https://www.bbc.com/zhongwen/watch/cm0e0q5dp3lyo/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
+      "id": "1b56d093d4e9cd85f833",
+      "title": "印尼股市基准指数上涨3%，至5,146.98点。",
+      "url": "https://news.google.com/rss/articles/CBMiS0FVX3lxTFBDMlNxZFh2YlE2T0ppd1J1ek5nUHJYeVFlNWg4YjZEV19fRTZXODRTWXhtZXlGeXFWTVJNeDRaY3NnQnptYkpnNzNxMA?oc=5",
+      "source": "手机新浪网",
+      "category": "金融",
+      "published_at": "2026-10-20T02:37:39+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "d8deaf6b44cc9ad014c3",
+      "title": "印尼股市基准指数上涨2%，至5,095.38点。",
+      "url": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE5HTVdwNzJPRTlRYUpRZ2doRVltbnNuZHY0YVliSWI2M3Rma0lrMjhxdGJERHF2NlYxLW93TWo2LXVzZWhVN2NKbjFhYw?oc=5",
+      "source": "手机新浪网",
+      "category": "金融",
+      "published_at": "2026-10-20T02:08:09+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "54da15163182e42ce920",
+      "title": "印尼股市基准指数上涨1%，至5047.20点。",
+      "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE5BZVFCZkdiV0Q1V2VfQ25ONHdrT3ZBOVpCSkFiMXlFYzgwXzFuN05uY1dTTGR4RjFGc2lKNmdGTk4zRExoZHl0U1dDOVlDckU?oc=5",
+      "source": "手机新浪网",
+      "category": "金融",
+      "published_at": "2026-10-20T02:02:57+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "4e0d2811b8fb083e6fcc",
+      "title": "昆山：打通AI落地通道 让技术走出实验室跑进生产一线",
+      "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTFB1ZlpfUmlFWG5oLVptSUc5bEFRS1daU0ZUckVxRW0wTmsxRjhSNUVFVHA4NmNfSnpmU3I0Wk9xYVp6Ym5tcUxsSjVBZnFsOThTbVhIMHh4blZnTWpFTUN4WU4xbmRXT2tRYmtsZkVKYzlhbzJS?oc=5",
+      "source": "新华网江苏频道",
+      "category": "科技",
+      "published_at": "2026-10-20T01:55:26+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "712d07c1c5914c54b575",
+      "title": "“三连涨”之后 10月15日24时国内油价不作调整",
+      "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTFBLZklxNzJlZjBCNzdPMFNFZkR0a0sxeWRlV3pya21qYmVBaFQ1VTJWSllKYk5zdVJhQ2xSdEVDOUt6Ynk3Q3BHbGhaamNKRjllUjc1NFoxNlRyNC1LalN0RV9B?oc=5",
+      "source": "汽车之家",
       "category": "全球",
-      "published_at": "2026-10-15T12:46:44+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+      "published_at": "2026-10-20T01:47:41+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
     },
     {
-      "id": "7b329579f173a1b38bfb",
-      "title": "薄熙來前搭檔受查：重慶政壇「不倒翁」黃奇帆是誰？",
-      "url": "https://www.bbc.com/zhongwen/watch/c83vq5lwy6wlo/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
-      "category": "全球",
-      "published_at": "2026-10-14T14:46:38+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "38da8fdcbc198cbdd9a2",
-      "title": "台灣AV盛極而衰：中國市場如何催生這場成人片熱潮？",
-      "url": "https://www.bbc.com/zhongwen/articles/cqlymyyze8mjo/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
-      "category": "全球",
-      "published_at": "2026-10-08T09:37:08+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "32dd398252e79c40a91c",
-      "title": "「特習會」後兩架美國 F-16V 抵台 「雖遲但到」的時機與信號",
-      "url": "https://www.bbc.com/zhongwen/articles/c6pwg52xjp8jo/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
-      "category": "全球",
-      "published_at": "2026-10-05T00:14:01+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
-    },
-    {
-      "id": "fb69b70800e6cfc63e22",
-      "title": "特朗普排除美中合作開發人工智能",
-      "url": "https://www.bbc.com/zhongwen/articles/cm5ye14v6n8xo/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
+      "id": "945a6cccc00c1b50bdd1",
+      "title": "我校陈金至教授荣获第二届“胡乃武中国宏观经济理论优秀成果奖”",
+      "url": "https://news.google.com/rss/articles/CBMiZkFVX3lxTE8wUnhwdUJjSWlpYUwyeUE4emYzOVBVbm9NRlZ5QTRpMGsxVjhQUFRvcUlvcDNWNnhhcUU3S0M5TUNTMC1odWdyNFJWc2RIeEJrRG5mUGQwbXN5TTFCSklTUnZwUVVoQQ?oc=5",
+      "source": "南京审计大学",
       "category": "政治",
-      "published_at": "2026-09-30T04:39:30+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+      "published_at": "2026-10-20T01:32:29+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
     },
     {
-      "id": "249695977d55f1e312b9",
-      "title": "特朗普習近平峰會：沒有說出口的議題可能更重要",
-      "url": "https://www.bbc.com/zhongwen/articles/cmzxzl450p2no/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
+      "id": "b11f2625b81875c41062",
+      "title": "资金面与股市资金流向日评20261020",
+      "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE9JYmJFcVpmZUdOaGxtckdRWnlnekRVUHZjTkQwSVBac1pqZnhMb0Q1bDZvSWU2d0Z0aGEtc0xtZWtBQTNWbG5XSEl2X0N5eGpXSnlfMEp0SEw0YmF3SE9jVG81U0JTbHBRUkQydDFR?oc=5",
+      "source": "新浪财经",
+      "category": "金融",
+      "published_at": "2026-10-20T01:27:35+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "652aad68ace51af9ca82",
+      "title": "【环球财经】科技股反弹 纽约股市三大股指19日涨跌不一",
+      "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTE1COGZ3UEw3bWNFUTBBeVhXWmd3dEJRRGNmdmFCc1JCVnhOdG1Bek12WjkyZjk2U1ppcS1CR29vQXVFeTNiYW5BbTVVcEVwcDQ2T25lUnJGeG9GYTZaS29mMi1VMjZQek1FUGZ3Ni1BaVdHRXpoci1rbw?oc=5",
+      "source": "新浪财经",
+      "category": "金融",
+      "published_at": "2026-10-20T01:09:56+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "30c94e46088dce28f1e9",
+      "title": "工信部:加快AI电脑、手机等产品普及 推动智能终端创新与发展",
+      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE5ab0pCSUpidnRudF9yMVJDWnA1LUcxUzFGRWliOHpvZ1NlZW1rV0RPeHV0ZUdTMDY3cDJBVVR2clEzdjRvMnBKMUJpN2drd0lOM0p5WHVoWnFDTGdlZWtaZWg3dEpCTHNoQ3d6Vm92T0g?oc=5",
+      "source": "中华网",
+      "category": "科技",
+      "published_at": "2026-10-20T01:05:50+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "fcd5258706fefcec72da",
+      "title": "韩国股市，开盘后跳水！",
+      "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTE9wMFhrQmRJc0RDX0xabFI1SUhOMEsyQnBmdS1uYTA4NGRkRzJOSXR3LVFSMm82cE00Y25YbzBYcWpqb2M2YUJORHp2eFlQT2RwYzJiS1RzX0NTcWcxMWJRZVhwR1kySWw2RXVfYUphdExKaGY3VjlXXw?oc=5",
+      "source": "新浪财经",
+      "category": "金融",
+      "published_at": "2026-10-20T01:01:36+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "d7b7bed04c881482a9ee",
+      "title": "携手AI向内挖潜 智能体进上海港领航运变革之先",
+      "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE5ka1ZETkRWMjY5aklZUGxCUkZWQ2N3SWVyeHU0MWpRVjREZGF0ZEJaTU5sX2tPMUJqS2dhOVN6dUJzNXhLN0JMN0Z5cmRENlp2VXJuMVRDaGNLekptNGNpUTB5SVlNbXprNnc?oc=5",
+      "source": "人民网-上海频道",
+      "category": "科技",
+      "published_at": "2026-10-20T00:56:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "9418e2be979d4eb95ee2",
+      "title": "从“4.6%”透视前三季度中国经济",
+      "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxQZk1pNXQxdGlHN2lNMUR2MHVfYmhCdHJzaTk4b3doRnpnU1NYbEdpbVlnaGZvWmpuYXFyWm1tTTM4NkRoZ21NelZnbnF2RnQ0d25LSlRncHVWeTVzZE5JaU85anFObW9iM25zU1U4S0RvUkMtWVQ5OVdQeFRranA0QXdRekpISzNM?oc=5",
+      "source": "搜狐",
       "category": "政治",
-      "published_at": "2026-09-29T03:48:29+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+      "published_at": "2026-10-20T00:48:42+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
     },
     {
-      "id": "c71e11bddace4117e525",
-      "title": "為何特朗普在國宴上送習近平一座華麗的白頭海鵰雕像？",
-      "url": "https://www.bbc.com/zhongwen/articles/c3qjkx1wdyyxo/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
-      "category": "政治",
-      "published_at": "2026-09-25T04:56:06+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+      "id": "485927757936618b8037",
+      "title": "日韩股市，低开",
+      "url": "https://news.google.com/rss/articles/CBMiUEFVX3lxTFB5MjhvTUdieWtIcWpLNlE3U0UxSm5GMTc5ZmxQdlc2Z3dhcE1KOTBpMW5pZ1pvVThfbGdYTXpSOFRhMTdGdjhVOUVJbzh5M0Nv?oc=5",
+      "source": "凤凰网",
+      "category": "金融",
+      "published_at": "2026-10-20T00:38:42+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
     },
     {
-      "id": "63b1eb81b86b41747554",
-      "title": "從年輕縣官到國家主席：習近平41年來的訪美影像",
-      "url": "https://www.bbc.com/zhongwen/articles/c9zrz24j8pdvo/trad?at_medium=RSS&at_campaign=rss",
-      "source": "BBC 中文",
+      "id": "d3145f38ca2b0a7c2387",
+      "title": "联合国警告也门塔伊兹人道主义局势急剧恶化",
+      "url": "https://news.google.com/rss/articles/CBMiekFVX3lxTFBxZnNsUWx6UzRWNTNqR1p0TlJOUzR3TFdFdU1zVVpTWlI3WkN0NWhXbDRSYzhaZ1ktUFVHWERQNzRjMS1tSmNMdUlqOVUtNnhTaGp0Y09MaTNtOVVha3VWUkxxSm9rRTJNaXc4ZlUtQWJOaFhjSXVTaTdn?oc=5",
+      "source": "国际在线",
       "category": "全球",
-      "published_at": "2026-09-22T14:36:55+00:00",
-      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+      "published_at": "2026-10-20T00:27:55+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "14a908609e7abfb4412a",
+      "title": "【信息化处 校团委】“智赋农科・慧享校园”人工智能创新应用大赛决赛举办",
+      "url": "https://news.google.com/rss/articles/CBMid0FVX3lxTFBSNFdZRkFtMXl0M0IwMkYzWjJEeGZhY3pobEtnWHgta1pDbzlGWUxkSVBLRWhIQnBiWUp5MGNSODFCbm5CbFc5aGxrRmtiTnhaMVhHeWdPa0s2SFBtWVdmOWQ0RHVEV3VmUlpFZVRSSk0wLUpKaFhB?oc=5",
+      "source": "西北农林科技大学",
+      "category": "科技",
+      "published_at": "2026-10-20T00:18:13+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "e3a7395a17ddcdb95de3",
+      "title": "联合国专家组警告：AI发展速度已超越科学认知和监管能力 或带来灾难性风险",
+      "url": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE42UE9JWHBPcXhKcTJjVHR5U3FlRUNtSFZkUC1kci1HaDg0eTJETXFKd2l2N3pIam9jU08yZzJyZU9LSTFvZzdpMQ?oc=5",
+      "source": "财联社",
+      "category": "科技",
+      "published_at": "2026-10-20T00:17:36+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "90046a072ba1615509df",
+      "title": "10.20股市早8点丨底部筹码从来都不属于散户_证券要闻",
+      "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE5mdTBubDJxTjZhWWtOVXljRk54T2FJUVVHSnZKc3l6cGhfdEdDdWowa1RjMU1PRm5KRTF1RXI1aUQ4dnZNZnNOR0N2OVc0b0hHMjdxb3B1QkNwSTVpb2tWLXFzUHp3RWp0RW5ESk5R?oc=5",
+      "source": "中金在线",
+      "category": "金融",
+      "published_at": "2026-10-20T00:17:04+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "f44b90579d5a92893d6f",
+      "title": "外商上门洽谈 关注AI技术",
+      "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTFBaZ1FzOEZLVVVpM1BQdXJrdlhaakFDcVlzZEJ1VFp5ZUhWNmpQaVUyWmVya2lnNUdpQTVKOF85SkdMdnpvUnN6OG80YlpVY3FIMkEyajRPVER4U3ljb1Z0dzVBNVhHczgyUUdjUFFpck81QS1COFdURHdhbmREVGc?oc=5",
+      "source": "新浪网",
+      "category": "科技",
+      "published_at": "2026-10-20T00:14:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "1f00f3cb65b896e76851",
+      "title": "【中国银河宏观】经济总量改善，修复仍待扩散——三季度及9月经济数据解读",
+      "url": "https://news.google.com/rss/articles/CBMihgFBVV95cUxQNmZ1LVUzZmNCckFISDRYb294Y014WW5oRjJpckI4UVRDNFIxMVdva1VyeGRpMWFVS0dmNUN2UFpEUEctcXJFZjNaR1Nuc05LNG5NdGFCSFFKX3dDTmh4VHhKQUstQUw0ZGJmSUVzanp3MnBHLWVuMHpPRjlGT2VTLVFFc2ZpQQ?oc=5",
+      "source": "新浪财经",
+      "category": "政治",
+      "published_at": "2026-10-19T23:52:32+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "43eb45cbe03f91a517e4",
+      "title": "操盘必读：影响股市利好或利空消息_2026年10月20日_财经新闻",
+      "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxQb080SDQ0TEY2MTVnLW1WZXZGaEc5M1lYYkUwaW5MV1d5WDhsbEdEY2RVdU1hYVZFTU5XZWdTdFdjXzVYeWVkLTI3UUo4YzFfZk50dERreVk2dGs2c1hkQzhVTzh3VGR3b1Q0QWhKdFRPdmd6Tk9vdHlYRWNwZTRZSg?oc=5",
+      "source": "新浪财经",
+      "category": "金融",
+      "published_at": "2026-10-19T23:43:55+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "65f96ecb80ea35d04f3e",
+      "title": "陆利平：经济政策正从短期刺激转向长期制度建设",
+      "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTE5nRHFwTWhpZExqdzlOR1ltUkFBQ29VVy1QZjY2UjJSVnMzRUV6T0RwSmZuek1LSlpvQmFmLU8xajZuSHk5M2h4Q0tvelhIbjNFSUNxd2JHYmJZbFYxTjF1VVQ5cGJfUkFSVmJxY043UURFa05Uam1Kcg?oc=5",
+      "source": "新浪财经",
+      "category": "政治",
+      "published_at": "2026-10-19T23:26:15+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "a347c7c76f110747221e",
+      "title": "【大咖观点】吴恩达演讲：企业都在技术栈底层较劲，应用层才是价值洼地",
+      "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE94aEVjalJySTBTZzF1d3dvR3VuTkYxVmEzT2pGaHBZRXpfZFNqaDBmdDN0X1dILUpKX1pheVJ4VDhKQ1RUdUNPZGM4ak5hcm5kb21LU1M2QmFIZWVRUEZ5TE1LTmNiSE01YjJCd2s4bVNSM19OSWdlX3NqcmhjdEE?oc=5",
+      "source": "新浪网",
+      "category": "科技",
+      "published_at": "2026-10-19T23:21:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "98f1701dea2d33a6c1be",
+      "title": "小摩：债券收益率企稳或终结估值压缩、叠加盈利加速，股市有望涨到年底_滚动新闻",
+      "url": "https://news.google.com/rss/articles/CBMiZEFVX3lxTFBrYkM0MFR1MWUwOEJtWU55Q1k3elZDNElKZkRiOU0zdW5jZzZKQ0RwTW9CbEdCLWdfVmxlQ25md3JpdDZZa1hTNnFScTd5S29mX29tN3hNY25UZXlYaWhHdFphQ0M?oc=5",
+      "source": "证券之星",
+      "category": "金融",
+      "published_at": "2026-10-19T22:59:35+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "7dd9a7592a80e4c84da3",
+      "title": "印度应对卢比贬值政策空间收窄",
+      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE4yQ091WldzWnZWdW1yNDZ4ejNQZDRxTHNEOFpic3RWeDRnbHI2ZFVNS1dyZGE0QTJicUFMT2VKeFY4YnlTNV9CcElSMTRqYks1TDNxdFZkYnowUllvdjZwb0hVTDEyN0pHS1lFandUbw?oc=5",
+      "source": "中国经济网",
+      "category": "政治",
+      "published_at": "2026-10-19T22:19:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "4d9bf6d93c27a22aea98",
+      "title": "俄罗斯积极寻求突破能源算力瓶颈",
+      "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTFBxOHpKS0MtZUM2aEdvcFNpTmVWb25JbFZpWnBDQm9DMkxXV21aNFc3VjJCTlVoNVZQOGllT2ZSOWFYYUVKa0pPVXpzclFnNWFCOEQtTUkzY0lDRTRuX3Rj?oc=5",
+      "source": "中国经济网",
+      "category": "科技",
+      "published_at": "2026-10-19T22:18:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "e31d43d809f7ebee2c5c",
+      "title": "粤开证券首席罗志恒：4.6%的经济增速凸显韧性 建议加快收入分配改革和中央转移支付力度｜宅男财经",
+      "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxNbWoyYmwxLWNEYi1fcmVwWl8wa1FkOHlvTnNDbkNVYVRlUkVoODVrSWlidkROY0psSHFLNWZIWlNsRkVtdkp0N0F1Y1RhUl9WZzFTMnMzcUlSRzRhUlRFc0RJRGVSMzVGa05TdHdRQ2o4aTU2TkhBaWx2dks0RGd6bkhfNmc?oc=5",
+      "source": "新浪网",
+      "category": "政治",
+      "published_at": "2026-10-19T22:00:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "c29d422d4a06459db09e",
+      "title": "好评中国 | “人工智能+”的牵引力，不在实验室在车间",
+      "url": "https://news.google.com/rss/articles/CBMidkFVX3lxTE15QnlPS0pfd1JaUzBaV1pZcG5UdjR4aVdPOEtibWJZMkk0UnhkQmhjaGphUG91eEFVVGk5MDNZLWd5Tk1iaHJUTzRMVmMzU0tyTVcwMzNkN3k5ODNWTHk1cDNNTUtMdFBHbmR4c2RNX0Q0RUJraXc?oc=5",
+      "source": "新浪新闻_手机新浪网",
+      "category": "科技",
+      "published_at": "2026-10-19T21:51:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "467d1ba742c45c4eb1fe",
+      "title": "日韩股市，开盘下跌",
+      "url": "https://news.google.com/rss/articles/CBMixgJBVV95cUxNRVdoQkpNRHUwTnMzQXFJZF9HbmZXMXlCbi1hSmFvZEUxbXJJOTFvakJHVmUtWk1Eal9OZG5WUDhwN05KZ1ZMRFlWb2c4QkVOc04xUE5ORDZaWl94QmlTc3EwMmk0QVJ0d3NSSUtwd2k5WjJ4aXRrbGcxZzF3N2xMNDN1cHpTTWxJZGZIeUFrWW1STXAzR1hVeUI5ZEc4d3hiWWNqVmFEenU0N3ZZd1hxdE1TTnVpbjJGdlA2UWV3M2NqUXphbEtzai1RdmV5aEEycTN3bTM4bElRMVVKX0NMLUlUVUFpNFZyOGdJejhlUTV5cWlNOWI0QzR3QzJqZnpfMnBkeThwblJzTWliWEVIVnZwQzQyRmtJdWpVS1JFZjFxa2RHRXVyV1FNZm5OTnczV1VfemV5VmF4NXJndGU1M1RMTkFldw?oc=5",
+      "source": "新浪财经",
+      "category": "金融",
+      "published_at": "2026-10-19T20:54:04+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "17d11a25416e6a78cab3",
+      "title": "坚定信心迎难而上实现“十五五”良好开局|国内生产总值|中国经济|国民经济|贵州省|我国经济",
+      "url": "https://news.google.com/rss/articles/CBMimAFBVV95cUxOcTU3MW9ZUjlzWUN5eUdJdmVOVjFJVEU1WU53SUJOOHZDRVNfaXVQYk1GT1U2RnhhRVRILURXRjBBbWxXUk5OdU9VbFA0RU85ay1YSXBJblV4RDVfNmVvQm9pdHBtWUhnbG5sS3gxY2YxYm9pcE9EcDVvSnVvTDRkUE5xcGdsR1dXOTNsQ3cxaDJYLXhXM1F3dQ?oc=5",
+      "source": "新浪财经",
+      "category": "政治",
+      "published_at": "2026-10-19T20:10:53+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "b4b141d73dc5eec9c1ba",
+      "title": "伊朗和巴西外长通话 商讨主要地区议题以及最新国际局势",
+      "url": "https://news.google.com/rss/articles/CBMiS0FVX3lxTFBCYVUtZ3dwR3lxUDVYc0txNHRjZ045NnBZT3pCX0cwVlYxTEo4ZGk4Y2VGYW9JSzJ2Z1JjX05xOUoydVVqUzJLOElzOA?oc=5",
+      "source": "手机新浪网",
+      "category": "全球",
+      "published_at": "2026-10-19T19:47:22+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "a5e9c620c1178aea007e",
+      "title": "清华企业家协会参访张江AI创新小镇|机器人|年会|人才|人工智能|训练场",
+      "url": "https://news.google.com/rss/articles/CBMidkFVX3lxTE9sUFdBMUlfVG16VHpaQlhpOWM4cDQ5REdiQXBmTm5fMnBka3QyMFRVOXhPSjBveEUtSmlzdWZVZ05lVWZHNGtQQkMyZ3VWMjJWbjF4NTFzWFNUa2JMTkVaVDN2eFd4QWpVMTNiejhwWVUtMm13dnc?oc=5",
+      "source": "新浪新闻",
+      "category": "科技",
+      "published_at": "2026-10-19T19:01:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "07f1f38841768a484195",
+      "title": "上半年AI热钱涌动，国资基金抢滩人工智能｜2026张江AI小镇生态日现场侧记",
+      "url": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE5rTE5hdFRhVEI1V3RPSkVHQ2MwTl91WUNWQV9RMUJ5YmE2S0R3bEFJc3g2c18wakVuU1ZHWjNFSUczaVFiMWo2dQ?oc=5",
+      "source": "财联社",
+      "category": "科技",
+      "published_at": "2026-10-19T18:59:47+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "8ee024aeb3813287278b",
+      "title": "俄伊外长会面 讨论双边关系及地区形势发展",
+      "url": "https://news.google.com/rss/articles/CBMiiwFBVV95cUxOOUlfUlFVTkMtaG5HVXZBY0tmYUlJNUxSUUhWMFBjUFM4aE9QVmNqZUV2XzBBYjlaRXh0STNac25BNEl3ZkpISkN6LU5kT1pWWjAzbU1SQnQ4WC1RQkZvZnpKeGlkSm93NXFZZWJ4dUJzVFFJbXA2WlpDR2h1LUc4cklqVjd2eG9JczUw?oc=5",
+      "source": "香港電台",
+      "category": "全球",
+      "published_at": "2026-10-19T18:08:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "e67572bba3c3efe748fa",
+      "title": "科技创新世界潮 | 大模型竞争进入下半场：高质量数据成AI领域硬通货",
+      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE9ycGNhWHctczVJRjVvbG4xNE5WVXlFWTk3dUF2TmNhc005TFI5YjZyR2NfNW45Y1R6ZE16QXp0a1pPekdDNU5vdkd4NS05Wm54WmpBdHMtQWRWOTl2NEJJWDhBUUVIR3V3czJlQnVmTl8?oc=5",
+      "source": "中国科技网",
+      "category": "科技",
+      "published_at": "2026-10-19T17:45:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "c77869c2cbb8bcbc7d0f",
+      "title": "卓世科技亮相海南新闻联播：以新质生产力激活自贸港 AI 新动能",
+      "url": "https://news.google.com/rss/articles/CBMidkFVX3lxTFA2cTkzRmE0dkJucFczQjIzbThiWERlTVhEc25lZ2JadEkxT01sTnFiUXRPaUR6Smh3aVR3bUFQai1BV1Q1MnhoanFfc0UyY2s5TDNvMFlSQnpqRWFLQ1lhaHJrRHdOdGYzZUZYajg1bDFHTlpRa2c?oc=5",
+      "source": "新浪新闻_手机新浪网",
+      "category": "科技",
+      "published_at": "2026-10-19T17:19:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "c69e4975a8f7ca1035f3",
+      "title": "泰国与柬埔寨讨论缓和海上边界紧张局势——《曼谷邮报》",
+      "url": "https://news.google.com/rss/articles/CBMiswFBVV95cUxNVHJuSWp0REJCYUhxbTFEbUxEM1k0U3g5Y1RSRTVoYUYtcUxHQmdsTkRNSnNyZ1pfLU1Ua3dBQUdHLUNyTWlMVmU0NDIyak1LckU3Qmx0cUJzelQ1cjlicXlHOGt2N29kZzFVYWJGUllLcElRQkpvUUhvMlYwUXRIdTZUZ3J2Y2JaMFpyQWp0YXg0VGZmZDM0OUpyaFZzSlI5TURsb2dQNUt6eC0wR1FQRFJrWQ?oc=5",
+      "source": "UA.NEWS",
+      "category": "全球",
+      "published_at": "2026-10-19T17:09:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "262da29a574abf7894e8",
+      "title": "三季报出炉，完成全年目标有底气",
+      "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTE1RYmI2VHkwSk1kU1UwSFd2bEZWd2I1cF9lT0didkdBel9wV0hqeC02RnVXRWIxVTRpOTdaMTNzczFZV1VSZ25VanZsTlZRUUNBeWJkTjNvWXNHbnBHT3c2UndoUndkRkgwSmszVE1ZUHFoX25yQTgzbw?oc=5",
+      "source": "新浪财经",
+      "category": "政治",
+      "published_at": "2026-10-19T17:05:19+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "3fd6d1da39024afd62f8",
+      "title": "云从科技参编两项人工智能操作系统国家标准正式发布|人机协同操作系统|权限管理|管理|持续|模型",
+      "url": "https://news.google.com/rss/articles/CBMidkFVX3lxTE1vWlBSTkljYzlDa1hIVG8wQUtWdnZVT3N1U0Z6cFR0QU1UaG51RDdxSjFDR3cxYkxRSVpLSDZ4VzY5UnZrMm9ZMkVjSG42aTZlLWt3dlNYV1lZRjlUb3ItbnVTTFYtcTBTZGJfS1JQUE9BM2FlLXc?oc=5",
+      "source": "新浪新闻_手机新浪网",
+      "category": "科技",
+      "published_at": "2026-10-19T15:43:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "6630bf512d01ef4e42fd",
+      "title": "全球正梦游走向三战？FT警告：最大风险是误判",
+      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE1DZkdKYTcxR0dTV0xZU0I0VUhkR0dSUUZnN3ZWb0FKT3NGVjV1WGRJX3kxTGIzazBxWE5vWGkyckExd1dwdG5ySWJuanYwcGVrN3NmQnhvLWhSQXNJaXZjN1dSQ3FUOTB0?oc=5",
+      "source": "文学城",
+      "category": "全球",
+      "published_at": "2026-10-19T15:40:45+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "bff3d51fdca2128852c8",
+      "title": "ETF #股票#财经 #投资#基金 #ETF",
+      "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxQS0diQkh0UnB6bW81WGJMLXRyWlV6LUozcjU1eHZjLW1Oa2c1bm1JWVFuQXU2d2pjRjFkLUVmTEhDWFhKMExJeU1uN3pSTXlnVlREbjBUaXVkNERZbVRXSlcwWEpyWDBERFNheEl5cjlWWGFyY3VvN1ZVaUxzZFBrZTNMakhncEE1YUFFanV3?oc=5",
+      "source": "新浪财经",
+      "category": "金融",
+      "published_at": "2026-10-19T15:39:47+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "d7f5adac0d80daa78504",
+      "title": "潘功胜：央行将继续实施好适度宽松的货币政策，为中国经济稳定增长和金融市场的平稳运行营造良好的货币金融环境",
+      "url": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE5rQXRnaU9KeVZJMFpBVDZNRW1oSG9meVFsZHB4eHpmU3gyeHFTeEZvbHNZVEZxb3l3SG8xNUFYRElOY3Z4ZGRHWQ?oc=5",
+      "source": "财联社",
+      "category": "政治",
+      "published_at": "2026-10-19T15:20:30+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "f63b2a07c7a3b33e4fcb",
+      "title": "伊朗外长与俄罗斯外长举行新闻发布会",
+      "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTFBSdDkzRHVSWG9VWUtKcFk3ZmpXdW1YUU9BSDloSTNWTkxMTFE2TzZBMXh2LUNxRlVMUnpnRy15RVRZeGlCZlR4bndzQmVxUHZuREE?oc=5",
+      "source": "搜狐网",
+      "category": "全球",
+      "published_at": "2026-10-19T14:41:11+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "22cde36f4580bb374224",
+      "title": "国际观察丨地区多国声援沙特：各自考量牵动局势走向",
+      "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTFBoaWs3WE94NE9DQ3EtR2M4THMta05LRnBISU95dUdZMzlCaGRTazNhYVFTRnppZUEtVF9DelRIYUl0dGd5ajRnZDhFOUVuT3NEaHFnc2t1TXAtd1hrVV9FbUFUOU1uTTZHRjZKazdCeEVINVR3dUVWa1QzYUF4dlE?oc=5",
+      "source": "新华网",
+      "category": "全球",
+      "published_at": "2026-10-19T14:22:52+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "bc111434aa5faa64293d",
+      "title": "增量政策集中释放 如何利好中国经济发展?",
+      "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE04NFdVSWtYSzVRQ3RBbm5aUzRyUmpNZVdaQVowZWhfSDY1Z0RESF9LV0RITjFxQ2Z4d3JsWHdFNUUwcml4S0ZNaXNsMC1IU0NhdTdKZw?oc=5",
+      "source": "第一财经",
+      "category": "政治",
+      "published_at": "2026-10-19T14:01:36+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "41ff8db0d7de07852910",
+      "title": "明豪国际观察：持续关注法国局势",
+      "url": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE5RYmE3d2JlUzMwNnE0Z3hpR0p0Vl9xVUpNNjBoWE92U2tpM0lCMGNZTnpQbXo3dUJON1VBSHh5SVZDOGJoT3ZpcngwSEVfeTE1SFl3OWpEZmpoR29f?oc=5",
+      "source": "万维读者网",
+      "category": "全球",
+      "published_at": "2026-10-19T13:43:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "0e76ec36d3d1803c7dad",
+      "title": "伊朗与俄罗斯两国外长举行会晤，磋商地区和国际局势",
+      "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxOa0lhSG0yVDFUbWZfTGp5YURMTjE1b3RINThiWUI5VU5NZ21sMFc1REFZdmJ6SkFZdzZNUmZGUmdLY2UwSm84ZkNxOVROWmRpakNzOENLbmlOTVU2aEpNWVg1OEY1d1BVYUp3SlI4U3VndU1KanlGVzgtUDlzR3hpM3RTUWlxNzJmOXplU3Z3MA?oc=5",
+      "source": "搜狐网",
+      "category": "全球",
+      "published_at": "2026-10-19T13:41:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "a76cdcb14ad2ea070262",
+      "title": "科技股暴跌只是“健康回调”？美知名投行：AI主题拥有“绝对主导地位”！",
+      "url": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE9OeFNoZS1hUWhMa2plU2ItYTFtVlpOaUhxSURvenJsMW4ydm9ISWJyaGF5YWFQS2V5MDVpSmswMFlIWXUtT2tMWQ?oc=5",
+      "source": "财联社",
+      "category": "科技",
+      "published_at": "2026-10-19T13:39:46+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "948df5af6cae6b608230",
+      "title": "买盘，突然涌入！李在明，紧急发声！涉及股市",
+      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE1qZXFHVHhfMUpNNzl0SGJ3S2hSb3NsYmE0ekVXNWdRMnNvb1RqZDR6UWRBc1cyLVVYc3MtMEN4b08xYU5XZlQwdzFIaGNWaFdZTk1BSVVPdzI2Ti1ENGdHdw?oc=5",
+      "source": "证券之星",
+      "category": "金融",
+      "published_at": "2026-10-19T13:09:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "e79cd4b076e3e73c2035",
+      "title": "美联储重启加息、货币政策周期错位，中国如何应对？|首席经济学家|经济韧性|毛振华|美国|管涛",
+      "url": "https://news.google.com/rss/articles/CBMikAJBVV95cUxPZlFWbG41cmZsdTBkVmQ2VU9HdVRuLUZkeEZMVG83RnFaUS1xMlJqRVlpdXlRQk8za0hZMEhxanJwanpSTzNFWmp4dEZheXB2bUpSVWdoTUFjTXF1RlJvVGkxRVh3VU14VkhaR1M4bTBUOFBsSjBGX3dON1NKeDN0M0lRaHhpcXp1US1IVV9tV1lxc2lwVEw2RWVSaVdOVUs2VVpoOHdmMlZzVGd6X0hwal9nVmo1Ui1wRDhUZWRKcnF6Si1IXzkxdUdhbWlUZEMtckNlTHNCbFBoWnozbS1JODF3SFpSVVhkOXZxNW0tR29uYVNBbkotLVRraC1TUVlKRnlPRXlHekoxQmR4a2c5RQ?oc=5",
+      "source": "新浪财经",
+      "category": "政治",
+      "published_at": "2026-10-19T13:03:54+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "7dc6105395f8ddccc45f",
+      "title": "潘功胜重磅发声！汇率、人民币、AI全回应",
+      "url": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE55a1FFUDZJTlliWHZhTmdudFBKUF9SZTRzT3hpaUZtbkt5ZU1hQXNGVVpkU3otbXV3eHhsQ04tQzREekNGcGRnTXI3RHZHYVZXWFhvMEZ5SkdrQ3Q0bGxQT3MxeF8?oc=5",
+      "source": "新京报",
+      "category": "科技",
+      "published_at": "2026-10-19T13:02:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "cf77872528484c704fcf",
+      "title": "4.6%：GDP增长背后的变与不变",
+      "url": "https://news.google.com/rss/articles/CBMidkFVX3lxTE8zTmZNVVlNTWRJWlhKQ1FIaWdJNWRhZXNpNjJXcllXRDRXbHQ1WHEwMlRUc19XQjNkRnZMZWNjWXBZdC1JZ0pBX2lEdzMtOHBqZ3I3TjBPVXNWSmtZUlNlcXJxa0dYNkM1ZDhSS1ZtY1JKRWRLUnc?oc=5",
+      "source": "新浪新闻",
+      "category": "政治",
+      "published_at": "2026-10-19T12:49:29+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "969b2ca454694a0ec13f",
+      "title": "国新办发布会：开展“人工智能+文化和旅游”应用试点",
+      "url": "https://news.google.com/rss/articles/CBMie0FVX3lxTE5lbmxYV0NyR2JvN1p3WVNDMFJKRHRRRm5pVFBfaWJDU0MzUUxuc056emxjOTNwM0MxRk9FM3NIem12dHh1LXJCeGxEdmtsdlc1WXRJVVpybGJLZU9STDlFN0VFbEZ3U1lUTTFWZTlaMm0zUk9wQmM5VWgybw?oc=5",
+      "source": "中国旅游新闻网",
+      "category": "科技",
+      "published_at": "2026-10-19T12:42:41+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "437a272752d5eebacca1",
+      "title": "伊朗与俄罗斯两国外长举行会晤，磋商地区和国际局势",
+      "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTFA4dll3TUNSdmx2WXp5Tlg3S1FuZEZPZzlIRFRSSlFXX2VEdjg2ZEtwekRnY09JU2lOS2ZMdjhVT2E5b3VkRkRCVk5taXFzWFQtaTVQaFdFWnh2QWo3VVE?oc=5",
+      "source": "京报网",
+      "category": "全球",
+      "published_at": "2026-10-19T12:31:11+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "9c781b884eb068a2946e",
+      "title": "丹斯克银行：亚洲股市反弹是修复还是喘息AI高估值资产或持续承压_公司新闻_财经",
+      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE42MkNIeWJtYXdiOHVJQms1V1J3X2syakpTWTU0TmJoUVlzeWV5TmlqR1pEUHRkS2h3c09CT25ZNlpmb1lOMlEwWmJQVVc5MDVrQ3FJQUZkM05ib0EzRWQ4Xw?oc=5",
+      "source": "证券之星",
+      "category": "金融",
+      "published_at": "2026-10-19T12:28:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "fa6fe12d9190b5b620de",
+      "title": "伊朗与俄罗斯两国外长举行会晤 磋商地区和国际局势",
+      "url": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE1YdDdxZXh5dnlxOWNPaUpwclQ2bGllRWtRVDdtekFiVHg2ZW1aMWVEWGZLWlB3cUpHM2tXcGJLSUQ4WFlMRGZjOS1kMGdBamIyekk5aW9YUGZaUnFU?oc=5",
+      "source": "www.caiwennews.com",
+      "category": "全球",
+      "published_at": "2026-10-19T12:23:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "37a0506f483d3942d25a",
+      "title": "北大人工智能研究院第四届学生科技节启幕",
+      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE4wR1VXTWt5SVR5ajhwcE1CQ0RHVUJha0Y3N1JCUlBEMHE1b21yVTJxVk5hYlpZU2NORm9RUmxDQ1V4cEwxaEhxU0hCcDJ4UGVURW9QeGZuT3MtSEthcGVWa1VEeklaemhtQ0FtcExQUGI?oc=5",
+      "source": "中国科技网",
+      "category": "科技",
+      "published_at": "2026-10-19T12:13:11+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "14d4ced84f0400f82ccd",
+      "title": "陆利平：经济政策正从短期刺激转向长期制度建设",
+      "url": "https://news.google.com/rss/articles/CBMifkFVX3lxTE8yMWZCN2ljTzdwc3drTkhHSkVlTnFVdC0xRGNqMVZqck1HZG5HNldWV1VRRFhXcTlld2pwaW9JdWZ4WU5LS0lPaWRsM0xyNmxlSWFDbXpxakQyck53YWdvajg4cEx2ZTZzd2dFZ0VKMVVqRzhQYXdOZmx5eXE3UQ?oc=5",
+      "source": "中国新闻网",
+      "category": "政治",
+      "published_at": "2026-10-19T11:19:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "ba89efec3c2e73fa7f2c",
+      "title": "【财经分析】印尼股市跌至六年低位 市场改革面临更大压力",
+      "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTE1CRGJFOUhZMHFyNTZZRmoxVndIeFZpaUpZbFVXN01WVHJNMkZjVzdZVEgyempTMDQzdGpfMWg4THVqNHN5RVFybHBVUmtORUJWUUFmeXhCZklRc0kzZ25JZjBnVkw1Mko3eUdYMU11V1ZVR01OZE5SeA?oc=5",
+      "source": "新浪财经",
+      "category": "金融",
+      "published_at": "2026-10-19T11:13:25+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "08137b291b7998fd76b4",
+      "title": "埃及选择支持沙特，将对也门局势产生何种影响？",
+      "url": "https://news.google.com/rss/articles/CBMiTEFVX3lxTE9tZFZRd1V1ZkhoRER6b3MwQXFSNUVWak5BNkNyZFNYUGtKNEl3eFQwUVJNbTd3Zkp5dV9FZVBXT1hZa2RQZjhJWnZ0VXk?oc=5",
+      "source": "凤凰网",
+      "category": "全球",
+      "published_at": "2026-10-19T11:06:19+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "e25643f644bbcd6b844c",
+      "title": "中国经济向新而行",
+      "url": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE1PR0NYemZGZ0M1cTItOW01UDZIS19YNkVlNlh6OWlsMGpDODVsWVZXdmhVZV8zTXVqT3FsQzJjM2lMQXhQLTVpX25CQkJMUmhBZ3hUdkIxSnFaRFp5?oc=5",
+      "source": "证券时报网",
+      "category": "政治",
+      "published_at": "2026-10-19T11:03:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "34e1e63d3ad8524ec944",
+      "title": "外媒关注中国经济数据：展现强大韧性 全年增长目标有望顺利实现",
+      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE5YT282REk0S3BDd0FuaThqM0NIU2E5Zlo0dURnQjNfSlNhR2JKRGYyWk0tV2U3cEFXaUV6MTYyeExSWGVJeF82WlRKRS1zUUplZXBzMlQyWmE5Q2FKNFZoVG16Z0pKbWdE?oc=5",
+      "source": "中国新闻网",
+      "category": "政治",
+      "published_at": "2026-10-19T10:47:05+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "b8700d55e79668dc7d2c",
+      "title": "再这么打下去，沙特很可能会向胡塞武装投降了！\"国际局势最新动态 #沙特##微博视频精选大赏##烽火问鼎计划# ​",
+      "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxQNk1yMXJaOW1aQlRXZFZuTl9WMDk2WTRRczZyVEJJR0lkbHd3X2hhSXA0VFczOHc4UEhNY3ZLSkl6Nmo3dHFNdVFKbFRfQlZ1TXktTDlFRU5ib0F6dTZQUUJzNVdaSTNRanU2TFF3M3N3TUxTMWhmeGU5WEI0Zy1LUFRfbFA?oc=5",
+      "source": "新浪网",
+      "category": "全球",
+      "published_at": "2026-10-19T10:46:43+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "071e124a351b9c3cc378",
+      "title": "“问道·领航”欧洲侨领高级研修班在中国人民大学开班",
+      "url": "https://news.google.com/rss/articles/CBMiXEFVX3lxTFBNUXV6RGlUR0hkbGtFWl9vYXFvV3Q1TFROUDB2ZC1EUGgtMy1LZm5jUFVzbHNoSjVxZ0ZzbHdDU1RYZHlPdm85NU5QbXJ3bTdSUlVJMFRYMWh2WWI0?oc=5",
+      "source": "人大新闻网",
+      "category": "政治",
+      "published_at": "2026-10-19T10:10:48+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "d267d02b6b4754a97447",
+      "title": "人工智能活化文化资源，文旅部已立项14个“AI+文旅”试点",
+      "url": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE5kN3pqTWFzVUs3N0xFM2xtbXJPWlZnbERXc2xBRFlpcENMQU94N3FqdFAyamVyV3VtRF9KcGRENGJjZUxjVjBaUzVOWWNHZmFZd3pCY01qQmdzMHM1T0NkZjdtQ3Q?oc=5",
+      "source": "新京报",
+      "category": "科技",
+      "published_at": "2026-10-19T09:23:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "4d4c90324ae7a677f843",
+      "title": "管清友谈中国经济三季报：高技术制造业表现亮眼 要投资于人激发经济活力｜宅男财经",
+      "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE1Uc3hFbWk4a2NHcGZUVk1GY0x6N0FoRDBOaHRVUmFzdHlHaXBjN0ZMeE85X3ZFMTU0NndCYTV5ek9SeEdNU2plWkRMNHZxZVpLYUxOSzRBY0RWVVlvUXhWS0pWTDhUbjg?oc=5",
+      "source": "中新经纬",
+      "category": "政治",
+      "published_at": "2026-10-19T09:22:29+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "466c4c55f3682f392cc6",
+      "title": "陆利平：经济政策正从短期刺激转向长期制度建设",
+      "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE0wS1JmcDR5MGNBME5uM3pHWXhOR2VESERXbFh4ak53REt5cWRFMllLYzJrWnFGTjhZeUpNVmQtQ25sMEFxLVJoUXZpS1ZHNXZJbGsyOXJDb1JLZWNDeTF6b2VB?oc=5",
+      "source": "观点网",
+      "category": "政治",
+      "published_at": "2026-10-19T09:18:33+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "216cf2c4f2ce1cfe2c79",
+      "title": "泽连斯基与威特科夫通话，讨论通过外交解决乌克兰危机，他将竞选连任总统",
+      "url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxPU2pZNTNmam95SUpGZUhDS01oUWwzTHlLdGFxWFZLSnFseGxfVE1NeEVQY2h5TnlUb3lkTWtMNU9BOGRXdDk0RE5TbHByNXVvcFYyb0U1V0g4WDFyaVhEY2hOTFBLOXZxdWpfYkhWVkxOaXBIWnN3VkJ5cVdmcFY2MzNDc3l5b1d2WldHbg?oc=5",
+      "source": "搜狐",
+      "category": "全球",
+      "published_at": "2026-10-19T09:06:38+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "3d8903d97284f535f031",
+      "title": "韩国养老金，“血亏”一万亿",
+      "url": "https://news.google.com/rss/articles/CBMitwJBVV95cUxPYVBUX0NoX1ZkOUlyYUppYm9pWnhkV2JTV2JPTE16b19UUmZHU01vSWtkODVGVmpaMldwQ0FFN29jbVBrWlBZb1gyOEZJUVVZVlgzZmdWQ2V6RGd1WVVsR0ZIekg5OUQ2blg4Y1F6MW1iOUFhYUNfMGJCUDRwTjRTa2Nsc3FfU25TQ3BUSU9sYnQ4MmYtYm5LcUM3c3o3QXhxbjEwNzRqVGZRM2tXNkYtb01NUEdVcDdDVlluUzJhR2JhZTAwSjl2SGFFLUhySmh3ZXF2THVqQ0dLTy1zaFJjSGdCbW04S05TT09EUmozcWlPMmdOeWVmblphWWdZS3k2Q3o3azhxUE9ZT3BBWEtuN25VbkZEcVg0Sjh6Q2tfSzJzWndxQ1UwX2pNd3lnbGtKbTFzdHFZRQ?oc=5",
+      "source": "新浪财经",
+      "category": "金融",
+      "published_at": "2026-10-19T08:55:15+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "c37bcf3894696df57aba",
+      "title": "2026年中国环境战略与政策学术年会在京召开",
+      "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE0xQm10bUx0c3NiRFhzcG90MWxGQmlqbXlqc2ZfS2l1Q2VLWDhJdXd0aWdlZEFhUmJ2U0tKZUNWTHk4eWdPeFpBeHkxRUpkZWVybTZMV01oOHk1LVFOLWV0X2ZHdw?oc=5",
+      "source": "光明网理论",
+      "category": "政治",
+      "published_at": "2026-10-19T08:39:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "79fa37b3e220cee5dd6d",
+      "title": "人工智能赋能新型工业化深度行（流程工业）暨工业AI成果发布会在宁波成功举办",
+      "url": "https://news.google.com/rss/articles/CBMifEFVX3lxTE5Lbk9pUlREOXBxUWJwdXNaaXkyaDlfUHlsQjgtaUt3bVR2T2FxeGxxOXBGSUx4NlNUZll0bThGX1RJNDMtUjdmcDhfN0RCV2JIRHJNSWtIS25pTDNlUDhiaS1rcENMWXdGYjRNaUNuSTBXWFo2ei1GNTZmRWI?oc=5",
+      "source": "新华网",
+      "category": "科技",
+      "published_at": "2026-10-19T08:32:53+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "02d8372bb72a6e16916d",
+      "title": "遭MSCI降级，印尼股市跌至6年新低",
+      "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTFBCR09FcEdPejZxNlg3VXlDNjdnTHBucmI5eGpUaTVuMlFGa0l1TGRFTGZIUUlZX1V0c2hiNERlZmt1TlBWWUdrNk9KV3hoamd2UEd5azVnTFFJNDNDUExhS3haZGpjMllybFUtLTR0TU5OUjBGZUprdg?oc=5",
+      "source": "新浪财经",
+      "category": "金融",
+      "published_at": "2026-10-19T08:31:15+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "c15948ba84c1b4a19093",
+      "title": "AI启智热电焕新｜“人工智能+”园区供热技术论坛暨众茂杭州湾ADMC热电智能调控系统交付仪式成功举办",
+      "url": "https://news.google.com/rss/articles/CBMimgFBVV95cUxOSTVvckdpcXBkSDRwT2NzOG9hMUxrbUl3eExjMEhuN2pMd3lKaUhNLWQ3ZnlKVDdaOV9MdGFwTGpxZEhHUU5iQjEwQkRBVy1nTUVwV1ItR0xtMFdmMFl2S2VQV2RqN1Y2ZGlEcG9wd1QxbWhDeERUZnJzd052UHRBZDJ6R3d6RFBrT2FRUDhiVkdZTENCZzJpcmdB?oc=5",
+      "source": "新华网客户端",
+      "category": "科技",
+      "published_at": "2026-10-19T08:20:09+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "e2ba42d8d73c6943ecf6",
+      "title": "地缘冲突风险升温，油价缘何反倒回落丨说商道市",
+      "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTE50a2JWODI0dGFMc2VsUnVxYWJKa1VNVHVBUFg5aGlwc2RnemtOUUllbWNXY2FLODdfVXZiUE0teXlGSkNDbUVBSUlXOGYtVENXWjRwRG1lM0ZOczdERXY3aTNxbE16RHhRbkgxTG1yQ3lycFBWSGFZWA?oc=5",
+      "source": "新浪财经",
+      "category": "全球",
+      "published_at": "2026-10-19T08:07:07+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "564b15a6d90b738bd73c",
+      "title": "中国经济增长回升，4.5%的超预期表现提振前景",
+      "url": "https://news.google.com/rss/articles/CBMiV0FVX3lxTE5wZWJLcHloSEdMTVJIRDluczRGSlZYd1QwajBCejV0LWk4UkxYVk5lTDdKdTlablhiUnVIRW83Rl9KSEtuTjd6NW1ZeHNhWmQ5TUVZSXNpQQ?oc=5",
+      "source": "NAI500",
+      "category": "政治",
+      "published_at": "2026-10-19T08:04:49+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "8f5e006c8d0c3acdbd71",
+      "title": "查伊卜在巴格达强调，应统一努力应对紧张局势热点和日益加剧的危机| 阿尔及利亚新闻社",
+      "url": "https://news.google.com/rss/articles/CBMi1ANBVV95cUxQV3JUVXlFbWpNT1I2TUtSZjZSTVdLUFE1dDliTTl0ZEJIM1NKZGg1VDF5RWRCVTZnQ1ExTG9GY1hLYWtkcWpYWWhCU2djMVh5dWZzRlN1R2VrYVpqVTh5Tzd3Q0pYbndsQ2doWklRWmtnYnZUeFRTZnVHV1NoSkF5U0I0NVFLLUdmVE5lZzlkNmo4M0ltMTNPdjRzcmlDXzhyZVhiX21veUxPWWRaelB2amVvNzlDT183TFFqSmYwQWNZX2R3VVpBeW1BRlRkd3E4WUo0LU1ObGVEMWNRNkZpanhXUWhmdlVCX0xTZnptOVZweWJ5QktULVUwMWtJampmcUE0VUMwSVU2Y2FPaE1lTzJUaXE4OEtQSk9VcElzNWRzaDg4ZTQwaVBhRG1Jd0Yzd2F5R2NfSVQySXY5ZlpBYTdSZEs5al9zeHNMelBxM2tqZzdWbWhBMkJUR3lZTnI0dFZkMGpyNFREQWl3UDhhdmV6QTdJbjV5Y3RSZE1yd0VFQjlYVkZGMkhKN3RKX0g2WnhWYkhmOFZhQnRjMFFNeC11bk5wRW1DMGhSamtGaXN3UmdIN0RHWko4OXJLcGxLcUZCNmM5anpzOXZLUzhJRWt5djE?oc=5",
+      "source": "وكالة الأنباء الجزائرية",
+      "category": "全球",
+      "published_at": "2026-10-19T07:59:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "6b18ca59347d12eefede",
+      "title": "高盛预警：AI 利差飙升，股市或跌15%_全球市场_财经",
+      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTFBlSEFfWHhTb2JjaEp6VWFZUXRNZ1RBeG9qaTBvMTduTTNZaEJLNjVKZFJ2R21oRFV5ckpFYjNpbUdUQXZSZURzTk1iQ1NBQXV1TWtnV0NjalVTWFY1Q2RMLQ?oc=5",
+      "source": "证券之星",
+      "category": "金融",
+      "published_at": "2026-10-19T07:34:19+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "48e5cf3c54ca7cbe7670",
+      "title": "7名以色列暴徒暴打欧洲外交官，78岁法国市长遭棍棒殴打，美记者受了重伤",
+      "url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxNWm1Wa0tVdklVbl85V2pnT3JDaFlMSU55cDk0YzVYazF3aTc5MW5DZGp4Q0N2b0p2Rms3Z3ZCMGNpT1U2QjNORVFJd0hEcXJlM1JwM0pZNE5SUFJoUWJIYmphbTlQUV94Z1N1RXk3RlBTMlZidHhlRjloR3VFb3NNd2Vha0EzTXpGekxIMQ?oc=5",
+      "source": "搜狐",
+      "category": "全球",
+      "published_at": "2026-10-19T06:55:02+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "b41e9630c39d0f7049a0",
+      "title": "MSCI降级警报引发“恐慌式”抛售！印尼股市连续两日大跌创六年来新低_滚动新闻_财经",
+      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE8zbE8zd25vRjZaSThvem9jcElNOHNuYmJ0QmkyNFNPVlJXRFZSTWdENFJKWHkyX2N5SnY2V0JxMEJkVUxzT09IWWg2bWswTGxNMTVkeEs5d00yZXduN25Kbg?oc=5",
+      "source": "证券之星",
+      "category": "金融",
+      "published_at": "2026-10-19T06:52:15+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "9f0b0a44caa772af9028",
+      "title": "印尼股市雪崩，高盛预警！",
+      "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxPVWgzTXpmM3NPWmpvWEMycm1ndUJFZ3VDbVpTUEtqd19nTUVuMVk1Ujl5dXRoc1VJY21XVWFrSXZYTmZYRDhnRTBXVDdqR0IwWDVOYXc1eUFmZFpMNm1hQlVlUWxOTW92ODh4Qkg4WWI4OU0tZlpqWms2dUNtNGZrbg?oc=5",
+      "source": "新浪财经",
+      "category": "金融",
+      "published_at": "2026-10-19T06:49:31+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "33f593949ec8ba3aca0d",
+      "title": "印尼股市，跌至近六年低点",
+      "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE1aWDQ4WXVHY0ZvMjkybW5QTUVmZGkzZUYtQVpUN2F1WDRuZm8zVkpSYnNPT0l1dGRNMG1ROGpCYnNCREREcDRZNzlIYlkzWExSVmFGMThzY0pVYTNCUDNSeFNQWGxDcF9YNTJGLXBB?oc=5",
+      "source": "新浪财经",
+      "category": "金融",
+      "published_at": "2026-10-19T06:49:27+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "6d88ff2a98b021ad0821",
+      "title": "第一现场｜阿富汗重建仍面临多重挑战- 国际",
+      "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE11ZkxxTTdsTVdMWW1OWU1URG5GSXhLMWNBTG1wUTNZM1dINm9tX3ZrdkhjckR4T0Y4SU5YYTBjYm5QV2o5c1hvN2VqcmVPaXhXb2x2YzNoME1tcGhiWXhr?oc=5",
+      "source": "中工网",
+      "category": "全球",
+      "published_at": "2026-10-19T06:29:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "3de06b99d6d35143ea49",
+      "title": "技术出口推动中国经济第三季度增长4.4%",
+      "url": "https://news.google.com/rss/articles/CBMimwJBVV95cUxPS0pCSnBwMTBpOEhfZ19qelRxRTBYeTRvV1h4d0dMSkMxUEUyT1k5anFmbDNSeHNjQ0dHck40cndwVmliR2lTV0s4ZldaRWNYSlFqVDQ2eXlDQzA3VUw0YVk3Y0Zma29BQjFLYVM2UkFnN1ZSMVVhTHo5X29GSzE4aTE1WGhQazliWjFKRGY4ZGt1dC0wZXhfRVdISEd0eUE2aDFEMWdpRzh5N205RktrNk5rVHRXNjhBOHFzOFhZeVo4QXJ2OXQ3VXpXSS1JaTJWUFNmTzZNOWEwUnhtb3RSZ1ppNUNBQVBldV8xZUw4Vk91RzRCRmRrTFNFQnp3LWIyMGltenpLWk1ZU2w0ZFE1dHFWV0NfUmhQVjZN?oc=5",
+      "source": "IDNFinancials",
+      "category": "政治",
+      "published_at": "2026-10-19T06:00:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "361b90f01aea59a40195",
+      "title": "【环球财经】巴西股市上周累计上涨3.97%",
+      "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxNU1FGbmMxdzZMWjQzamlRYmpfdm5YaWJWY2JDdTM0ZDA2VzFROUFMUkJuYXRuZV9VMXJqcWJuOUUxX0VmOGhPYS1rSk9hbV9OSmItb0xuUndNb1MtRWZaVUl5aHV6dC10ODI4TllDdk9rOGdycGNtaDFjV3lKWjdhcTJxSW42TGpHbzBDVkcwWQ?oc=5",
+      "source": "21财经",
+      "category": "金融",
+      "published_at": "2026-10-19T03:48:49+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "a297ab80c1f8d090410c",
+      "title": "九部门：加快推进科技兴商 深入实施“人工智能+制造”专项行动",
+      "url": "https://news.google.com/rss/articles/CBMiSEFVX3lxTE8wN3RUZW94Q0xKOGtmRVVtWENyVU1KUVVhMmVQT2pMOG1HUjhfNmhvamRwZld5cEVwVUlxQzhkVm9NMnFNVm1SSg?oc=5",
+      "source": "财联社",
+      "category": "科技",
+      "published_at": "2026-10-19T02:30:49+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "91867eb87f8c3a593bad",
+      "title": "中国第三季经济增速升至4.5% 高于预期",
+      "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE05RDZIZHJuMWwyWGNCUjhldktsNGVsSmJLVzgzdkxLNFFfb2dCR1hqbjI4ZXY5NWxaemwxcG16NUhxWk9qTU9samkxdDlFazZpZEVzcHZySTR5emdnWFlfTHhJUlQ0WFMxRFE?oc=5",
+      "source": "联合早报",
+      "category": "政治",
+      "published_at": "2026-10-19T02:01:02+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "08f0e75d350d04c36a9a",
+      "title": "日韩股市大跌！",
+      "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxPdi1EMHY3Zm9TUXpqR3lCOUwydTAtMUZtZmhBYWF1UkEyQ3p1b1huNmFQNEhlandjcDh3eGlPYWZxX3JEYW1PcDViSjQtZ25XUzItNzZUX2IzaXlFVFp6SnJoSGlDbnhqd3RvOEg5RzRqSS0wRWQtbnIycTV6WTFPc1RnRm1pNFVVcU16V2hfSQ?oc=5",
+      "source": "21财经",
+      "category": "金融",
+      "published_at": "2026-10-19T01:57:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "e4689fe088fed7a42211",
+      "title": "美国教授：当下国际局势，马克思在百余年前就已讲透",
+      "url": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxOdkJuY1pXMzV0RzBVdWY5ZldkMU9ZcHB4cl8wN1V2bzFYcTFHSlRpUXVwbmt0UG9HWHVPU2dOWk9tUGo5c2U0WVZpNzdYSU5LWm1jMWg2LUFNS3dNYVl6M0E4WjMzWnZYYy11V1EyR2k3eS1CREVzTDVXZmpLUzJmbktES3RWMnRL?oc=5",
+      "source": "搜狐",
+      "category": "全球",
+      "published_at": "2026-10-19T01:48:45+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "529c7ee803fefc44761a",
+      "title": "国际油价短线跳水，WTI原油跌破99美元，金银拉升",
+      "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxQUnFPTjBvQlAwQ21UZGc3aUQtNF9mQnB3Zm1HZnRQZ1FWN2lNRUVWX3l1Tk5oNlRaTmRSWWtXaDlJVFBhanJ5ZnZERDhzcTNGXzk0by04Mm1yVGF3bTZoQ2RXWE1TY2VHUnFXU1RYc3MwMmZrTmNvd3Y4UkJvQ0xOQlFoOGRteVlkZ0xNT01Ecw?oc=5",
+      "source": "21财经",
+      "category": "全球",
+      "published_at": "2026-10-18T23:29:12+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "2d6c54c4436b2c3eb8c6",
+      "title": "操盘必读：影响股市利好或利空消息_2026年10月19日_财经新闻",
+      "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxQQlJXUnJIZXpOMmlmdENEbGNQaEYwN3pnWTI2Nk83SXdKT0pLRWkzLWZYam5DVGtBOC1leTBLOURXMzBRdjRqbFN3dXVnalZYS2JBWm54eUs1UmdnQnlsUWNER3lqUVJ3UVFfQkZPQ0dhTFZlYnJaRVpONnVmY2hOMA?oc=5",
+      "source": "新浪财经",
+      "category": "金融",
+      "published_at": "2026-10-18T23:16:42+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
+    },
+    {
+      "id": "c3115135ffa2d658f2e3",
+      "title": "【财金视野】用好财税杠杆撬动新质生产力",
+      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE9ZSXNJeFpJRV9BR0hnZEFSNmxRZVpyNGpNZkUyVWdkN2V1REgzRi1rQVpybTE4ZENSelNjSnJOVGhrZVB5MVBQQ1ZrTWhTRDhXckFwa2kwRzJiSVJjYVpyTnhKd3pPRncycExmSHp6NA?oc=5",
+      "source": "中国经济网",
+      "category": "政治",
+      "published_at": "2026-10-18T22:13:00+00:00",
+      "fetched_at": "2026-10-20T03:13:07.962868+00:00"
     }
   ],
   "calendar": [],
   "sources": [
+    {
+      "id": "news:全球",
+      "status": "ok",
+      "last_success": "2026-10-20T03:13:07.962868+00:00",
+      "count": 22,
+      "error": null
+    },
+    {
+      "id": "news:金融",
+      "status": "ok",
+      "last_success": "2026-10-20T03:13:07.962868+00:00",
+      "count": 24,
+      "error": null
+    },
+    {
+      "id": "news:政治",
+      "status": "ok",
+      "last_success": "2026-10-20T03:13:07.962868+00:00",
+      "count": 24,
+      "error": null
+    },
+    {
+      "id": "news:科技",
+      "status": "ok",
+      "last_success": "2026-10-20T03:13:07.962868+00:00",
+      "count": 24,
+      "error": null
+    },
     {
       "id": "calendar",
       "status": "error",
@@ -815,36 +1342,8 @@
     {
       "id": "markets",
       "status": "ok",
-      "last_success": "2026-10-20T03:11:01.261237+00:00",
+      "last_success": "2026-10-20T03:13:07.962868+00:00",
       "count": 6,
-      "error": null
-    },
-    {
-      "id": "news:科技",
-      "status": "ok",
-      "last_success": "2026-10-20T03:11:01.261237+00:00",
-      "count": 10,
-      "error": null
-    },
-    {
-      "id": "news:金融",
-      "status": "ok",
-      "last_success": "2026-10-20T03:11:01.261237+00:00",
-      "count": 18,
-      "error": null
-    },
-    {
-      "id": "news:全球",
-      "status": "ok",
-      "last_success": "2026-10-20T03:11:01.261237+00:00",
-      "count": 20,
-      "error": null
-    },
-    {
-      "id": "news:政治",
-      "status": "ok",
-      "last_success": "2026-10-20T03:11:01.261237+00:00",
-      "count": 4,
       "error": null
     }
   ]
