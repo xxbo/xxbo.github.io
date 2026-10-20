@@ -32,6 +32,7 @@ jobs:
           node scripts/test_topics.cjs
           node scripts/test_event_tracking.cjs
           node scripts/test_dashboard.cjs
+          node scripts/test_themes.cjs
           python -m unittest discover -s scripts -p "test_*.py"
       - name: Collect public data
         run: python scripts/update_data.py

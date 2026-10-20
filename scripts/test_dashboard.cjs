@@ -6,7 +6,7 @@ async function check(snapshot){
  const nodes={},events={},listeners={},storage=new Map();let fetchCount=0;
  function element(id){return nodes[id]??={innerHTML:'',textContent:'',value:'',checked:false,hidden:false,open:false,isConnected:true,classList:{toggle(){},add(){},remove(){}},addEventListener(t,f){events[id+':'+t]=f},setAttribute(){},querySelector(){return null},focus(){},showModal(){this.open=true},close(){this.open=false}};}
  element('#group-events').checked=true;
- const context={console,Date,URL,setTimeout:()=>0,clearTimeout(){},setInterval(){},fetch:async()=>{fetchCount++;return {ok:true,json:async()=>snapshot}},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},document:{querySelector:element,querySelectorAll:()=>[],getElementById:element,addEventListener(t,f){(listeners[t]??=[]).push(f)},body:{classList:{toggle(){},add(){},remove(){}}}},window:{scrollTo(){},addEventListener(){},matchMedia:()=>({matches:false})},location:{hash:'#/overview'}};
+ const context={console,Date,URL,setTimeout:()=>0,clearTimeout(){},setInterval(){},fetch:async()=>{fetchCount++;return {ok:true,json:async()=>snapshot}},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},document:{documentElement:{setAttribute(){}},querySelector:element,querySelectorAll:()=>[],getElementById:element,addEventListener(t,f){(listeners[t]??=[]).push(f)},body:{classList:{toggle(){},add(){},remove(){}}}},window:{scrollTo(){},addEventListener(){},matchMedia:()=>({matches:false})},location:{hash:'#/overview'}};
  vm.createContext(context);
  for(const f of scripts)vm.runInContext(fs.readFileSync(path.join(root,f),'utf8'),context,{filename:f});
  await new Promise(resolve=>setImmediate(resolve));
