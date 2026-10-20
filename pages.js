@@ -13,6 +13,7 @@ function routeCrumbs(items) { return '<nav class="detail-crumbs" aria-label="面
 function detailShell(crumbs,body) { return routeCrumbs(crumbs)+body; }
 function articleCard(n) { return `<a class="related-item" href="${articleRoute(n)}"><div class="news-meta"><span class="tag ${esc(n.category)}">${esc(n.category)}</span><span>${esc(n.source)}</span><time>${esc(relative(n.published_at))}</time></div><h3>${esc(n.title)}</h3><span class="related-arrow">查看详情 →</span></a>`; }
 function articlePage(n) {
+  readingOpen(n);
   recentArticles[n.id]=n;
   const keys=Object.keys(recentArticles);if(keys.length>100)keys.slice(0,keys.length-100).forEach(k=>delete recentArticles[k]);persist('recentArticles',recentArticles);
   const related=(state.data.news||[]).filter(x=>x.id!==n.id&&x.category===n.category).sort((a,b)=>Number(b.kind==='headline')-Number(a.kind==='headline')).slice(0,5);
@@ -21,7 +22,7 @@ function articlePage(n) {
   return detailShell([{label:'新闻雷达',href:'#/news/全部'},{label:n.category,href:'#/news/'+encodeURIComponent(n.category)},{label:'报道详情'}],`
     <div class="detail-grid"><article class="article-page paper"><a class="back-link" href="${esc(returnRoute)}">← 返回阅读列表</a><div class="news-meta"><a class="tag ${esc(n.category)}" href="#/news/${encodeURIComponent(n.category)}">${esc(n.category)}</a><span>来源：${esc(n.source)}</span></div><h1>${esc(n.title)}</h1><div class="article-meta"><span>发布 ${esc(fmt(n.published_at))}</span><span>采集 ${esc(fmt(n.fetched_at))} · 北京时间</span></div><div class="article-actions"><button class="outline-button" data-detail-save="${esc(n.id)}">${state.saved[n.id]?'◆ 已收藏':'◇ 收藏报道'}</button><button class="outline-button" data-copy-link>复制站内链接</button><span>已加入阅读记录 ✓</span></div>
     <section class="article-summary"><div class="eyebrow">${summary?'SOURCE EXCERPT':'ABOUT THIS REPORT'}</div><h2>${summary?'来源摘要':'报道信息'}</h2>${summary?`<p>${esc(summary)}</p><small>以上为来源提供的简短摘要，非 AI 生成。</small>`:'<p>这条报道来自 <b>'+esc(n.source)+'</b>，当前资讯源只提供标题与链接，尚未提供可在站内展示的摘要或正文。</p><p>你可以先在这里收藏、记录想法、继续浏览同类报道；需要阅读全文时，再打开原始来源。</p>'}<a class="solid-button external-action" href="${safeUrl(n.url)}" target="_blank" rel="noopener noreferrer">前往 ${esc(n.source)} 阅读原文 ↗</a></section>
-    <section class="personal-notes"><div class="section-heading"><h2>我的笔记 <small>PERSONAL NOTES</small></h2><span class="subtle">仅存当前浏览器</span></div><label class="sr-only" for="article-note">这条报道的个人笔记</label><textarea id="article-note" data-note-id="${esc(n.id)}" placeholder="记下你的判断、疑问，或者与持仓相关的线索…" maxlength="10000">${esc(notes[n.id]||'')}</textarea><div class="note-status" id="note-status">输入后自动保存到本机</div></section></article>
+    ${readingFeedbackMarkup(n)}<section class="personal-notes"><div class="section-heading"><h2>我的笔记 <small>PERSONAL NOTES</small></h2><span class="subtle">仅存当前浏览器</span></div><label class="sr-only" for="article-note">这条报道的个人笔记</label><textarea id="article-note" data-note-id="${esc(n.id)}" placeholder="记下你的判断、疑问，或者与持仓相关的线索…" maxlength="10000">${esc(notes[n.id]||'')}</textarea><div class="note-status" id="note-status">输入后自动保存到本机</div></section></article>
     <aside class="detail-aside"><section class="paper related-panel"><div class="section-heading"><h2>继续阅读 <small>RELATED</small></h2></div>${related.map(articleCard).join('')||'<p class="empty">暂无同类报道</p>'}<a class="all-link" href="#/news/${encodeURIComponent(n.category)}">查看全部${esc(n.category)}新闻 →</a></section><section class="detail-tip">从分类到报道，全部留在站内。<br>只有明确标注 ↗ 的链接会打开外部来源。</section></aside></div>`);
 }
 function chartMarkup(m,period=30) {
@@ -56,7 +57,7 @@ function marketPage(m,mode="overview") {
 function renderRoute(scroll=true) {
   let parts;try {parts=location.hash.replace(/^#\/?/,'').split('/').filter(Boolean).map(decodeURIComponent);}catch{parts=['missing'];}
   if(parts[0]==='main')return;
-  const root=parts[0]||'overview';const detail=(root==='news'&&parts[2]==='article')||root==='markets'||root==='calendar'||root==='topics'||root==='health'||root==='events';
+  const root=parts[0]||'overview';const detail=(root==='news'&&parts[2]==='article')||root==='markets'||root==='calendar'||root==='topics'||root==='health'||root==='events'||root==='preferences';
   document.body.classList.toggle('detail-mode',detail);$('#detail-page').hidden=!detail;
   if(!detail) {
     if(!['overview','news','watch','saved'].includes(root)){document.body.classList.add('detail-mode');$('#detail-page').hidden=false;$('#detail-page').innerHTML='<div class="paper empty"><h2>没有找到这个页面</h2><a href="#/overview">返回今日概览 →</a></div>';return;}
@@ -64,7 +65,7 @@ function renderRoute(scroll=true) {
     setView(root);document.querySelectorAll('[data-category]').forEach(b=>{b.classList.toggle('selected',b.dataset.category===state.category);b.setAttribute('aria-pressed',String(b.dataset.category===state.category));});
     document.title=(root==='news'&&state.category!=='全部'?state.category+'新闻':'观潮')+' · XXBO 财经与新闻';return;
   }
-  $('#view-label').innerHTML=root==='markets'?'<a href="#/watch">市场观察</a> / 行情详情':root==='events'?'<a href="#/events">事件追踪</a>':root==='health'?'<a href="#/health">数据健康</a>':root==='topics'?'<a href="#/topics">关注主线</a>':root==='calendar'?'<a href="#/calendar">经济日历</a>':'<a href="#/news/全部">新闻雷达</a> / 报道详情';
+  $('#view-label').innerHTML=root==='markets'?'<a href="#/watch">市场观察</a> / 行情详情':root==='preferences'?'<a href="#/preferences">阅读偏好</a>':root==='events'?'<a href="#/events">事件追踪</a>':root==='health'?'<a href="#/health">数据健康</a>':root==='topics'?'<a href="#/topics">关注主线</a>':root==='calendar'?'<a href="#/calendar">经济日历</a>':'<a href="#/news/全部">新闻雷达</a> / 报道详情';
   document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b.dataset.view===(root==='topics'?'topics':root==='markets'?'watch':root==='news'?'news':'overview')));
   if(!state.loaded){$('#detail-page').innerHTML='<div class="paper empty">正在读取详情…</div>';return;}
   let content;
@@ -72,6 +73,7 @@ function renderRoute(scroll=true) {
   if(root==='markets') {const m=(state.data.markets||[]).find(m=>m.id===parts[1]);if(m)content=marketPage(m,parts[2]||'overview');}
   if(root==='calendar')content=calendarDetailPage(parts[1]);
   if(root==='topics')content=topicsPage(parts[1]);
+  if(root==='preferences')content=preferencesPage();
   if(root==='events')content=eventsPage(parts[1]);
   if(root==='health')content=dataHealthPage();
   $('#detail-page').innerHTML=content||'<div class="paper empty"><h2>这条内容已不在当前快照中</h2><p>定时更新可能替换旧条目。收藏或已打开过的报道会保留在当前浏览器。</p><a href="#/overview">返回今日概览 →</a></div>';
@@ -81,7 +83,7 @@ function renderRoute(scroll=true) {
 document.addEventListener('click',e=>{const a=e.target.closest('a[href^="#/"]');if(a&&a.href.includes('/article/')&&!location.hash.includes('/article/'))returnRoute=location.hash.startsWith('#/')?location.hash:'#/overview';});
 $('#detail-page').addEventListener('click',async e=>{
   const save=e.target.closest('[data-detail-save]'),watch=e.target.closest('[data-watch-toggle]'),period=e.target.closest('[data-period]');
-  if(save){const id=save.dataset.detailSave,n=newsById(id);if(state.saved[id])delete state.saved[id];else if(n)state.saved[id]=n;persist('saved',state.saved);renderRoute(false);}
+  if(save){const id=save.dataset.detailSave,n=newsById(id);if(state.saved[id])delete state.saved[id];else if(n)state.saved[id]=n;persist('saved',state.saved);readingUpdated();renderRoute(false);}
   if(watch){const id=watch.dataset.watchToggle;state.watch=state.watch.includes(id)?state.watch.filter(x=>x!==id):[...state.watch,id];persist('watch',state.watch);renderWatch();renderRoute(false);}
   if(period){chartPeriod=Number(period.dataset.period);renderRoute(false);}
   const techP=e.target.closest('[data-tech-period]'),overlay=e.target.closest('[data-tech-overlay]');if(techP){techPeriod=Number(techP.dataset.techPeriod);renderRoute(false);}if(overlay){techOverlay=overlay.dataset.techOverlay;renderRoute(false);}

@@ -20,6 +20,7 @@ function renderHomeOverview(){
  $('#home-wire').innerHTML=`<div class="section-heading"><h2>最新快讯 <small>LIVE WIRE</small></h2><span class="wire-dot"></span></div><p class="panel-caption">源端发布时间 · 随快照更新</p><div class="home-wire-list">${wire.map(n=>`<a href="${articleRoute(n)}"><time>${esc(fmt(n.published_at))}</time><h3>${esc(n.title)}</h3><span>${esc(n.source)}</span></a>`).join('')||'<p class="empty">快讯源暂不可用</p>'}</div>`;
  renderAssistantBrief();
  renderTopicsHome();
+ renderReadingHome();
  const calendar=document.querySelector('.calendar-panel');if(calendar)calendar.classList.toggle('home-empty-calendar',!(state.data.calendar||[]).length);
 }
 function healthTag(health){return `<span class="health-tag ${health.level}">${esc(health.label)}</span>`;}
