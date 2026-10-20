@@ -68,6 +68,14 @@ def history(market):
     close_hour = 15 if market['region']=='A股' else 16
     for bar in prior:
         bar['partial'] = bar['date']==local.date().isoformat() and local.hour<close_hour
+    session_key = local.date().isoformat() + ('-closed' if local.hour>=close_hour else '-open')
+    try:
+        fetched = dt.datetime.fromisoformat(market.get('history_fetched_at', ''))
+        age = (dt.datetime.now(dt.timezone.utc)-fetched).total_seconds()
+        if len(prior)>=120 and market.get('history_session_key')==session_key and 0<=age<6*3600 and market.get('history_status')=='ok':
+            return market
+    except (TypeError, ValueError):
+        pass
     try:
         payload = json.loads(request(url))
         data = payload.get('data', {}).get(history_code, {})
@@ -86,6 +94,7 @@ def history(market):
         market['history'] = sorted({b['date']:b for b in parsed}.values(), key=lambda b:b['date'])[-320:]
         market['history_status'] = 'ok'
         market['history_fetched_at'] = NOW
+        market['history_session_key'] = session_key
         market['volume_basis'] = '来源原始单位，仅做同指数内相对比较'
     except Exception:
         market['history'] = prior
@@ -300,6 +309,9 @@ def main():
             old_market = next((m for m in previous.get('markets', []) if m['id']==market['id']), {})
             if not market.get('history'):
                 market['history'] = old_market.get('history', [])
+                for key in ('history_fetched_at', 'history_status', 'history_session_key', 'volume_basis'):
+                    if key in old_market:
+                        market[key] = old_market[key]
         result['markets'] = list(pool.map(history, result['markets']))
     unique = {}
     priority = {'headline': 3, 'flash': 2, 'search': 1}

@@ -2,10 +2,10 @@ name: Refresh dashboard
 on:
   workflow_dispatch:
   schedule:
-    - cron: '23 */2 * * *'
+    - cron: '7,27,47 * * * *'
   push:
     branches: [main]
-    paths: ['index.html', 'style.css', 'app.js', 'pages.js', 'technical.js', 'analysis-pages.js', 'scripts/**', '.github/workflows/refresh-dashboard.yml']
+    paths: ['index.html', 'style.css', 'app.js', 'home.js', 'pages.js', 'technical.js', 'analysis-pages.js', 'scripts/**', '.github/workflows/refresh-dashboard.yml']
 permissions:
   contents: write
 concurrency:
@@ -40,7 +40,7 @@ jobs:
       - name: Stage public files
         run: |
           mkdir -p _site/data
-          cp index.html style.css app.js pages.js technical.js analysis-pages.js _site/
+          cp index.html style.css home.js app.js pages.js technical.js analysis-pages.js _site/
           cp data/dashboard.json _site/data/
       - uses: actions/upload-pages-artifact@v3
         with:

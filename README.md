@@ -6,7 +6,7 @@ A buildless personal finance and news dashboard hosted on GitHub Pages.
 - News: Google News RSS searches with The Verge, BBC Chinese RSS and EastMoney fast-news fallbacks. Titles and source links only; no generated summaries.
 - Economic calendar: EastMoney adapter; currently returns no valid report, so the UI explicitly shows unavailable and links to the source page.
 - Watchlist, reading status and saved items: localStorage on the current browser. No private holdings are published.
-- Scheduled snapshot: `.github/workflows/refresh-dashboard.yml`, every two hours at minute 23, plus manual dispatch. GitHub scheduling can be delayed.
+- Scheduled snapshot: `.github/workflows/refresh-dashboard.yml`, every 20 minutes at minutes 7/27/47, plus manual dispatch. GitHub scheduling can be delayed.
 
 ## Refresh locally
 
@@ -48,3 +48,10 @@ Most feeds supply only titles and links; the site clearly indicates when no exce
 - Formula-driven observations describe observed trend, momentum and volatility, without price forecasts or buy/sell scores. Raw source activity units are not normalized across markets.
 - CLS home page's public `top_article` and `hotArticleData` lists are labeled separately as homepage headlines and popular reports. WallstreetCN's official RSS is labeled publisher news, not an inferred headline ranking. News search results and EastMoney flash wire have separate types.
 - Only brief source excerpts (up to 180 characters) accompany source links; no full articles are mirrored.
+
+
+## Daily reading homepage
+
+The homepage presents regional quote observations, a technical summary for each selected watchlist index, a diverse set of recent publisher reports, and the latest flash wire. Regional counts refer only to the small tracked index sample, never to full-market breadth. US, Hong Kong and mainland quotes retain their own timestamps. Headlines are selected from publisher lists; no causal market impact is inferred from adjacent news.
+
+The update workflow is scheduled every 20 minutes. Daily history is cached for up to 6 hours within the same market date/open-or-closed phase and refreshed across phase changes. Quote and news snapshots refresh independently of historical bars. Schedule timing is approximate; front-end refresh reloads the latest published data.
