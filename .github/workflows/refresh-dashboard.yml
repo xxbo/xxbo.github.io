@@ -5,7 +5,7 @@ on:
     - cron: '23 */2 * * *'
   push:
     branches: [main]
-    paths: ['scripts/update_data.py', '.github/workflows/refresh-dashboard.yml']
+    paths: ['index.html', 'style.css', 'app.js', 'scripts/update_data.py', '.github/workflows/refresh-dashboard.yml']
 permissions:
   contents: write
 concurrency:
