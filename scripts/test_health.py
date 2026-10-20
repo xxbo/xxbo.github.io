@@ -86,6 +86,23 @@ class HealthTests(unittest.TestCase):
         self.assertEqual(row['time'],'21:30');self.assertEqual(row['source_timezone'],'America/Chicago')
         self.assertIn('不包含全部',row['coverage_note']);self.assertIn('FRED',row['source'])
 
+    def test_core_calendar_keeps_partial_results_and_unknown_hours(self):
+        from economic_calendar import collect_fred
+        from urllib.parse import urlparse,parse_qs
+        def request(url):
+            rid=int(parse_qs(urlparse(url).query)['rid'][0])
+            if rid==11 or (rid==10 and 'alfred.' not in url):raise TimeoutError('fixture timeout')
+            return ('Sort By: <table><tr><td>Tuesday November 10, 2026</td></tr>'
+                    '<tr><td>7:30 am</td><td><a href="/release?rid='+str(rid)+'&rd=2026-11-10">Title</a></td></tr></table>'
+                    +('' if 'alfred.' in url else ' All times are US Central Time.'))
+        rows=collect_fred(request,NOW)
+        self.assertEqual(len(rows),4)
+        self.assertTrue(all(r.get('component_warning') for r in rows))
+        alfred=next(r for r in rows if 'ALFRED' in r['source'])
+        self.assertEqual(alfred['time'],'');self.assertTrue(alfred['date_only'])
+        self.assertEqual(alfred['source_timezone'],'')
+        _,warnings=validate_calendar(rows,NOW);self.assertTrue(warnings)
+
     def test_expired_schedule_is_not_healthy_empty(self):
         raw=b'BEGIN:VCALENDAR\nBEGIN:VEVENT\nUID:x\nDTSTART:20230101T123000Z\nSUMMARY:Old\nEND:VEVENT\nEND:VCALENDAR'
         with self.assertRaises(DataInvalid):collect_calendar('bea',lambda url:raw,NOW)

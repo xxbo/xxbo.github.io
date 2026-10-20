@@ -252,9 +252,9 @@ def collect_bls_html(request,now):
 
 FRED_RELEASES={10:'Consumer Price Index',50:'Employment Situation',46:'Producer Price Index',192:'Job Openings and Labor Turnover Survey',11:'Employment Cost Index'}
 
-def parse_fred(payload, now, url, release_id):
+def parse_fred(payload, now, url, release_id, dates_only=False):
     text=payload.decode('utf-8') if isinstance(payload,bytes) else payload
-    if 'All times are US Central Time' not in text:raise ValueError('FRED 时区声明未找到')
+    if not dates_only and 'All times are US Central Time' not in text:raise ValueError('FRED 时区声明未找到')
     table=re.search(r'<table[^>]*class="[^"]*release-calendar[^"]*".*?</table>',text,re.S)
     # Providers currently identify the table with release-dates-table; constrain to the data tbody.
     start=text.find('Sort By:')
@@ -264,12 +264,15 @@ def parse_fred(payload, now, url, release_id):
         date_match=re.search(r'(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)\s+([A-Za-z]+)\s+(\d{1,2}),\s+(\d{4})',clean(tr))
         if date_match:
             date=dt.datetime.strptime(' '.join(date_match.groups()),'%A %B %d %Y').date();continue
-        if not re.search(r'href="/release\?rid='+str(release_id)+r'"',tr):continue
+        if not re.search(r'href="/release\?rid='+str(release_id)+r'(?:"|&)',tr):continue
         clock=re.search(r'(\d{1,2}:\d{2})\s*(am|pm)',clean(tr),re.I)
-        if not date or not clock:raise ValueError('FRED 日期或发布时间未找到')
-        local=dt.datetime.combine(date,dt.datetime.strptime(clock[1]+' '+clock[2].upper(),'%I:%M %p').time(),ZoneInfo('America/Chicago'))
+        if not date or (not dates_only and not clock):raise ValueError('FRED 日期或发布时间未找到')
+        local=date if dates_only else dt.datetime.combine(date,dt.datetime.strptime(clock[1]+' '+clock[2].upper(),'%I:%M %p').time(),ZoneInfo('America/Chicago'))
         row=event(FRED_RELEASES[release_id],local,'bls',now,url)
-        row['source']='圣路易斯联储 FRED（BLS 核心指标）'
+        row['source']='圣路易斯联储 ALFRED（BLS 核心指标日期）' if dates_only else '圣路易斯联储 FRED（BLS 核心指标）'
+        if dates_only:
+            row['schedule_note']+=' 此备用通道未核验具体时刻的时区，仅展示来源日期。'
+            row['source_timezone']='';row['timezone']=''
         row['coverage_note']='备用仅覆盖 CPI、PPI、非农、JOLTS 与雇佣成本，不包含全部 BLS 日程。'
         rows.append(row)
     if not rows and not re.search(r'(?:Releases\s+0\s*-\s*0|No releases|No release dates)',clean(area),re.I):
@@ -278,12 +281,29 @@ def parse_fred(payload, now, url, release_id):
 
 
 def collect_fred(request, now):
-    from concurrent.futures import ThreadPoolExecutor
+    from concurrent.futures import ThreadPoolExecutor,as_completed
     today=dt.datetime.fromisoformat(now).astimezone(SH).date();end=today+dt.timedelta(days=45)
     def one(ident):
-        url='https://fred.stlouisfed.org/releases/calendar?'+urllib.parse.urlencode({'rid':ident,'vs':today.isoformat(),'ve':end.isoformat()})
-        return parse_fred(request(url),now,url,ident)
-    with ThreadPoolExecutor(max_workers=5) as pool:rows=[r for group in pool.map(one,FRED_RELEASES) for r in group]
+        query=urllib.parse.urlencode({'rid':ident,'vs':today.isoformat(),'ve':end.isoformat()})
+        url='https://fred.stlouisfed.org/releases/calendar?'+query
+        try:
+            return parse_fred(request(url),now,url,ident),None
+        except Exception as first:
+            alternate='https://alfred.stlouisfed.org/releases/calendar?'+query
+            try:
+                return parse_fred(request(alternate),now,alternate,ident,dates_only=True),None
+            except Exception as second:
+                return [],FRED_RELEASES[ident]+': '+str(first)[:70]+' / ALFRED: '+str(second)[:70]
+    rows=[];errors=[]
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        futures=[pool.submit(one,ident) for ident in FRED_RELEASES]
+        for future in as_completed(futures):
+            group,error=future.result();rows.extend(group)
+            if error:errors.append(error)
+    if errors and not rows:raise ValueError('核心指标备用均未取得：'+'; '.join(errors))
+    if errors:
+        note='部分指标未取得：'+'; '.join(errors)
+        for row in rows:row['component_warning']=note
     return filter_window(rows,now)
 
 
@@ -298,7 +318,7 @@ def canonical_calendar(rows):
 
 def calendar_candidates(key, request, now, previous):
     primary=(SOURCES[key][0]+' / 官方日程',lambda:canonical_calendar(collect_calendar(key,request,now)))
-    if key=='bls':return [primary,('BLS 官方 HTML 日程',lambda:canonical_calendar(collect_bls_html(request,now))),('FRED / BLS 核心指标',lambda:canonical_calendar(collect_fred(request,now)))]
+    if key=='bls':return [primary,('BLS 官方 HTML 日程',lambda:canonical_calendar(collect_bls_html(request,now))),('FRED / ALFRED 核心指标',lambda:canonical_calendar(collect_fred(request,now)))]
     if key=='bea':return [primary,('BEA 官方 JSON 日程',lambda:canonical_calendar(collect_bea_json(request,now)))]
     if key=='nbs':
         targets=[r['url'] for r in previous if r.get('url','').startswith('https://www.stats.gov.cn/')]
