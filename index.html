@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="XXBO 的个人财经与新闻工作台：关注市场，理解变化。">
 <meta name="color-scheme" content="light"><title>观潮 · XXBO 财经与新闻</title>
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 <a class="skip" href="#main">跳到主要内容</a>
@@ -27,8 +27,10 @@
     <section id="market-section" aria-labelledby="market-title"><div class="section-heading"><h2 id="market-title">市场温度 <small>MARKET PULSE</small></h2><span class="subtle">各市场最近报价 · 非实时</span></div><div class="markets" id="markets"><div class="empty">正在读取行情快照…</div></div></section>
     <div id="data-notice" class="data-notice" role="status"></div>
     <section id="detail-page" hidden tabindex="-1" aria-label="详情内容"></section>
+    <section id="headlines-section" aria-labelledby="headlines-title"><div class="section-heading"><h2 id="headlines-title">头条要闻 <small>EDITORIAL PICKS</small></h2><span class="subtle">媒体头条与热门报道 · 保留来源筛选标签</span></div><div id="headlines-grid"></div></section>
     <div class="columns"><section class="news-panel" id="news-section" aria-labelledby="news-title">
       <div class="section-heading"><h2 id="news-title">值得关注 <small>NEWS RADAR</small></h2><span id="news-total" class="subtle"></span></div>
+      <div class="news-tiers" role="group" aria-label="资讯类型"><button data-tier="headline" class="selected">媒体要闻</button><button data-tier="all">全部资讯</button><button data-tier="flash">即时快讯</button></div>
       <div class="news-tools"><div class="tabs" role="group" aria-label="新闻分类"><button class="selected" data-category="全部">全部</button><button data-category="科技">科技</button><button data-category="金融">金融</button><button data-category="全球">全球</button><button data-category="政治">政治</button></div><label class="search"><span>⌕</span><input id="search" type="search" placeholder="搜索新闻" aria-label="搜索新闻标题或来源"></label></div>
       <div class="filter-line"><span id="filter-note">按发布时间排序 · 点击标题查看站内详情</span><label><input id="unread" type="checkbox"> 只看未读</label></div>
       <div id="news-list" aria-live="polite"><div class="empty">正在读取新闻…</div></div><button id="load-more" class="load-more" hidden>查看更多新闻 ↓</button>
@@ -43,6 +45,8 @@
 </main>
 <dialog id="sources-dialog"><div class="dialog-heading"><div><span class="eyebrow">TRANSPARENCY</span><h2>数据来源与更新状态</h2></div><button id="close-sources" aria-label="关闭">×</button></div><p>页面展示公开来源的报价快照与新闻标题，点击前往来源阅读。抓取时间不等于行情时间；失败时保留上次成功数据。</p><div id="source-status"></div><p class="subtle">定时任务计划每两小时更新，实际运行可能延迟。新闻分类采用检索词及简单规则，可能有交叉；第一版不生成 AI 摘要或投资建议。公开站点不保存个人持仓。</p><a href="https://github.com/xxbo/xxbo.github.io/actions" target="_blank" rel="noopener noreferrer">查看更新任务 ↗</a></dialog>
 <div id="toast" role="status"></div>
-<script src="app.js?v=2" defer></script>
-<script src="pages.js?v=2" defer></script>
+<script src="technical.js?v=3" defer></script>
+<script src="app.js?v=3" defer></script>
+<script src="analysis-pages.js?v=3" defer></script>
+<script src="pages.js?v=3" defer></script>
 </body></html>

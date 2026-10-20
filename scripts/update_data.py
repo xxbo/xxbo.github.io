@@ -25,7 +25,7 @@ MARKETS = [
 
 
 def request(url):
-    req = urllib.request.Request(url, headers={'User-Agent': UA, 'Referer': 'https://finance.eastmoney.com/'})
+    req = urllib.request.Request(url, headers={'User-Agent': UA, 'Referer': 'https://gu.qq.com/' if 'gtimg.cn' in url else 'https://finance.eastmoney.com/'})
     with urllib.request.urlopen(req, timeout=18) as res:
         return res.read()
 
@@ -59,18 +59,37 @@ def market_snapshot():
 
 
 def history(market):
-    # Daily close only, unadjusted index data. Failure does not invalidate quotes.
+    from zoneinfo import ZoneInfo
     code = market['id']
-    if not code.startswith(('sh', 'sz')):
-        return market
-    url = 'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?' + urllib.parse.urlencode({'param': f'{code},day,,,40,qfq'})
+    history_code = 'us.IXIC' if code=='usIXIC' else code
+    url = f'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={history_code},day,,,320,qfq'
+    prior = market.get('history', [])
+    local = dt.datetime.now(ZoneInfo('America/New_York') if market['region']=='美股' else ZoneInfo('Asia/Shanghai'))
+    close_hour = 15 if market['region']=='A股' else 16
+    for bar in prior:
+        bar['partial'] = bar['date']==local.date().isoformat() and local.hour<close_hour
     try:
         payload = json.loads(request(url))
-        data = payload.get('data', {}).get(code, {})
+        data = payload.get('data', {}).get(history_code, {})
         bars = data.get('day') or data.get('qfqday') or []
-        market['history'] = [{'date': b[0], 'close': float(b[2])} for b in bars if len(b) > 2][-30:]
+        local = dt.datetime.now(ZoneInfo('America/New_York') if market['region']=='美股' else ZoneInfo('Asia/Shanghai'))
+        close_hour = 15 if market['region']=='A股' else 16
+        parsed = []
+        for b in bars:
+            if len(b)<6 or not number(b[2]) or number(b[2])<=0:
+                continue
+            parsed.append({'date': b[0], 'open': number(b[1]), 'close': number(b[2]),
+                           'high': number(b[3]), 'low': number(b[4]), 'volume': number(b[5]),
+                           'partial': b[0]==local.date().isoformat() and local.hour<close_hour})
+        if not parsed or len(parsed)<min(len(prior),20):
+            raise ValueError('daily history is incomplete')
+        market['history'] = sorted({b['date']:b for b in parsed}.values(), key=lambda b:b['date'])[-320:]
+        market['history_status'] = 'ok'
+        market['history_fetched_at'] = NOW
+        market['volume_basis'] = '来源原始单位，仅做同指数内相对比较'
     except Exception:
-        pass
+        market['history'] = prior
+        market['history_status'] = 'unavailable' if not prior else 'stale'
     return market
 
 
@@ -140,6 +159,81 @@ def news_feed(category, query):
     return rows
 
 
+def classify(title):
+    if any(w in title for w in ('AI', '人工智能', '大模型', 'OpenAI', '芯片', '半导体', '苹果', '英伟达', '算力')):
+        return '科技'
+    if any(w in title for w in ('俄', '乌克兰', '伊朗', '中东', '战争', '以色列')):
+        return '全球'
+    if any(w in title for w in ('国务院', '证监会', '吴清', '潘功胜', '政策', '央行', '财政部')):
+        return '政治'
+    return '金融'
+
+
+def cls_headlines():
+    content = request('https://www.cls.cn/').decode('utf-8')
+    match = re.search(r'<script[^>]+id="__NEXT_DATA__"[^>]*>(.*?)</script>', content, re.S)
+    if not match:
+        raise ValueError('财联社首页结构发生变化')
+    props = json.loads(match.group(1))['props']['pageProps']
+    top = props.get('assembleData', {}).get('top_article', [])
+    hot = props.get('hotArticleData', [])
+    rows, seen = [], set()
+    for label, articles in [('首页头条', top), ('热门报道', hot[:10])]:
+        for item in articles:
+            ident = str(item.get('id') or '')
+            if not ident or ident in seen or item.get('is_ad'):
+                continue
+            seen.add(ident)
+            title = clean(item.get('title'))
+            if not title:
+                continue
+            published = dt.datetime.fromtimestamp(item['ctime'], dt.timezone.utc).isoformat() if item.get('ctime') else None
+            rows.append({'id': 'cls:'+ident, 'title': title, 'summary': clean(item.get('brief'))[:180],
+                         'url': 'https://www.cls.cn/detail/'+ident, 'source': '财联社',
+                         'category': classify(title), 'published_at': published, 'fetched_at': NOW,
+                         'kind': 'headline', 'selection': label, 'featured': label=='首页头条'})
+    if not rows:
+        raise ValueError('财联社未提供头条列表')
+    return rows
+
+
+def wallstreet_headlines():
+    root = ET.fromstring(request('https://dedicated.wallstreetcn.com/rss.xml'))
+    rows = []
+    for item in root.findall('./channel/item')[:16]:
+        title, link = clean(item.findtext('title')), item.findtext('link') or ''
+        if not title or not link.startswith('https://wallstreetcn.com/'):
+            continue
+        try:
+            published = email.utils.parsedate_to_datetime(item.findtext('pubDate')).isoformat()
+        except (TypeError, ValueError):
+            published = None
+        rows.append({'id': 'wsc:'+hashlib.sha256(link.encode()).hexdigest()[:16],
+                     'title': title, 'summary': clean(item.findtext('description'))[:180],
+                     'url': link, 'source': '华尔街见闻', 'category': classify(title),
+                     'published_at': published, 'fetched_at': NOW, 'kind': 'headline',
+                     'selection': '媒体资讯', 'featured': False})
+    if not rows:
+        raise ValueError('华尔街见闻 RSS 未返回条目')
+    return rows
+
+
+def flash_feed():
+    url = 'https://np-listapi.eastmoney.com/comm/web/getFastNewsList?client=web&biz=web_724&fastColumn=102&pageSize=30&sortEnd=&req_trace=1'
+    data = json.loads(request(url))
+    rows = []
+    for item in (data.get('data') or {}).get('fastNewsList', []):
+        code = str(item.get('code') or '')
+        if code:
+            rows.append({'id':'em:'+code,'title':clean(item.get('title')),'summary':clean(item.get('summary'))[:180],
+                         'url':'https://finance.eastmoney.com/a/'+code+'.html','source':'东方财富快讯',
+                         'category':'金融','published_at':str(item.get('showTime') or '').replace(' ', 'T')+'+08:00',
+                         'fetched_at':NOW,'kind':'flash','selection':'即时快讯'})
+    if not rows:
+        raise ValueError('快讯源无有效数据')
+    return rows
+
+
 def calendar_snapshot():
     params = {'reportName': 'RPT_ECONOMICCALENDAR',
               'columns': 'PUBLISH_DATE,TIME,COUNTRY,INDICATOR,STAR,FORECAST,PREVIOUS,ACTUAL,UNIT',
@@ -173,8 +267,9 @@ def main():
         previous = {}
     result = {'generated_at': NOW, 'markets': previous.get('markets', []),
               'news': [], 'calendar': previous.get('calendar', []), 'sources': []}
-    jobs = {'markets': market_snapshot, 'calendar': calendar_snapshot}
-    queries = {'科技': '人工智能 科技', '金融': '财经 股市', '全球': '国际 局势', '政治': '中国 政策 经济'}
+    jobs = {'markets': market_snapshot, 'calendar': calendar_snapshot,
+            'editorial:cls': cls_headlines, 'editorial:wsc': wallstreet_headlines, 'wire:eastmoney': flash_feed}
+    queries = {'科技': '大模型 OR 半导体 OR OpenAI OR 英伟达', '金融': 'A股 OR 港股 OR 美股 OR 利率', '全球': '俄乌 OR 中东 OR 地缘政治', '政治': '国务院 OR 央行 OR 财政部 OR 中国政策'}
     for category, query in queries.items():
         jobs['news:' + category] = lambda c=category, q=query: news_feed(c, q)
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
@@ -183,7 +278,10 @@ def main():
             key = futures[future]
             try:
                 rows = future.result()
-                if key.startswith('news:'):
+                if key.startswith(('news:', 'editorial:', 'wire:')):
+                    for row in rows:
+                        row.setdefault('kind', 'search')
+                        row['feed_id'] = key
                     result['news'].extend(rows)
                 else:
                     result[key] = rows
@@ -191,16 +289,27 @@ def main():
                                           'count': len(rows), 'error': None})
             except Exception as e:
                 old = next((s for s in previous.get('sources', []) if s['id'] == key), {})
-                if key.startswith('news:'):
-                    result['news'].extend(n for n in previous.get('news', []) if n['category'] == key[5:])
+                if key.startswith(('news:', 'editorial:', 'wire:')):
+                    result['news'].extend(n for n in previous.get('news', []) if n.get('feed_id')==key)
                 result['sources'].append({'id': key, 'status': 'error',
                                           'last_success': old.get('last_success'), 'error': str(e)[:160]})
                 print(f'{key}: unavailable ({type(e).__name__})', flush=True)
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
+        for market in result['markets']:
+            old_market = next((m for m in previous.get('markets', []) if m['id']==market['id']), {})
+            if not market.get('history'):
+                market['history'] = old_market.get('history', [])
         result['markets'] = list(pool.map(history, result['markets']))
+    unique = {}
+    priority = {'headline': 3, 'flash': 2, 'search': 1}
+    for item in result['news']:
+        old = unique.get(item['id'])
+        if old is None or priority.get(item.get('kind'), 0)>priority.get(old.get('kind'), 0):
+            unique[item['id']] = item
+    result['news'] = list(unique.values())
     result['news'].sort(key=lambda n: n.get('published_at') or '', reverse=True)
     path.parent.mkdir(exist_ok=True)
-    path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + '\n')
+    path.write_text(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False) + '\n')
     print(f"Snapshot: {len(result['markets'])} markets, {len(result['news'])} headlines, {len(result['calendar'])} calendar events", flush=True)
 
 

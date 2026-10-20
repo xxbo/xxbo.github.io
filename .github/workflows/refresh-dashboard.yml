@@ -5,7 +5,7 @@ on:
     - cron: '23 */2 * * *'
   push:
     branches: [main]
-    paths: ['index.html', 'style.css', 'app.js', 'pages.js', 'scripts/update_data.py', '.github/workflows/refresh-dashboard.yml']
+    paths: ['index.html', 'style.css', 'app.js', 'pages.js', 'technical.js', 'analysis-pages.js', 'scripts/**', '.github/workflows/refresh-dashboard.yml']
 permissions:
   contents: write
 concurrency:
@@ -20,6 +20,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Verify indicator calculations
+        run: node scripts/test_technical.cjs
       - name: Collect public data
         run: python scripts/update_data.py
       - name: Commit snapshot
@@ -35,7 +40,7 @@ jobs:
       - name: Stage public files
         run: |
           mkdir -p _site/data
-          cp index.html style.css app.js pages.js _site/
+          cp index.html style.css app.js pages.js technical.js analysis-pages.js _site/
           cp data/dashboard.json _site/data/
       - uses: actions/upload-pages-artifact@v3
         with:
