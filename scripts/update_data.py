@@ -4,6 +4,7 @@ import datetime as dt
 import email.utils
 import hashlib
 import html
+from html.parser import HTMLParser
 import json
 import pathlib
 import re
@@ -105,6 +106,57 @@ def history(market):
 def clean(value):
     return re.sub(r'\s+', ' ', html.unescape(re.sub('<[^>]*>', '', value or ''))).strip()
 
+
+
+class FeedText(HTMLParser):
+    """Convert publisher-provided RSS HTML to inert, paragraph-separated text."""
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.parts, self.skip = [], 0
+    def handle_starttag(self, tag, attrs):
+        if tag in ('script', 'style', 'iframe', 'object'):
+            self.skip += 1
+        if not self.skip and tag in ('p', 'div', 'br', 'li', 'h1', 'h2', 'h3', 'blockquote', 'tr'):
+            self.parts.append('\n')
+    def handle_endtag(self, tag):
+        if tag in ('script', 'style', 'iframe', 'object'):
+            self.skip = max(0, self.skip - 1)
+        elif not self.skip and tag in ('p', 'div', 'li', 'h1', 'h2', 'h3', 'blockquote', 'tr'):
+            self.parts.append('\n')
+    def handle_data(self, data):
+        if not self.skip:
+            self.parts.append(data)
+
+
+def reader_fields(raw, rss_url):
+    parser = FeedText()
+    parser.feed(raw or '')
+    lines = [re.sub(r'\s+', ' ', line).strip() for line in ''.join(parser.parts).split('\n')]
+    text = '\n\n'.join(line for line in lines if line)
+    return {'reader_text': text[:14000], 'reader_kind': 'rss',
+            'reader_truncated': len(text)>14000, 'rss_url': rss_url,
+            'summary': re.sub(r'\s+', ' ', text)[:180]}
+
+
+def publisher_feed(url, source, limit=8):
+    rows = []
+    root = ET.fromstring(request(url))
+    for item in root.findall('./channel/item')[:limit]:
+        title, link = clean(item.findtext('title')), (item.findtext('link') or '').strip()
+        if not title or not link.startswith('https://'):
+            continue
+        try:
+            published = email.utils.parsedate_to_datetime(item.findtext('pubDate')).isoformat()
+        except (TypeError, ValueError):
+            published = None
+        raw = item.findtext('{http://purl.org/rss/1.0/modules/content/}encoded') or item.findtext('description') or ''
+        rows.append({'id': 'rss:'+hashlib.sha256(link.encode()).hexdigest()[:20],
+                     'title': title, 'url': link, 'source': source, 'category': '科技',
+                     'published_at': published, 'fetched_at': NOW, 'kind': 'headline',
+                     'selection': '科技媒体 RSS', **reader_fields(raw, url)})
+    if not rows:
+        raise ValueError(source+' RSS 未返回条目')
+    return rows
 
 def rss_rows(payload, category):
     root = ET.fromstring(payload)
@@ -222,7 +274,8 @@ def wallstreet_headlines():
                      'title': title, 'summary': clean(item.findtext('description'))[:180],
                      'url': link, 'source': '华尔街见闻', 'category': classify(title),
                      'published_at': published, 'fetched_at': NOW, 'kind': 'headline',
-                     'selection': '媒体资讯', 'featured': False})
+                     'selection': '媒体资讯', 'featured': False,
+                     **reader_fields(item.findtext('description'), 'https://dedicated.wallstreetcn.com/rss.xml')})
     if not rows:
         raise ValueError('华尔街见闻 RSS 未返回条目')
     return rows
@@ -278,6 +331,8 @@ def main():
     result = {'generated_at': NOW, 'markets': previous.get('markets', []),
               'news': [], 'calendar': previous.get('calendar', []), 'sources': []}
     jobs = {'markets': market_snapshot, 'calendar': calendar_snapshot,
+            'editorial:ifanr': lambda: publisher_feed('https://www.ifanr.com/feed', '爱范儿'),
+            'editorial:geekpark': lambda: publisher_feed('https://www.geekpark.net/rss', '极客公园'),
             'editorial:cls': cls_headlines, 'editorial:wsc': wallstreet_headlines, 'wire:eastmoney': flash_feed}
     queries = {'科技': '大模型 OR 半导体 OR OpenAI OR 英伟达', '金融': 'A股 OR 港股 OR 美股 OR 利率', '全球': '俄乌 OR 中东 OR 地缘政治', '政治': '国务院 OR 央行 OR 财政部 OR 中国政策'}
     for category, query in queries.items():
