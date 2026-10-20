@@ -12,10 +12,18 @@ async function check(snapshot){
  await new Promise(resolve=>setImmediate(resolve));
  assert(!element('#data-notice').textContent.includes('暂时无法读取快照'));
  assert(element('#assistant-brief').innerHTML.includes('YOUR DAILY BRIEF'));
- assert(element('#home-topics').innerHTML.includes('topic-card'));
+ assert(element('#home-topics').innerHTML.includes('topic-card'));assert(element('#home-technical').innerHTML.includes('MARKET CONTEXT'));
  assert(storage.has('current:briefVisit'));
  for(const [route,expected] of [['#/events','EVENT TRACKER'],['#/health','DATA RELIABILITY'],['#/topics/chips','近期变化与报道'],['#/calendar','来源覆盖与状态']]){
   context.location.hash=route;vm.runInContext('renderRoute(false)',context);assert(element('#detail-page').innerHTML.includes(expected),route);
+ }
+ if(snapshot.markets?.length){
+  vm.runInContext("location.hash='#/markets/'+encodeURIComponent(state.data.markets[0].id)+'/technical';renderRoute(false)",context);
+  assert(element('#detail-page').innerHTML.includes('READ THE CONTEXT'));
+  assert(element('#detail-page').innerHTML.includes('相对强弱'));
+  assert(element('#detail-page').innerHTML.includes('近期信息背景与待验证节点'));
+  vm.runInContext("contextCompareChoices[state.data.markets[0].id]='usIXIC';contextComparePeriod=60;renderRoute(false)",context);
+  assert(element('#detail-page').innerHTML.includes('跨市场观察'));
  }
  if(snapshot.calendar?.length){vm.runInContext("location.hash='#/calendar/'+encodeURIComponent(eventId(state.data.calendar[0]));renderRoute(false)",context);assert(element('#detail-page').innerHTML.includes('查看官方安排'));}
  if(snapshot.events?.length){
