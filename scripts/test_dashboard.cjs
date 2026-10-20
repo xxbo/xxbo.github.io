@@ -13,6 +13,7 @@ async function check(snapshot){
  assert(!element('#data-notice').textContent.includes('暂时无法读取快照'));
  assert(element('#assistant-brief').innerHTML.includes('YOUR DAILY BRIEF'));
  assert(element('#home-topics').innerHTML.includes('topic-card'));assert(element('#home-technical').innerHTML.includes('MARKET CONTEXT'));
+ const homeKeys=vm.runInContext('state.homePickedIds',context);assert.equal(homeKeys.length,new Set(homeKeys).size,'home article IDs must not repeat across sections');
  assert(storage.has('current:briefVisit'));assert(element('#personal-reading').innerHTML.includes('YOUR READING DESK'));
  for(const [route,expected] of [['#/preferences','YOUR READING PREFERENCES'],['#/events','EVENT TRACKER'],['#/health','DATA RELIABILITY'],['#/topics/chips','近期变化与报道'],['#/calendar','来源覆盖与状态']]){
   context.location.hash=route;vm.runInContext('renderRoute(false)',context);assert(element('#detail-page').innerHTML.includes(expected),route);
@@ -43,6 +44,7 @@ async function check(snapshot){
  }
  if(snapshot.news?.length){
   vm.runInContext('readingProfile=Reading.clean({});openReader(state.data.news[0])',context);assert(element('#reader-content').innerHTML.includes('reader-title'));assert(element('#reader-content').innerHTML.includes('少看这类'));
+  if(snapshot.news.length>1){vm.runInContext('readerQueue=state.data.news.slice(0,3).map(n=>n.id);openReader(state.data.news[0],{keepQueue:true});readerMove(1)',context);assert.equal(vm.runInContext('readerArticle.id',context),snapshot.news[1].id);vm.runInContext('readerBack()',context);assert.equal(vm.runInContext('readerArticle.id',context),snapshot.news[0].id);vm.runInContext('readingProfile=Reading.clean({});openReader(state.data.news[0])',context);}
   const first=JSON.parse(storage.get('current:readingProfile'));assert.equal(first.reads.length,1);assert(!JSON.stringify(first).includes(snapshot.news[0].title));
   vm.runInContext('openReader(state.data.news[0])',context);assert.equal(JSON.parse(storage.get('current:readingProfile')).reads.length,1);
   for(const handler of listeners.change||[])handler({target:{id:'reading-learning',checked:false,matches:()=>false}});
