@@ -1,27 +1,46 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Hello World — xxbo 的第一个 GitHub Pages 网页。">
-  <title>Hello World · xxbo</title>
-  <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100svh; display: grid; place-items: center; background: #0b101b; color: #f1f5f9; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    main { padding: 32px 24px; text-align: center; }
-    .label { color: #7dd3fc; font-size: 13px; letter-spacing: .16em; }
-    h1 { margin: 20px 0; font-size: clamp(48px, 10vw, 96px); letter-spacing: -.06em; line-height: 1.1; }
-    p { color: #a8b6cc; line-height: 1.8; }
-    a { display: inline-block; margin-top: 24px; color: #7dd3fc; text-underline-offset: 5px; }
-    a:focus-visible { outline: 2px solid #7dd3fc; outline-offset: 6px; }
-  </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="XXBO 的个人财经与新闻工作台：关注市场，理解变化。">
+<meta name="color-scheme" content="light"><title>观潮 · XXBO 财经与新闻</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main>
-    <div class="label">XXBO / GITHUB PAGES</div>
-    <h1>Hello World<span style="color:#7dd3fc">.</span></h1>
-    <p>你好，世界。<br>这是我的第一个 GitHub Pages 网页。</p>
-    <a href="https://github.com/xxbo/xxbo.github.io">查看源代码 ↗</a>
-  </main>
-</body>
-</html>
+<a class="skip" href="#main">跳到主要内容</a>
+<aside class="sidebar">
+  <a class="brand" href="./" aria-label="观潮首页"><span class="brand-icon">≈</span><span>观潮<small>THE DAILY CURRENT</small></span></a>
+  <div class="workspace">XXBO / PERSONAL DESK</div>
+  <nav aria-label="主导航">
+    <button class="nav active" data-view="overview"><span>◫</span> 今日概览 <i>01</i></button>
+    <button class="nav" data-view="news"><span>▤</span> 新闻雷达 <i>02</i></button>
+    <button class="nav" data-view="watch"><span>◎</span> 我的自选 <i>03</i></button>
+    <button class="nav" data-view="saved"><span>◇</span> 收藏夹 <i id="saved-count">0</i></button>
+  </nav>
+  <div class="side-note"><span class="live-dot"></span> 少一点噪声，多一点视野。<p>把市场与世界的变化，<br>放在同一个视野里。</p></div>
+  <div class="side-bottom"><button id="source-button">◉ 数据来源与状态</button><a href="https://github.com/xxbo/xxbo.github.io" target="_blank" rel="noopener noreferrer">GitHub ↗</a><div class="profile"><span>X</span><div>XXBO<small>你的个人观察站 · V1</small></div></div></div>
+</aside>
+<main id="main">
+  <header class="topbar"><span class="breadcrumb">个人工作台 <span>/</span> <b id="view-label">今日概览</b></span><div class="top-actions"><span id="clock"></span><button id="refresh" title="重新读取已发布的数据">↻ <span>刷新</span></button></div></header>
+  <div class="content">
+    <section class="intro"><div><div class="eyebrow" id="date">THE DAILY BRIEF</div><h1 id="page-title">把握变化，保持自己的节奏<span>。</span></h1><p id="page-description">市场有起伏，世界在流动。在这里，找到值得关注的线索。</p></div><div class="edition">观潮日报<span>PERSONAL EDITION</span></div></section>
+    <section id="market-section" aria-labelledby="market-title"><div class="section-heading"><h2 id="market-title">市场温度 <small>MARKET PULSE</small></h2><span class="subtle">各市场最近报价 · 非实时</span></div><div class="markets" id="markets"><div class="empty">正在读取行情快照…</div></div></section>
+    <div id="data-notice" class="data-notice" role="status"></div>
+    <div class="columns"><section class="news-panel" id="news-section" aria-labelledby="news-title">
+      <div class="section-heading"><h2 id="news-title">值得关注 <small>NEWS RADAR</small></h2><span id="news-total" class="subtle"></span></div>
+      <div class="news-tools"><div class="tabs" role="group" aria-label="新闻分类"><button class="selected" data-category="全部">全部</button><button data-category="科技">科技</button><button data-category="金融">金融</button><button data-category="全球">全球</button><button data-category="政治">政治</button></div><label class="search"><span>⌕</span><input id="search" type="search" placeholder="搜索新闻" aria-label="搜索新闻标题或来源"></label></div>
+      <div class="filter-line"><span id="filter-note">按发布时间排序 · 点击标题阅读原文</span><label><input id="unread" type="checkbox"> 只看未读</label></div>
+      <div id="news-list" aria-live="polite"><div class="empty">正在读取新闻…</div></div><button id="load-more" class="load-more" hidden>查看更多新闻 ↓</button>
+    </section>
+    <aside class="right-column">
+      <section class="watch-panel"><div class="section-heading"><h2>自选观察 <small>WATCHLIST</small></h2><button id="edit-watch" class="text-button">编辑</button></div><p class="panel-caption">关注你的主线，而不是每一次波动。</p><div id="watch-list"></div><div id="watch-editor" hidden><p class="subtle">选择关注的市场</p><div id="watch-options"></div><button id="save-watch" class="solid-button">保存自选</button></div><div class="private-note">⌁ 自选与收藏仅保存在当前浏览器</div></section>
+      <section class="calendar-panel"><div class="section-heading"><h2>数据日历 <small>UP NEXT</small></h2><span class="calendar-icon">▦</span></div><p class="panel-caption">未来一周 · 来源时间，时区未核验</p><div id="calendar-list"><div class="empty">正在读取日历…</div></div></section>
+      <section class="reading-note"><span>给自己留一点空间</span><p>信息是用来帮助判断的，<br>不必每条都追，不必每次都动。</p><div>READ SLOWLY. THINK CLEARLY.</div></section>
+    </aside></div>
+    <footer><span><b>观潮</b> · A quieter view of a moving world.</span><span id="updated-at">数据准备中</span></footer>
+  </div>
+</main>
+<dialog id="sources-dialog"><div class="dialog-heading"><div><span class="eyebrow">TRANSPARENCY</span><h2>数据来源与更新状态</h2></div><button id="close-sources" aria-label="关闭">×</button></div><p>页面展示公开来源的报价快照与新闻标题，点击前往来源阅读。抓取时间不等于行情时间；失败时保留上次成功数据。</p><div id="source-status"></div><p class="subtle">定时任务计划每两小时更新，实际运行可能延迟。新闻分类采用检索词及简单规则，可能有交叉；第一版不生成 AI 摘要或投资建议。公开站点不保存个人持仓。</p><a href="https://github.com/xxbo/xxbo.github.io/actions" target="_blank" rel="noopener noreferrer">查看更新任务 ↗</a></dialog>
+<div id="toast" role="status"></div>
+<script src="app.js" defer></script>
+</body></html>

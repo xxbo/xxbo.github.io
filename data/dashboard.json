@@ -1,0 +1,851 @@
+{
+  "generated_at": "2026-10-20T03:11:01.261237+00:00",
+  "markets": [
+    {
+      "id": "sh000001",
+      "name": "上证指数",
+      "region": "A股",
+      "secid": "1.000001",
+      "source": "腾讯财经",
+      "source_url": "https://gu.qq.com/sh000001",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00",
+      "status": "ok",
+      "history": [
+        {
+          "date": "2026-09-01",
+          "close": 3979.89
+        },
+        {
+          "date": "2026-09-02",
+          "close": 3941.39
+        },
+        {
+          "date": "2026-09-03",
+          "close": 3942.09
+        },
+        {
+          "date": "2026-09-04",
+          "close": 3930.12
+        },
+        {
+          "date": "2026-09-07",
+          "close": 3932.7
+        },
+        {
+          "date": "2026-09-08",
+          "close": 3940.55
+        },
+        {
+          "date": "2026-09-09",
+          "close": 3951.51
+        },
+        {
+          "date": "2026-09-10",
+          "close": 3934.4
+        },
+        {
+          "date": "2026-09-11",
+          "close": 3888.11
+        },
+        {
+          "date": "2026-09-14",
+          "close": 3885.33
+        },
+        {
+          "date": "2026-09-15",
+          "close": 3864.28
+        },
+        {
+          "date": "2026-09-16",
+          "close": 3891.6
+        },
+        {
+          "date": "2026-09-17",
+          "close": 3875.6
+        },
+        {
+          "date": "2026-09-18",
+          "close": 3911.87
+        },
+        {
+          "date": "2026-09-21",
+          "close": 3949.91
+        },
+        {
+          "date": "2026-09-22",
+          "close": 3952.13
+        },
+        {
+          "date": "2026-09-23",
+          "close": 3936.52
+        },
+        {
+          "date": "2026-09-24",
+          "close": 3888.37
+        },
+        {
+          "date": "2026-09-28",
+          "close": 3823.62
+        },
+        {
+          "date": "2026-09-29",
+          "close": 3830.45
+        },
+        {
+          "date": "2026-09-30",
+          "close": 3842.19
+        },
+        {
+          "date": "2026-10-08",
+          "close": 3811.9
+        },
+        {
+          "date": "2026-10-09",
+          "close": 3813.79
+        },
+        {
+          "date": "2026-10-12",
+          "close": 3797.24
+        },
+        {
+          "date": "2026-10-13",
+          "close": 3800.86
+        },
+        {
+          "date": "2026-10-14",
+          "close": 3767.23
+        },
+        {
+          "date": "2026-10-15",
+          "close": 3707.48
+        },
+        {
+          "date": "2026-10-16",
+          "close": 3716.28
+        },
+        {
+          "date": "2026-10-19",
+          "close": 3730.92
+        },
+        {
+          "date": "2026-10-20",
+          "close": 3729.01
+        }
+      ],
+      "price": 3729.2,
+      "change": -1.72,
+      "change_pct": -0.05,
+      "quote_time": "20261020111106"
+    },
+    {
+      "id": "sz399006",
+      "name": "创业板指",
+      "region": "A股",
+      "secid": "0.399006",
+      "source": "腾讯财经",
+      "source_url": "https://gu.qq.com/sz399006",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00",
+      "status": "ok",
+      "history": [
+        {
+          "date": "2026-09-01",
+          "close": 3393.43
+        },
+        {
+          "date": "2026-09-02",
+          "close": 3312.24
+        },
+        {
+          "date": "2026-09-03",
+          "close": 3312.54
+        },
+        {
+          "date": "2026-09-04",
+          "close": 3286.55
+        },
+        {
+          "date": "2026-09-07",
+          "close": 3398.68
+        },
+        {
+          "date": "2026-09-08",
+          "close": 3359.72
+        },
+        {
+          "date": "2026-09-09",
+          "close": 3354.97
+        },
+        {
+          "date": "2026-09-10",
+          "close": 3338.42
+        },
+        {
+          "date": "2026-09-11",
+          "close": 3322.04
+        },
+        {
+          "date": "2026-09-14",
+          "close": 3285.58
+        },
+        {
+          "date": "2026-09-15",
+          "close": 3247.92
+        },
+        {
+          "date": "2026-09-16",
+          "close": 3311.47
+        },
+        {
+          "date": "2026-09-17",
+          "close": 3298.31
+        },
+        {
+          "date": "2026-09-18",
+          "close": 3372.68
+        },
+        {
+          "date": "2026-09-21",
+          "close": 3399.59
+        },
+        {
+          "date": "2026-09-22",
+          "close": 3399.93
+        },
+        {
+          "date": "2026-09-23",
+          "close": 3379.61
+        },
+        {
+          "date": "2026-09-24",
+          "close": 3288.95
+        },
+        {
+          "date": "2026-09-28",
+          "close": 3139.82
+        },
+        {
+          "date": "2026-09-29",
+          "close": 3142.56
+        },
+        {
+          "date": "2026-09-30",
+          "close": 3135.28
+        },
+        {
+          "date": "2026-10-08",
+          "close": 3036.66
+        },
+        {
+          "date": "2026-10-09",
+          "close": 3043.33
+        },
+        {
+          "date": "2026-10-12",
+          "close": 2963.82
+        },
+        {
+          "date": "2026-10-13",
+          "close": 2958.34
+        },
+        {
+          "date": "2026-10-14",
+          "close": 2866.76
+        },
+        {
+          "date": "2026-10-15",
+          "close": 2783.17
+        },
+        {
+          "date": "2026-10-16",
+          "close": 2772.38
+        },
+        {
+          "date": "2026-10-19",
+          "close": 2746.29
+        },
+        {
+          "date": "2026-10-20",
+          "close": 2759.3
+        }
+      ],
+      "price": 2759.96,
+      "change": 13.67,
+      "change_pct": 0.5,
+      "quote_time": "20261020111106"
+    },
+    {
+      "id": "sh000688",
+      "name": "科创50",
+      "region": "A股",
+      "secid": "1.000688",
+      "source": "腾讯财经",
+      "source_url": "https://gu.qq.com/sh000688",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00",
+      "status": "ok",
+      "history": [],
+      "price": 1343.69,
+      "change": 14.5,
+      "change_pct": 1.09,
+      "quote_time": "20261020111106"
+    },
+    {
+      "id": "hkHSI",
+      "name": "恒生指数",
+      "region": "港股",
+      "secid": "100.HSI",
+      "source": "腾讯财经",
+      "source_url": "https://gu.qq.com/hkHSI",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00",
+      "status": "ok",
+      "history": [],
+      "price": 23959.77,
+      "change": -227.06,
+      "change_pct": -0.94,
+      "quote_time": "2026/10/20 10:56:06"
+    },
+    {
+      "id": "hkHSTECH",
+      "name": "恒生科技",
+      "region": "港股",
+      "secid": "100.HSTECH",
+      "source": "腾讯财经",
+      "source_url": "https://gu.qq.com/hkHSTECH",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00",
+      "status": "ok",
+      "history": [],
+      "price": 4074.55,
+      "change": -33.69,
+      "change_pct": -0.82,
+      "quote_time": "2026/10/20 10:56:06"
+    },
+    {
+      "id": "usIXIC",
+      "name": "纳斯达克",
+      "region": "美股",
+      "secid": "100.NDX",
+      "source": "腾讯财经",
+      "source_url": "https://gu.qq.com/usIXIC",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00",
+      "status": "ok",
+      "history": [],
+      "price": 26430.89,
+      "change": 290.86,
+      "change_pct": 1.11,
+      "quote_time": "2026-10-19 17:15:59"
+    }
+  ],
+  "news": [
+    {
+      "id": "em:202610203901122321",
+      "title": "润本股份第三季度营收增速降至2.89% 驱蚊产品收入下滑",
+      "url": "https://finance.eastmoney.com/a/202610203901122321.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T11:08:12+08:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "em:202610203901117961",
+      "title": "首批场外科创债指基获批",
+      "url": "https://finance.eastmoney.com/a/202610203901117961.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T11:07:21+08:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "em:202610203901120538",
+      "title": "450亿美元算力云大单洽谈中，云计算50ETF东方红（562110）标的指数连续两日上涨",
+      "url": "https://finance.eastmoney.com/a/202610203901120538.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T11:06:53+08:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "em:202610203901120989",
+      "title": "政策催化叠加算力网定位，云计算50ETF东方红（562110）再度活跃于市场",
+      "url": "https://finance.eastmoney.com/a/202610203901120989.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T11:06:25+08:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "em:202610203901121264",
+      "title": "国家发展改革委：引导地方在关键核心技术攻关、可再生能源制氢示范应用场景开拓中找准自身定位 实现错位发展",
+      "url": "https://finance.eastmoney.com/a/202610203901121264.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T11:06:21+08:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "em:202610203901118639",
+      "title": "英矽智能与施维雅达成首个研发里程碑 将获得里程碑付款",
+      "url": "https://finance.eastmoney.com/a/202610203901118639.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T11:06:12+08:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "em:202610203901116660",
+      "title": "泡泡玛特跌超5%",
+      "url": "https://finance.eastmoney.com/a/202610203901116660.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T11:05:26+08:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "em:202610203900873451",
+      "title": "“表外幽灵”虎视眈眈？标普重磅警示：科技巨头还有大量未披露AI负债！",
+      "url": "https://finance.eastmoney.com/a/202610203900873451.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T11:05:02+08:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "em:202610203900882742",
+      "title": "中期选举前关键民调！特朗普支持率创历史新低：31%",
+      "url": "https://finance.eastmoney.com/a/202610203900882742.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T11:04:31+08:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "em:202610203901117153",
+      "title": "国家发展改革委：发展新质生产力要实事求是 避免遍地开花",
+      "url": "https://finance.eastmoney.com/a/202610203901117153.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T11:03:36+08:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "em:202610203901110923",
+      "title": "白宫官员解读9月CPI：通胀反弹与经济繁荣并存 尊重FED独立性！",
+      "url": "https://finance.eastmoney.com/a/202610203901110923.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T11:02:22+08:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "em:202610203901115140",
+      "title": "芯片产业链震荡反弹 科创芯片设计ETF易方达涨3.65%",
+      "url": "https://finance.eastmoney.com/a/202610203901115140.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T11:01:16+08:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "em:202610203901113968",
+      "title": "科创200ETF易方达盘中涨超4% +4.26%",
+      "url": "https://finance.eastmoney.com/a/202610203901113968.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T11:00:44+08:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "em:202610203901113811",
+      "title": "中国AI大模型周调用量连续25周领跑全球，科创AIETF博时(588790)跟踪指数探底回升涨超4.8%",
+      "url": "https://finance.eastmoney.com/a/202610203901113811.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T11:00:27+08:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "em:202610203901113583",
+      "title": "隔夜美股芯片反弹，AI终端政策再添催化，科创创业人工智能ETF永赢盘中涨超2%！",
+      "url": "https://finance.eastmoney.com/a/202610203901113583.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T10:59:07+08:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "em:202610203901112616",
+      "title": "不等同降息！权威解读央行货币政策目标利率择机“换锚”",
+      "url": "https://finance.eastmoney.com/a/202610203901112616.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T10:58:15+08:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "em:202610203901112028",
+      "title": "直击长鑫科技股东会：高管称“订单饱满” 有能力应对市场变化",
+      "url": "https://finance.eastmoney.com/a/202610203901112028.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T10:57:10+08:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "em:202610203901087521",
+      "title": "SpaceX财报前瞻：Q3有望实现首个季度盈利 股价或现大幅波动",
+      "url": "https://finance.eastmoney.com/a/202610203901087521.html",
+      "source": "东方财富快讯",
+      "category": "金融",
+      "published_at": "2026-10-20T10:56:16+08:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "b3e56de32de5ef500e8e",
+      "title": "法國騷亂：巴黎局部宵禁 被劫商品現身二手平台",
+      "url": "https://www.bbc.com/zhongwen/articles/cwp9g811d5ydo/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "全球",
+      "published_at": "2026-10-20T02:47:44+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "9bdca7ec971e83c922ae",
+      "title": "俄羅斯境內反普京破壞行動的隱秘世界",
+      "url": "https://www.bbc.com/zhongwen/articles/c6d09dpdn294o/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "全球",
+      "published_at": "2026-10-20T01:14:38+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "b44a6d14686f0af1fa59",
+      "title": "香港演員鍾雪瑩、袁澧林發聲之後，她們分享親歷的性別冒犯",
+      "url": "https://www.bbc.com/zhongwen/articles/cqly0v0xnxdvo/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "全球",
+      "published_at": "2026-10-20T00:26:42+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "1d960afcbf15efa440d8",
+      "title": "Elon Musk’s proposed SpaceX stock giveaway would go into ‘Trump Accounts’",
+      "url": "https://www.theverge.com/tech/1014115/elon-musk-spacex-trump-account",
+      "source": "The Verge",
+      "category": "科技",
+      "published_at": "2026-10-19T18:30:42-04:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "fe71d377ee244b059584",
+      "title": "The fossil fuel comeback is here",
+      "url": "https://www.theverge.com/science/1013954/fossil-fuel-power-infrastructure-data-centers-report",
+      "source": "The Verge",
+      "category": "科技",
+      "published_at": "2026-10-19T17:48:01-04:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "85ed69736e92d20ff74d",
+      "title": "CoreWeave’s debt is becoming the whole AI industry’s problem",
+      "url": "https://www.theverge.com/ai-artificial-intelligence/1014045/coreweave-stock-debt-sector-ai",
+      "source": "The Verge",
+      "category": "科技",
+      "published_at": "2026-10-19T17:28:20-04:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "43c9106709af315f25fc",
+      "title": "I tried a $99 plug that promises to track your car and send help when needed — without selling your data",
+      "url": "https://www.theverge.com/tech/1013918/miles-plug-vehicle-tracking-data-privacy-specs-price-launch-date",
+      "source": "The Verge",
+      "category": "科技",
+      "published_at": "2026-10-19T17:00:17-04:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "e6e234bc172dfbe94dc6",
+      "title": "Sony’s best noise-canceling earbuds are nearly $100 off today only",
+      "url": "https://www.theverge.com/gadgets/1013911/sonys-best-noise-canceling-earbuds-are-nearly-100-off-today-only",
+      "source": "The Verge",
+      "category": "科技",
+      "published_at": "2026-10-19T14:52:41-04:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "8e8803bda3628fd46fdb",
+      "title": "Apple teases MacBook Pro event next week",
+      "url": "https://www.theverge.com/tech/1013028/apple-second-october-product-launch-announcement",
+      "source": "The Verge",
+      "category": "科技",
+      "published_at": "2026-10-19T12:04:29-04:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "b0ef1cc24d7131641e5d",
+      "title": "Amazon is funding a new nuclear plant in Indiana",
+      "url": "https://www.theverge.com/tech/1013735/amazon-x-energy-aep-nuclear-indiana",
+      "source": "The Verge",
+      "category": "科技",
+      "published_at": "2026-10-19T11:44:20-04:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "4c14ea4cdc714e96e939",
+      "title": "Apple’s last-gen Mac Mini with the M4 is $150 off",
+      "url": "https://www.theverge.com/gadgets/1013645/apple-mac-mini-m4-lg-c6-oled-deal-sale",
+      "source": "The Verge",
+      "category": "科技",
+      "published_at": "2026-10-19T10:41:48-04:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "7bf27ea750e3c7638bdb",
+      "title": "JB Pritzker thinks AI could help us live to 100 — or threaten us like nukes",
+      "url": "https://www.theverge.com/podcast/1012839/pritzker-ai-privacy-data-centers-flock-congress-laws",
+      "source": "The Verge",
+      "category": "科技",
+      "published_at": "2026-10-19T10:30:00-04:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "ced358144305e84803a6",
+      "title": "Major European mobile carriers are teaming up for a ‘direct’ satellite program without Starlink",
+      "url": "https://www.theverge.com/policy/1013680/european-mobile-carriers-mobile-satellite-starlink",
+      "source": "The Verge",
+      "category": "科技",
+      "published_at": "2026-10-19T10:24:42-04:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "61c836c7fe014cf2f783",
+      "title": "《孤獨的美食家》：一個人吃飯，為什麼能紅遍全亞洲？",
+      "url": "https://www.bbc.com/zhongwen/watch/c6x2wvlxqjr8o/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "全球",
+      "published_at": "2026-10-19T09:37:41+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "d08d9d1d729d435f222e",
+      "title": "中國三季度增長4.5% 但出口暴增，樓市新開工面積暴跌",
+      "url": "https://www.bbc.com/zhongwen/articles/cqdjv2vw9n4po/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "全球",
+      "published_at": "2026-10-19T09:19:13+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "59efee14d65d5bcb6849",
+      "title": "BBC暫停公務員借調計劃",
+      "url": "https://www.bbc.com/zhongwen/articles/cq0mel7ep01xo/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "全球",
+      "published_at": "2026-10-19T06:54:50+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "90d77ced75da2b2d8c2c",
+      "title": "烏克蘭鋼企老闆稱：歐盟對華關稅殃及本國",
+      "url": "https://www.bbc.com/zhongwen/articles/cw0k0z264d0jo/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "全球",
+      "published_at": "2026-10-19T04:33:11+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "5f881090f570cb63a71b",
+      "title": "尊界V800「煞車門」：從產品安全之爭到「恨國」論戰",
+      "url": "https://www.bbc.com/zhongwen/articles/cmje5y4254qdo/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "全球",
+      "published_at": "2026-10-19T03:22:46+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "0dcf7f19b1609e5d73fc",
+      "title": "矽谷這座城市垃圾太臭居民受不了 就讓科技來幫忙",
+      "url": "https://www.bbc.com/zhongwen/articles/c5kgl32d8443o/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "全球",
+      "published_at": "2026-10-19T00:08:13+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "c32e91ab55b2971d8a41",
+      "title": "我們的廣告提到了「懷孕」 結果給 Instagram 下架了",
+      "url": "https://www.bbc.com/zhongwen/articles/cr1ex0l8l9z5o/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "全球",
+      "published_at": "2026-10-19T00:08:09+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "657a0d83de2b66036f19",
+      "title": "「我申請了200份工作」——用AI「撒網」求職為何易弄巧成拙？",
+      "url": "https://www.bbc.com/zhongwen/articles/crz65gwv8gv5o/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "全球",
+      "published_at": "2026-10-18T00:32:02+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "cdb291b8461ce1707001",
+      "title": "在美中國研究生涉毒害越南同學：大學與家屬怎麼說？",
+      "url": "https://www.bbc.com/zhongwen/articles/c6vg08d0glp7o/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "全球",
+      "published_at": "2026-10-18T00:31:53+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "0bc0150d063ef97c5ff1",
+      "title": "遊艇上的水上滑梯、泳池：衛星影像揭示的金正恩「夏宮」生活",
+      "url": "https://www.bbc.com/zhongwen/articles/cm9dzq7z7vw8o/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "全球",
+      "published_at": "2026-10-18T00:31:34+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "f0359e5428ca3d17df36",
+      "title": "「我擔心得不敢去中國了」：韓國脫北者接連收到警方赴華警告",
+      "url": "https://www.bbc.com/zhongwen/articles/cmd6dgj9jwp8o/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "全球",
+      "published_at": "2026-10-17T12:54:47+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "b8428d15e6617ed75576",
+      "title": "上任僅五天便下台，特朗普的白宮新聞秘書出了甚麼問題？",
+      "url": "https://www.bbc.com/zhongwen/articles/ck5yng42z0dlo/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "政治",
+      "published_at": "2026-10-17T05:43:01+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "3e0e93250f10f3ae5c13",
+      "title": "美沙冬是毒還是藥？從香港經驗看台灣選戰戒毒爭議",
+      "url": "https://www.bbc.com/zhongwen/watch/cmwyq699de35o/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "全球",
+      "published_at": "2026-10-16T08:57:18+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "fac779159e2dc6d7f2ae",
+      "title": "新鴨綠江大橋閒置12年終開通：中朝關係回暖？",
+      "url": "https://www.bbc.com/zhongwen/watch/cm0e0q5dp3lyo/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "全球",
+      "published_at": "2026-10-15T12:46:44+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "7b329579f173a1b38bfb",
+      "title": "薄熙來前搭檔受查：重慶政壇「不倒翁」黃奇帆是誰？",
+      "url": "https://www.bbc.com/zhongwen/watch/c83vq5lwy6wlo/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "全球",
+      "published_at": "2026-10-14T14:46:38+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "38da8fdcbc198cbdd9a2",
+      "title": "台灣AV盛極而衰：中國市場如何催生這場成人片熱潮？",
+      "url": "https://www.bbc.com/zhongwen/articles/cqlymyyze8mjo/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "全球",
+      "published_at": "2026-10-08T09:37:08+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "32dd398252e79c40a91c",
+      "title": "「特習會」後兩架美國 F-16V 抵台 「雖遲但到」的時機與信號",
+      "url": "https://www.bbc.com/zhongwen/articles/c6pwg52xjp8jo/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "全球",
+      "published_at": "2026-10-05T00:14:01+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "fb69b70800e6cfc63e22",
+      "title": "特朗普排除美中合作開發人工智能",
+      "url": "https://www.bbc.com/zhongwen/articles/cm5ye14v6n8xo/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "政治",
+      "published_at": "2026-09-30T04:39:30+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "249695977d55f1e312b9",
+      "title": "特朗普習近平峰會：沒有說出口的議題可能更重要",
+      "url": "https://www.bbc.com/zhongwen/articles/cmzxzl450p2no/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "政治",
+      "published_at": "2026-09-29T03:48:29+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "c71e11bddace4117e525",
+      "title": "為何特朗普在國宴上送習近平一座華麗的白頭海鵰雕像？",
+      "url": "https://www.bbc.com/zhongwen/articles/c3qjkx1wdyyxo/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "政治",
+      "published_at": "2026-09-25T04:56:06+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    },
+    {
+      "id": "63b1eb81b86b41747554",
+      "title": "從年輕縣官到國家主席：習近平41年來的訪美影像",
+      "url": "https://www.bbc.com/zhongwen/articles/c9zrz24j8pdvo/trad?at_medium=RSS&at_campaign=rss",
+      "source": "BBC 中文",
+      "category": "全球",
+      "published_at": "2026-09-22T14:36:55+00:00",
+      "fetched_at": "2026-10-20T03:11:01.261237+00:00"
+    }
+  ],
+  "calendar": [],
+  "sources": [
+    {
+      "id": "calendar",
+      "status": "error",
+      "last_success": null,
+      "error": "经济日历接口未返回有效列表"
+    },
+    {
+      "id": "markets",
+      "status": "ok",
+      "last_success": "2026-10-20T03:11:01.261237+00:00",
+      "count": 6,
+      "error": null
+    },
+    {
+      "id": "news:科技",
+      "status": "ok",
+      "last_success": "2026-10-20T03:11:01.261237+00:00",
+      "count": 10,
+      "error": null
+    },
+    {
+      "id": "news:金融",
+      "status": "ok",
+      "last_success": "2026-10-20T03:11:01.261237+00:00",
+      "count": 18,
+      "error": null
+    },
+    {
+      "id": "news:全球",
+      "status": "ok",
+      "last_success": "2026-10-20T03:11:01.261237+00:00",
+      "count": 20,
+      "error": null
+    },
+    {
+      "id": "news:政治",
+      "status": "ok",
+      "last_success": "2026-10-20T03:11:01.261237+00:00",
+      "count": 4,
+      "error": null
+    }
+  ]
+}
