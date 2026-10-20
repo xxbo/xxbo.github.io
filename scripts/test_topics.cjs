@@ -18,3 +18,6 @@ const fed={date:'2026-10-27',end_date:'2026-10-28',source_date:'2026-10-27',date
 assert(C.upcoming(fed,Date.parse('2026-10-29T02:00:00Z')));assert(!C.upcoming(fed,Date.parse('2026-10-29T05:00:00Z')));
 assert(C.scheduleLabel(fed).includes('美国当地日期'));assert(!C.scheduleLabel(fed).includes('北京时间'));
 console.log('Topic and calendar checks passed: keyword boundaries, event deduplication, visit changes, relevance and time precision.');
+
+assert.equal(C.status({date:'2099-01-01',date_only:true,feed_id:'calendar:bls'}),'计划发布（仅日期）');
+assert.equal(C.status({date:'2099-01-01',date_only:true,feed_id:'calendar:fed'}),'计划会议');

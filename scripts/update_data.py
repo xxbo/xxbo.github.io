@@ -348,7 +348,7 @@ def collect_dashboard(previous,now):
     result['news']=sorted(unique.values(),key=lambda n:n.get('published_at') or '',reverse=True)
     result['calendar']=sorted({r['id']:r for r in result['calendar']}.values(),key=lambda r:(r['date'],r['time'],r['id']))
     result['calendar_coverage']={'days':45,'timezone':'Asia/Shanghai','schedule_only':True,
-        'note':'已知时刻统一北京时间；仅日期的 FOMC 会议保留美国当地日期。备用源覆盖范围可能不同，逐项标明。'}
+        'note':'已知时刻统一北京时间；仅日期条目保留来源当地日期。备用源覆盖范围可能不同，逐项标明。'}
     result['events']=build_events(result['news'],previous,now)
     result['event_tracking_since']=previous.get('event_tracking_since') or previous.get('generated_at') or now
     result['source_policy_version']=1

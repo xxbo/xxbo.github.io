@@ -318,7 +318,7 @@ def canonical_calendar(rows):
 
 def calendar_candidates(key, request, now, previous):
     primary=(SOURCES[key][0]+' / 官方日程',lambda:canonical_calendar(collect_calendar(key,request,now)))
-    if key=='bls':return [primary,('BLS 官方 HTML 日程',lambda:canonical_calendar(collect_bls_html(request,now))),('FRED / ALFRED 核心指标',lambda:canonical_calendar(collect_fred(request,now)))]
+    if key=='bls':return [primary,('BLS 官方 HTML 日程',lambda:canonical_calendar(collect_bls_html(request,now))),('FRED / ALFRED 核心指标',lambda:canonical_calendar(collect_fred(request,now))),('Forex Factory 本周美元日程（媒体备用）',lambda:collect_forexfactory(request,now))]
     if key=='bea':return [primary,('BEA 官方 JSON 日程',lambda:canonical_calendar(collect_bea_json(request,now)))]
     if key=='nbs':
         targets=[r['url'] for r in previous if r.get('url','').startswith('https://www.stats.gov.cn/')]
@@ -330,3 +330,26 @@ def calendar_candidates(key, request, now, previous):
             return [primary,('国家统计局 / 上次官方表格直连',direct)]
     # No unrelated source is substituted for the Fed meeting calendar.
     return [primary]
+
+
+def collect_forexfactory(request,now):
+    """Public publisher weekly export; deliberately not labeled as official BLS coverage."""
+    import json
+    url='https://nfs.faireconomy.media/ff_calendar_thisweek.json'
+    data=json.loads(request(url))
+    if not isinstance(data,list) or not data:raise DataInvalid('Forex Factory 周度导出结构异常')
+    stamps=[dt.datetime.fromisoformat(r['date']) for r in data if r.get('date')]
+    if not stamps or any(not d.tzinfo for d in stamps):raise DataInvalid('周度日程缺少明确时间偏移')
+    today=dt.datetime.fromisoformat(now).astimezone(SH).date()
+    if max(d.astimezone(SH).date() for d in stamps)<today:raise DataInvalid('周度日程文件已过期')
+    rows=[]
+    aliases={'Unemployment Claims':'美国初请失业金人数','Building Permits':'美国营建许可','Housing Starts':'美国新屋开工','Pending Home Sales m/m':'美国成屋签约销售','Flash Manufacturing PMI':'美国制造业 PMI 初值','Flash Services PMI':'美国服务业 PMI 初值','Revised UoM Consumer Sentiment':'美国密歇根消费者信心修订值','Revised UoM Inflation Expectations':'美国密歇根通胀预期修订值','ADP Weekly Employment Change':'美国 ADP 周度就业变化','CB Leading Index m/m':'美国领先经济指标','Crude Oil Inventories':'美国原油库存','Natural Gas Storage':'美国天然气库存','API Weekly Statistical Bulletin':'美国 API 周度统计公报'}
+    for item in data:
+        if item.get('country')!='USD' or not item.get('title'):continue
+        local=dt.datetime.fromisoformat(item['date'])
+        row=event(item['title'],local,'bls',now,'https://www.forexfactory.com/calendar')
+        row['title']=aliases.get(item['title'],row['title']);row['source']='Forex Factory（媒体周度日历）';row['source_type']='media'
+        row['currency']='USD';row['coverage_note']='媒体备用仅覆盖本周美元日程，与 BLS 官方范围不同，不代表完整的未来 45 天日程。'
+        row['schedule_note']='媒体整理的计划安排，时刻可能调整；仅展示日程，不提供预期值或实际公布值。'
+        rows.append(row)
+    return canonical_calendar(filter_window(rows,now))

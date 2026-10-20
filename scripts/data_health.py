@@ -96,11 +96,11 @@ def validate_quote(rows, now, previous=None):
 
 def validate_history(rows, now, previous=None):
     if not isinstance(rows,list):raise DataInvalid('日线不是列表')
-    clean={};bad=0;duplicates=0;current=date_time(now).date()
+    clean={};bad=0;duplicates=0;current=date_time(now).astimezone(dt.timezone(dt.timedelta(hours=8))).date()
     for row in rows:
         try:
             day=dt.date.fromisoformat(row['date'])
-            if day>current+dt.timedelta(days=1):raise ValueError()
+            if day>current:raise ValueError()
             o,c,h,l=(row.get(k) for k in ('open','close','high','low'))
             if not all(finite(v) and v>0 for v in (o,c,h,l)) or h<max(o,c,l) or l>min(o,c,h):raise ValueError()
             if row.get('volume') is not None and (not finite(row['volume']) or row['volume']<0):raise ValueError()

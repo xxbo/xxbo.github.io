@@ -94,3 +94,5 @@ The update workflow is scheduled every 20 minutes. Daily history is cached for u
 验证包括单源不可达、字段/时间/数值异常、主源恢复、全部失败沿用原时间、部分指数故障隔离、整段历史替换，以及 BLS/FRED 夏令时与覆盖范围。`scripts/test_dashboard.cjs` 检查脚本加载顺序和站内路由渲染，不能代替浏览器布局验收。
 
 线上容错补充：FRED 按指标独立请求，失败时尝试同属圣路易斯联储的 ALFRED 官方通道；ALFRED 页面未核验时刻时区时只展示日期，不推算发布时间。部分指标失败保留其他已取得条目并提示缺口，避免整组作废。
+
+最后一级美国日程备用为 Forex Factory 官方提供的本周 JSON 导出（https://nfs.faireconomy.media/ff_calendar_thisweek.json）。它是媒体整理的本周美元日程，与 BLS 官方日程范围不同，页面标明媒体来源和较短覆盖范围，不将其视为完整 45 天 BLS 数据。按导出中明确的 UTC 偏移换算；不取用预期/前值字段，不推算没有公布的时刻。

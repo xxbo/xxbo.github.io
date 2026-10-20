@@ -103,6 +103,17 @@ class HealthTests(unittest.TestCase):
         self.assertEqual(alfred['source_timezone'],'')
         _,warnings=validate_calendar(rows,NOW);self.assertTrue(warnings)
 
+    def test_media_weekly_backup_marks_scope_and_ignores_forecasts(self):
+        from economic_calendar import collect_forexfactory
+        import json
+        raw=json.dumps([{'title':'Housing Starts','country':'USD','date':'2026-10-20T08:30:00-04:00','forecast':'123','previous':'456'}, {'title':'Other','country':'EUR','date':'2026-10-20T08:30:00-04:00'}]).encode()
+        rows=collect_forexfactory(lambda u:raw,NOW)
+        self.assertEqual(len(rows),1);self.assertEqual(rows[0]['time'],'20:30')
+        self.assertEqual(rows[0]['source_type'],'media');self.assertIn('本周',rows[0]['coverage_note'])
+        self.assertIsNone(rows[0]['forecast']);self.assertIsNone(rows[0]['previous'])
+        _,state=run_chain('calendar:bls',[('official',fail),('media weekly',lambda:rows)],[],{},NOW,lambda r:validate_calendar(r,NOW))
+        self.assertEqual(state['mode'],'backup');self.assertEqual(state['status'],'ok')
+
     def test_expired_schedule_is_not_healthy_empty(self):
         raw=b'BEGIN:VCALENDAR\nBEGIN:VEVENT\nUID:x\nDTSTART:20230101T123000Z\nSUMMARY:Old\nEND:VEVENT\nEND:VCALENDAR'
         with self.assertRaises(DataInvalid):collect_calendar('bea',lambda url:raw,NOW)
