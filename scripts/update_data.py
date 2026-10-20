@@ -11,6 +11,7 @@ import re
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
+from event_digest import build_events, fingerprint
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 NOW = dt.datetime.now(dt.timezone.utc).isoformat()
@@ -352,13 +353,23 @@ def main():
                     result['news'].extend(rows)
                 else:
                     result[key] = rows
+                old = next((s for s in previous.get('sources', []) if s['id'] == key), {})
+                if key.startswith(('news:', 'editorial:', 'wire:')):
+                    signature = hashlib.sha256(json.dumps(sorted((n['id'], fingerprint(n)) for n in rows)).encode()).hexdigest()[:20]
+                elif key == 'markets':
+                    signature = hashlib.sha256(json.dumps([(m['id'], m.get('price'), m.get('quote_time')) for m in rows]).encode()).hexdigest()[:20]
+                else:
+                    signature = hashlib.sha256(json.dumps(rows, sort_keys=True).encode()).hexdigest()[:20]
+                changed = old.get('signature') != signature
                 result['sources'].append({'id': key, 'status': 'ok', 'last_success': NOW,
+                                          'checked_at': NOW, 'signature': signature,
+                                          'last_changed': NOW if changed else old.get('last_changed', NOW),
                                           'count': len(rows), 'error': None})
             except Exception as e:
                 old = next((s for s in previous.get('sources', []) if s['id'] == key), {})
                 if key.startswith(('news:', 'editorial:', 'wire:')):
                     result['news'].extend(n for n in previous.get('news', []) if n.get('feed_id')==key)
-                result['sources'].append({'id': key, 'status': 'error',
+                result['sources'].append({**old, 'id': key, 'status': 'error', 'checked_at': NOW,
                                           'last_success': old.get('last_success'), 'error': str(e)[:160]})
                 print(f'{key}: unavailable ({type(e).__name__})', flush=True)
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
@@ -378,6 +389,8 @@ def main():
             unique[item['id']] = item
     result['news'] = list(unique.values())
     result['news'].sort(key=lambda n: n.get('published_at') or '', reverse=True)
+    result['events'] = build_events(result['news'], previous, NOW)
+    result['event_tracking_since'] = previous.get('event_tracking_since') or previous.get('generated_at') or NOW
     path.parent.mkdir(exist_ok=True)
     path.write_text(json.dumps(result, ensure_ascii=False, indent=2, allow_nan=False) + '\n')
     print(f"Snapshot: {len(result['markets'])} markets, {len(result['news'])} headlines, {len(result['calendar'])} calendar events", flush=True)

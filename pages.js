@@ -8,7 +8,7 @@ let techPeriod = 120;
 let techOverlay = "ma";
 function navigate(path) { if(location.hash === path) renderRoute(); else location.hash=path; }
 function eventId(e) { return [e.date,e.time,e.country,e.title].join('|'); }
-function newsById(id) { return (state.data.news||[]).find(n=>n.id===id)||state.saved[id]||recentArticles[id]; }
+function newsById(id) { return (state.data.news||[]).find(n=>n.id===id)||state.saved[id]||recentArticles[id]||(state.data.events||[]).flatMap(e=>e.articles).find(n=>n.id===id); }
 function routeCrumbs(items) { return '<nav class="detail-crumbs" aria-label="面包屑"><a href="#/overview">今日概览</a>'+items.map(i=>'<span>/</span>'+(i.href?`<a href="${esc(i.href)}">${esc(i.label)}</a>`:`<span aria-current="page">${esc(i.label)}</span>`)).join('')+'</nav>'; }
 function detailShell(crumbs,body) { return routeCrumbs(crumbs)+body; }
 function articleCard(n) { return `<a class="related-item" href="${articleRoute(n)}"><div class="news-meta"><span class="tag ${esc(n.category)}">${esc(n.category)}</span><span>${esc(n.source)}</span><time>${esc(relative(n.published_at))}</time></div><h3>${esc(n.title)}</h3><span class="related-arrow">查看详情 →</span></a>`; }
