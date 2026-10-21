@@ -4,7 +4,7 @@ A buildless personal finance and news dashboard hosted on GitHub Pages.
 
 - Quotes: Tencent Finance snapshot; each card retains the provider's quote time.
 - News: Google News RSS searches with The Verge, BBC Chinese RSS and EastMoney fast-news fallbacks. Titles and source links only; no generated summaries.
-- Economic calendar: official NBS, BLS, BEA and FOMC schedules; known release times convert to Beijing time, date-only meetings retain their source dates. Independent source health and a 45-day window; no consensus or actual release values.
+- Economic calendar: official NBS, BLS, BEA and FOMC schedules; known release times convert to Beijing time, date-only meetings retain their source dates. Independent source health, 30-day history and a 45-day schedule window. Eastmoney adds global indicator actual/forecast/previous values in native units, with its own source status.
 - Watchlist, reading status and saved items: localStorage on the current browser. No private holdings are published.
 - Scheduled snapshot: `.github/workflows/refresh-dashboard.yml`, every 20 minutes at minutes 7/27/47, plus manual dispatch. GitHub scheduling can be delayed.
 
@@ -75,9 +75,9 @@ The update workflow is scheduled every 20 minutes. Daily history is cached for u
 - BEA 官方 ICS https://www.bea.gov/news/schedule/ics/online-calendar-subscription.ics
 - FOMC 官方会议日期 https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm
 
-保留今天至未来 45 天计划。BLS 的 US-Eastern 映射到 America/New_York，按夏令时规则换算；BEA UTC 同样换算到北京时间。FOMC 仅会议日期时不猜测声明发布时间，保留美国当地日期范围。取消的 ICS 事件剔除，折行及转义按日历格式解析。每个来源独立状态，失败只沿用该来源上次成功记录，过期日程清理，成功空窗口与抓取失败分开处理。
+保留过去 30 天至未来 45 天计划。BLS 的 US-Eastern 映射到 America/New_York，按夏令时规则换算；BEA UTC 同样换算到北京时间。FOMC 仅会议日期时不猜测声明发布时间，保留美国当地日期范围。取消的 ICS 事件剔除，折行及转义按日历格式解析。每个来源独立状态，失败只沿用该来源上次成功记录，过期日程清理，成功空窗口与抓取失败分开处理。
 
-日历为发布计划，不提供市场预期或实时公布值，时点已过也不认定数据已发布。不覆盖全球所有经济数据、公司财报及临时活动。主线与日程采用明确的宏观背景关联规则，可查看关联理由。
+官方来源仍只提供发布安排；新增 `scripts/calendar_results.py` 采集东方财富公开经济日历过去 30 天至未来 14 天的逐项指标，展示公布值、预期、前值及原始单位。来源未提供统计期或前值修订标识，不推算。23:59 占位时刻按仅日期处理；有公布值才标记已公布，零值有效，时点已过且无值则显示未取得。单独来源状态及失败缓存；按周查询并校验分页完整性、未来公布值和时区，所有分片成功才覆盖缓存。首次取得值的采集时间与后续数值修订分别保留（最多六次），不是官方实际发布时间。官方报告安排与数据商指标不跨来源强行合并。不覆盖全球所有经济数据、公司财报及临时活动。主线与日程采用明确的宏观背景关联规则，可查看关联理由。
 
 ## 数据可靠性与自动切换（第一阶段）
 
@@ -168,3 +168,7 @@ The update workflow is scheduled every 20 minutes. Daily history is cached for u
 - 新增 `test_global.py` / `test_global.cjs` 覆盖代码匹配、日期与收盘边界、FX 精度、基点与利差共同日期、日期型利率无伪造时刻、纯收盘序列不补 OHLC。原有测试继续运行。
 
 数据说明：[Yahoo 全球指数](https://finance.yahoo.com/markets/world-indices/)、[汇率](https://finance.yahoo.com/markets/currencies/)、[商品期货](https://finance.yahoo.com/markets/commodities/)、[美国财政部 XML 文档](https://home.treasury.gov/treasury-daily-interest-rate-xml-feed)。
+
+### Economic calendar results
+
+`node scripts/test_calendar.cjs` and `python -m unittest discover -s scripts -p "test_*.py"` cover zero/negative values, missing forecasts, percentage-point differences, explicit Beijing date-only rows, 30-day retention, response truncation, future values, revisions and cache preservation. Public result feed: https://np-listapi.eastmoney.com/sec/economiccalendar/findByDateRange (queried with startDate, endDate and req_trace, as used by the publisher calendar). The site uses scheduled snapshots, not a real-time release terminal.

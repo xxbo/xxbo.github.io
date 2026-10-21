@@ -18,6 +18,7 @@ import copy
 import xml.etree.ElementTree as ET
 from event_digest import build_events, fingerprint, RETENTION_DAYS, MAX_EVENTS
 from economic_calendar import calendar_candidates, SOURCES as CALENDAR_SOURCES
+from calendar_results import collect_results
 from global_markets import INSTRUMENTS, meta as global_meta
 from market_adapters import NAMES, quote_candidates, history_candidates, session_key, mark_partial
 from data_health import run_chain, validate_quote, validate_history, validate_news, validate_calendar, classify_news, date_time, finite
@@ -283,6 +284,8 @@ def collect_dashboard(previous,now):
     for cal in CALENDAR_SOURCES:
         key='calendar:'+cal;prior=[r for r in previous.get('calendar',[]) if r.get('feed_id')==key]
         jobs[key]=(calendar_candidates(cal,request,now,prior),prior,lambda rows:validate_calendar(rows,now),lambda rows:sorted((r['id'],r['date'],r['time'],r.get('end_date')) for r in rows))
+    key='calendar:results';prior=[r for r in previous.get('calendar',[]) if r.get('feed_id')==key]
+    jobs[key]=([('东方财富 / 经济指标与公布值',lambda p=prior:collect_results(request,now,p))],prior,lambda rows:validate_calendar(rows,now),lambda rows:sorted((r['id'],r.get('actual'),r.get('forecast'),r.get('previous')) for r in rows))
     def collect(key,job):
         chain,prior,validator,signature=job
         return run_chain(key,chain,prior,old_states.get(key,{}),now,validator,signature)
@@ -355,7 +358,7 @@ def collect_dashboard(previous,now):
             unique[row['id']]=row
     result['news']=sorted(unique.values(),key=lambda n:n.get('published_at') or '',reverse=True)
     result['calendar']=sorted({r['id']:r for r in result['calendar']}.values(),key=lambda r:(r['date'],r['time'],r['id']))
-    result['calendar_coverage']={'days':45,'timezone':'Asia/Shanghai','schedule_only':True,
+    result['calendar_coverage']={'days':45,'past_days':30,'result_future_days':14,'timezone':'Asia/Shanghai','schedule_only':False,
         'note':'已知时刻统一北京时间；仅日期条目保留来源当地日期。备用源覆盖范围可能不同，逐项标明。'}
     result['events']=build_events(result['news'],previous,now)
     result['event_retention']={'days':RETENTION_DAYS,'max_events':MAX_EVENTS,'max_reports':24,'max_changes':48,

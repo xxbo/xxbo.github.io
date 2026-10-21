@@ -34,7 +34,7 @@ async function check(snapshot){
   vm.runInContext("contextCompareChoices[state.data.markets[0].id]='usIXIC';contextComparePeriod=60;renderRoute(false)",context);
   assert(element('#detail-page').innerHTML.includes('跨市场观察'));
  }
- if(snapshot.calendar?.length){vm.runInContext("location.hash='#/calendar/'+encodeURIComponent(eventId(state.data.calendar[0]));renderRoute(false)",context);assert(element('#detail-page').innerHTML.includes('查看官方安排'));}
+ if(snapshot.calendar?.length){vm.runInContext("location.hash='#/calendar/'+encodeURIComponent(eventId(state.data.calendar[0]));renderRoute(false)",context);assert(element('#detail-page').innerHTML.includes(snapshot.calendar[0].record_type==='indicator'?'查看数据来源':'查看官方安排'));}
  if(snapshot.events?.length){
   vm.runInContext("location.hash='#/events/'+encodeURIComponent(state.data.events[0].id);renderRoute(false)",context);assert(element('#detail-page').innerHTML.includes('报道时间线'));assert(storage.has('current:eventSeen'));
   vm.runInContext('openEventReader(state.data.events[0])',context);assert(element('#reader-content').innerHTML.includes('接下来观察什么'));assert(element('#reader-dialog').open);

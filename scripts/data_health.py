@@ -175,7 +175,7 @@ def validate_calendar(rows, now):
                 if not stamp:raise ValueError()
                 beijing=stamp.astimezone(dt.timezone(dt.timedelta(hours=8)))
                 if beijing.date()!=day or beijing.strftime('%H:%M')!=row['time']:raise ValueError()
-            if last>=current and day<=end:clean[row['id']]=row
+            if last>=current-dt.timedelta(days=30) and day<=end:clean[row['id']]=row
         except (ValueError,KeyError,TypeError):raise DataInvalid('日程日期、时刻或时区不一致')
     warnings=sorted({r['component_warning'] for r in clean.values() if r.get('component_warning')})
     return sorted(clean.values(),key=lambda r:(r['date'],r.get('time',''),r['id'])),warnings

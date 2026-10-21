@@ -1,4 +1,4 @@
-"""Official publication schedules only. No consensus forecasts or inferred release values."""
+"""Official schedules and explicitly labeled media schedule fallbacks."""
 import datetime as dt
 import hashlib
 import html
@@ -70,7 +70,7 @@ def event(title, local, source_id, now, url=None, uid=None, end_date=None):
             'date_only':not timed, 'source':source, 'url':url or source_url,
             'feed_id':'calendar:'+source_id, 'fetched_at':now,
             'previous':None, 'forecast':None, 'actual':None,
-            'schedule_note':'官方计划可能调整；仅发布安排，不提供前值、预期值或公布值。'}
+            'schedule_note':'官方发布安排；此来源未提供结果。'}
 
 
 def unescape_ics(value):
@@ -200,12 +200,12 @@ def collect_calendar(key, request, now):
     if rows and max(dt.date.fromisoformat(r.get('end_date') or r['date']) for r in rows)<today:
         raise DataInvalid('官方日程已过覆盖期，拒绝把旧文件当有效空窗口')
     # A valid future schedule can legitimately have zero releases in this window.
-    return sorted({r['id']:r for r in rows if today<=dt.date.fromisoformat(r.get('end_date') or r['date']) and dt.date.fromisoformat(r['date'])<=end}.values(), key=lambda r:(r['date'],r['time'],r['id']))
+    return sorted({r['id']:r for r in rows if today-dt.timedelta(days=30)<=dt.date.fromisoformat(r.get('end_date') or r['date']) and dt.date.fromisoformat(r['date'])<=end}.values(), key=lambda r:(r['date'],r['time'],r['id']))
 
 
 def filter_window(rows, now):
     today=dt.datetime.fromisoformat(now).astimezone(SH).date();end=today+dt.timedelta(days=45)
-    return sorted({r['id']:r for r in rows if today<=dt.date.fromisoformat(r.get('end_date') or r['date']) and dt.date.fromisoformat(r['date'])<=end}.values(),key=lambda r:(r['date'],r['time'],r['id']))
+    return sorted({r['id']:r for r in rows if today-dt.timedelta(days=30)<=dt.date.fromisoformat(r.get('end_date') or r['date']) and dt.date.fromisoformat(r['date'])<=end}.values(),key=lambda r:(r['date'],r['time'],r['id']))
 
 
 def collect_bea_json(request, now):
@@ -242,7 +242,7 @@ def parse_bls_html(payload, now, url):
 def collect_bls_html(request,now):
     from concurrent.futures import ThreadPoolExecutor
     today=dt.datetime.fromisoformat(now).astimezone(SH).date();end=today+dt.timedelta(days=45)
-    months=sorted({((today+dt.timedelta(days=d)).year,(today+dt.timedelta(days=d)).month) for d in range(46)})
+    months=sorted({((today+dt.timedelta(days=d)).year,(today+dt.timedelta(days=d)).month) for d in range(-30,46)})
     def one(pair):
         year,month=pair;url=f'https://www.bls.gov/schedule/{year}/{month:02d}_sched_list.htm'
         return parse_bls_html(request(url),now,url)

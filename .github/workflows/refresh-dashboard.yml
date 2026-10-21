@@ -31,6 +31,7 @@ jobs:
           node scripts/test_brief.cjs
           node scripts/test_topics.cjs
           node scripts/test_event_tracking.cjs
+          node scripts/test_calendar.cjs
           node scripts/test_dashboard.cjs
           node scripts/test_themes.cjs
           node scripts/test_desk.cjs
