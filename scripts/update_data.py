@@ -288,7 +288,7 @@ def collect_dashboard(previous,now):
     jobs[key]=([('东方财富 / 经济指标与公布值',lambda p=prior:collect_results(request,now,p))],prior,lambda rows:validate_calendar(rows,now),lambda rows:sorted((r['id'],r.get('actual'),r.get('forecast'),r.get('previous')) for r in rows))
     def collect(key,job):
         chain,prior,validator,signature=job
-        return run_chain(key,chain,prior,old_states.get(key,{}),now,validator,signature)
+        return run_chain(key,chain,prior,old_states.get(key,{}),now,validator,signature,prefer_latest=key in ('quote:sh000001','quote:sz399006','quote:sh000688'))
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
         futures={pool.submit(collect,key,job):key for key,job in jobs.items()}
         for future in concurrent.futures.as_completed(futures):

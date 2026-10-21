@@ -30,19 +30,42 @@ def error_type(exc):
     return 'parse'
 
 
-def run_chain(key, candidates, previous, old, now, validator, signature=None):
-    attempts=[];selected=None;rows=None;issues=[]
+def a_quote_target(now):
+    """A freshness target, not a claim that today is an exchange trading day."""
+    local=date_time(now).astimezone(ZoneInfo('Asia/Shanghai'))
+    minute=local.hour*60+local.minute
+    if local.weekday()>=5 or minute<9*60+35:return None
+    if minute>=15*60:
+        return local.replace(hour=15,minute=0,second=0,microsecond=0)-dt.timedelta(seconds=10)
+    target=minute
+    if 11*60+30<minute<13*60:target=11*60+30
+    return local.replace(hour=target//60,minute=target%60,second=0,microsecond=0)-dt.timedelta(minutes=5)
+
+
+def run_chain(key, candidates, previous, old, now, validator, signature=None, prefer_latest=False):
+    attempts=[];selected=None;rows=None;issues=[];best=None
+    target=a_quote_target(now) if prefer_latest else None
     for index,(name,fn) in enumerate(candidates):
         started=time.monotonic()
         try:
             rows,issues=validator(fn())
-            selected=(index,name)
-            attempts.append({'source':name,'status':'ok','duration_ms':round((time.monotonic()-started)*1000)})
-            break
+            attempts.append({'source':name,'status':'ok','quote_at':rows[0].get('quote_at') if prefer_latest and rows else None,'duration_ms':round((time.monotonic()-started)*1000)})
+            if not prefer_latest:
+                selected=(index,name)
+                break
+            stamp=date_time(rows[0].get('quote_at')) if rows else None
+            if stamp is None:raise DataInvalid('择新报价缺少源端时间')
+            if best is None or stamp>best[0]:best=(stamp,index,name,rows,issues)
+            if target is None or stamp>=target:break
         except Exception as exc:
             rows=None
             attempts.append({'source':name,'status':'error','kind':error_type(exc),
                              'error':str(exc)[:180],'duration_ms':round((time.monotonic()-started)*1000)})
+    if prefer_latest and best is not None:
+        stamp,index,name,rows,issues=best
+        selected=(index,name)
+        if target is not None and stamp<target:
+            issues=list(issues)+['已检查主备来源，源端报价仍较早；可能休市或延迟，未据此认定交易日']
     prior_mode=old.get('mode') or ('primary' if old.get('status')=='ok' else 'cache')
     if selected:
         rows=copy.deepcopy(rows)

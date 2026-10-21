@@ -172,3 +172,11 @@ The update workflow is scheduled every 20 minutes. Daily history is cached for u
 ### Economic calendar results
 
 `node scripts/test_calendar.cjs` and `python -m unittest discover -s scripts -p "test_*.py"` cover zero/negative values, missing forecasts, percentage-point differences, explicit Beijing date-only rows, 30-day retention, response truncation, future values, revisions and cache preservation. Public result feed: https://np-listapi.eastmoney.com/sec/economiccalendar/findByDateRange (queried with startDate, endDate and req_trace, as used by the publisher calendar). The site uses scheduled snapshots, not a real-time release terminal.
+
+### A 股报价直连与时效切换
+
+`live-quotes.js` 在打开页面、手动刷新，以及页面可见的工作日 09:25–15:35 每分钟尝试直连三个固定 A 股指数。来源为腾讯 → 新浪 → 东方财富；读取的是各来源自身的报价时间，校验指数身份、有限点位、时间回退和未来时间。盘中落后超过五分钟时继续检查备用源；午间对照上午收盘，收盘后要求报价至少覆盖 14:59:50，避免把 14:56 当作收盘报价。工作日不是已核验的交易日；全源较早时保留最新可核验报价并提示可能休市或延迟。浏览器网络、广告拦截或来源策略可能影响直连；全部失败时保留后台快照，不改写采集时间。
+
+直连仅覆盖报价，不改写新闻、经济日历、日线或后台 `generated_at`。页面分别标注直连检查时间、源端行情时间和资讯快照时间。本机检查在数据健康中明确标注。本机自选、研究和阅读记录不发送给报价接口；请求三个固定公开指数代码。
+
+后台 A 股报价增加东方财富（腾讯 → 新浪 → 东方财富 → Yahoo）；不够新时继续检查下一源，全源都较早时择新并提示，不因休市而强制清空。额外安排北京时间工作日 15:05 / 15:15 收盘补采。GitHub Actions 定时任务可能延迟，收盘补采不是准点保证，页面直连独立于其运行。`test_live_quotes.cjs` 与 `test_quote_freshness.py` 验证失效切换、旧主源、收盘校验、午休、周末、时间回退、缓存保留与不覆盖日线/新闻。

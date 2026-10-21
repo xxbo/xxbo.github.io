@@ -60,6 +60,23 @@ def sina_quote(code,request,now):
     return [row]
 
 
+def eastmoney_quote(code,request,now):
+    secid=('1.' if code.startswith('sh') else '0.')+code[2:]
+    url='https://push2.eastmoney.com/api/qt/stock/get?'+urllib.parse.urlencode({'secid':secid,'fields':'f43,f57,f58,f59,f60,f86,f169,f170'})
+    data=json.loads(request(url)).get('data')
+    if not isinstance(data,dict) or data.get('f57')!=code[2:]:raise ValueError('东方财富指数代码未匹配')
+    precision=data.get('f59')
+    if not isinstance(precision,int) or not 0<=precision<=6:raise ValueError('东方财富报价精度非法')
+    scale=10**precision
+    def scaled(key):
+        v=number(data.get(key))
+        return v/scale if v is not None else None
+    stamp=dt.datetime.fromtimestamp(int(data['f86']),zone(code))
+    row=base(code,'东方财富','https://quote.eastmoney.com/'+code+'.html',now)
+    row.update(price=scaled('f43'),change=scaled('f169'),change_pct=number(data.get('f170'))/100 if number(data.get('f170')) is not None else None,quote_time=stamp.strftime('%Y-%m-%d %H:%M:%S'),quote_at=stamp.isoformat())
+    return [row]
+
+
 def yahoo_data(code,request,span):
     symbol=SYMBOLS[code]
     url='https://query1.finance.yahoo.com/v8/finance/chart/'+urllib.parse.quote(symbol,safe='')+'?range='+span+'&interval=1d'
@@ -81,6 +98,7 @@ def quote_candidates(code,request,now):
     if code in INSTRUMENTS:return global_quotes(code,request,now)
     result=[('腾讯财经',lambda:tencent_quote(code,request,now))]
     if code!='usIXIC':result.append(('新浪财经',lambda:sina_quote(code,request,now)))
+    if NAMES[code][1]=='A股':result.append(('东方财富',lambda:eastmoney_quote(code,request,now)))
     result.append(('Yahoo Finance',lambda:yahoo_quote(code,request,now)))
     return result
 

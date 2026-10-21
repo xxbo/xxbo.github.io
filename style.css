@@ -111,3 +111,5 @@ body{background:var(--bg);color:var(--ink)}.sidebar{background:var(--side)}.side
 @media(max-width:760px){.calendar-overview{gap:7px}.calendar-overview>div{padding:12px 9px}.calendar-overview b{font-size:22px}.calendar-overview span{font-size:11px}.calendar-fields{grid-template-columns:1fr 1fr}.calendar-fields label:last-child{grid-column:1/-1}.schedule-card{grid-template-columns:47px minmax(0,1fr);gap:10px}.schedule-arrow{display:none}.schedule-clock b{font-size:14px}.calendar-values{gap:6px}.calendar-value{padding:8px}.calendar-value>b{font-size:13px}.calendar-page>.calendar-values .calendar-value{padding:12px}.calendar-page>.calendar-values b{font-size:18px}.calendar-day>h2{gap:10px;font-size:15px}}
 .calendar-filterbar>.calendar-fields{display:grid;gap:12px}.calendar-page>.back-link{margin-bottom:14px}.calendar-page>h1{margin-top:12px;margin-bottom:16px}
 @media(max-width:760px){.calendar-filterbar>.calendar-fields{grid-template-columns:1fr 1fr}}
+
+.market-live-status{font-size:11px;line-height:1.8;color:var(--muted);margin:-3px 0 14px;overflow-wrap:anywhere}
