@@ -5,7 +5,7 @@ on:
     - cron: '7,27,47 * * * *'
   push:
     branches: [main]
-    paths: ['index.html', 'style.css', 'app.js', 'home.js', 'brief.js', 'topics.js', 'topic-pages.js', 'calendar.js', 'calendar-pages.js', 'health-pages.js', 'events.js', 'event-pages.js', 'market-context.js', 'context-pages.js', 'reading.js', 'reading-pages.js', 'ui.js', 'pages.js', 'reader.js', 'technical.js', 'analysis-pages.js', 'scripts/**', '.github/workflows/refresh-dashboard.yml']
+    paths: ['index.html', 'style.css', 'app.js', 'home.js', 'brief.js', 'topics.js', 'topic-pages.js', 'calendar.js', 'calendar-pages.js', 'health-pages.js', 'events.js', 'event-pages.js', 'market-context.js', 'context-pages.js', 'reading.js', 'reading-pages.js', 'ui.js', 'desk.js', 'desk-pages.js', 'pages.js', 'reader.js', 'technical.js', 'analysis-pages.js', 'scripts/**', '.github/workflows/refresh-dashboard.yml']
 permissions:
   contents: write
 concurrency:
@@ -33,9 +33,13 @@ jobs:
           node scripts/test_event_tracking.cjs
           node scripts/test_dashboard.cjs
           node scripts/test_themes.cjs
+          node scripts/test_desk.cjs
           python -m unittest discover -s scripts -p "test_*.py"
       - name: Collect public data
-        run: python scripts/update_data.py
+        run: |
+          node scripts/archive_snapshot.cjs
+          python scripts/update_data.py
+          node scripts/archive_snapshot.cjs
       - name: Commit snapshot
         run: |
           git config user.name 'github-actions[bot]'
@@ -49,7 +53,7 @@ jobs:
       - name: Stage public files
         run: |
           mkdir -p _site/data
-          cp ui.js reading.js reading-pages.js market-context.js context-pages.js events.js event-pages.js index.html style.css brief.js topics.js topic-pages.js calendar.js calendar-pages.js health-pages.js home.js app.js pages.js reader.js technical.js analysis-pages.js _site/
+          cp desk.js desk-pages.js ui.js reading.js reading-pages.js market-context.js context-pages.js events.js event-pages.js index.html style.css brief.js topics.js topic-pages.js calendar.js calendar-pages.js health-pages.js home.js app.js pages.js reader.js technical.js analysis-pages.js _site/
           cp data/dashboard.json _site/data/
       - uses: actions/upload-pages-artifact@v3
         with:

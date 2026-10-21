@@ -353,6 +353,8 @@ def collect_dashboard(previous,now):
     result['event_retention']={'days':RETENTION_DAYS,'max_events':MAX_EVENTS,'max_reports':24,'max_changes':48,
         'truncated': bool(previous.get('event_retention',{}).get('truncated')) or len(result['events']) >= MAX_EVENTS or (not previous.get('event_retention') and len(previous.get('events',[])) >= 300)}
     result['event_tracking_since']=previous.get('event_tracking_since') or previous.get('generated_at') or now
+    result['desk_history']=previous.get('desk_history',[])
+    result['desk_history_policy']=previous.get('desk_history_policy',{})
     result['source_policy_version']=1
     return result
 

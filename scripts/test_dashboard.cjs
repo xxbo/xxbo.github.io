@@ -14,7 +14,13 @@ async function check(snapshot){
  assert(element('#assistant-brief').innerHTML.includes('YOUR DAILY BRIEF'));
  assert(element('#home-topics').innerHTML.includes('topic-card'));assert(element('#home-technical').innerHTML.includes('MARKET CONTEXT'));
  const homeKeys=vm.runInContext('state.homePickedIds',context);assert.equal(homeKeys.length,new Set(homeKeys).size,'home article IDs must not repeat across sections');
- assert(storage.has('current:briefVisit'));assert(element('#personal-reading').innerHTML.includes('YOUR READING DESK'));
+ if(snapshot.events?.length){vm.runInContext("globalThis.savedVisit=state.visitBaseline;state.visitBaseline={generated_at:new Date(Date.parse(state.data.generated_at)-86400000).toISOString(),markets:[]};renderHomeOverview()",context);const changedKeys=vm.runInContext('state.homePickedIds',context);assert.equal(changedKeys.length,new Set(changedKeys).size,'change cards must not reintroduce duplicate headlines or recommendations');assert(vm.runInContext("state.homeChangeEventIds.every(id=>!document.querySelector('#headlines-grid').innerHTML.includes(encodeURIComponent(id)))",context));vm.runInContext('state.visitBaseline=savedVisit;renderHomeOverview()',context);}
+
+ assert(storage.has('current:briefVisit'));
+ assert(element('#home-changes').innerHTML.includes('WHAT CHANGED'));assert(element('#home-research').innerHTML.includes('OPEN QUESTIONS'));
+ for(const route of ['#/research','#/research/new','#/changes','#/review']){context.location.hash=route;vm.runInContext('renderRoute(false)',context);assert(!element('#detail-page').innerHTML.includes('没有找到这个页面'),route);assert(element('#detail-page').innerHTML.length>100,route);}
+ vm.runInContext("researchItems=[{id:'test-question',title:'Test research',topic:'growth',keywords:[],evidence:[],versions:[],reviews:[],created_at:new Date().toISOString()}]",context);context.location.hash='#/research/test-question';vm.runInContext('renderRoute(false)',context);assert(element('#detail-page').innerHTML.includes('Test research'));assert(element('#detail-page').innerHTML.includes('data-research-review'));vm.runInContext('researchItems=[]',context);context.location.hash='#/overview';vm.runInContext('renderRoute(false)',context);
+ assert(element('#personal-reading').innerHTML.includes('YOUR READING DESK'));
  for(const [route,expected] of [['#/preferences','YOUR READING PREFERENCES'],['#/events','EVENT TRACKER'],['#/health','DATA RELIABILITY'],['#/topics/chips','近期变化与报道'],['#/calendar','来源覆盖与状态']]){
   context.location.hash=route;vm.runInContext('renderRoute(false)',context);assert(element('#detail-page').innerHTML.includes(expected),route);
  }
