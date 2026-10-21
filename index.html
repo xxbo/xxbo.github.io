@@ -5,7 +5,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="XXBO 的个人财经与新闻工作台：关注市场，理解变化。">
 <meta name="color-scheme" content="light dark"><title>观潮 · XXBO 财经与新闻</title>
-<link rel="stylesheet" href="style.css?v=21">
+<link rel="stylesheet" href="style.css?v=22">
 </head>
 <body>
 <a class="skip" href="#main">跳到主要内容</a>
@@ -20,29 +20,29 @@
     <button class="nav" data-view="research"><span aria-hidden="true">◈</span> 研究桌 <i>05</i></button>
     <button class="nav" data-view="topics"><span aria-hidden="true">⌁</span> 关注主线 <i>06</i></button>
   </nav>
-  <div class="side-note"><span class="live-dot"></span> 少一点噪声，多一点视野。<p>把市场与世界的变化，<br>放在同一个视野里。</p></div>
-  <div class="side-bottom"><a href="#/preferences">◷ 阅读偏好</a><button id="source-button">◉ 数据来源与健康</button><a href="https://github.com/xxbo/xxbo.github.io" target="_blank" rel="noopener noreferrer">GitHub ↗</a><div class="profile"><span>X</span><div>XXBO<small>你的个人研究助手 · 2.0</small></div></div></div>
+  
+  <div class="side-bottom"><a href="#/preferences">◷ 阅读偏好</a><button id="source-button">◉ 数据来源与健康</button><a href="https://github.com/xxbo/xxbo.github.io" target="_blank" rel="noopener noreferrer">GitHub ↗</a><div class="profile"><span>X</span><div>XXBO<small>个人工作台</small></div></div></div>
 </aside>
 <main id="main" tabindex="-1">
   <header class="topbar"><span class="breadcrumb">个人工作台 <span>/</span> <b id="view-label">今日概览</b></span><div class="top-actions"><span id="clock"></span><details class="theme-picker" id="theme-picker"><summary aria-label="选择界面主题">◐ <span id="theme-label">清晰白</span></summary><div class="theme-picker-panel" role="group" aria-label="界面主题"><p>主题会保存在当前浏览器</p><button data-theme-choice="clear" aria-pressed="true"><span class="theme-swatch clear" aria-hidden="true"></span><span><strong>清晰白</strong><small>白底深字 · 默认高对比</small></span></button><button data-theme-choice="paper" aria-pressed="false"><span class="theme-swatch paper" aria-hidden="true"></span><span><strong>暖纸</strong><small>暖色纸面 · 深棕文字</small></span></button><button data-theme-choice="blue" aria-pressed="false"><span class="theme-swatch blue" aria-hidden="true"></span><span><strong>冷蓝</strong><small>清冷蓝调 · 深蓝文字</small></span></button><button data-theme-choice="night" aria-pressed="false"><span class="theme-swatch night" aria-hidden="true"></span><span><strong>极夜</strong><small>深色背景 · 明亮文字</small></span></button></div></details><details class="workspace-menu" id="workspace-menu"><summary aria-label="打开工作台菜单">工作台 <span aria-hidden="true">⌄</span></summary><div class="workspace-menu-panel"><a href="#/watch">我的自选 <span>自选市场与观察范围</span></a><a href="#/changes">变化清单 <span>接上上次阅读</span></a><a href="#/review">存档与复盘 <span>当时的快照与判断</span></a><a href="#/calendar">经济日历 <span>日程与发布安排</span></a><a href="#/saved">我的收藏 <span id="saved-count">0</span></a><a href="#/preferences">阅读偏好 <span>推荐与本机数据</span></a><a href="#/health">数据健康 <span>来源与采集状态</span></a><div class="density-controls" role="group" aria-label="页面密度"><span>页面密度</span><button data-density="comfortable" aria-pressed="true">舒展</button><button data-density="compact" aria-pressed="false">紧凑</button></div></div></details><button id="refresh" title="重新读取已发布的数据">↻ <span>刷新</span></button></div></header>
   <div class="content">
-    <section class="intro"><div><div class="eyebrow" id="date">THE DAILY BRIEF</div><h1 id="page-title">把握变化，保持自己的节奏<span>。</span></h1><p id="page-description">市场有起伏，世界在流动。在这里，找到值得关注的线索。</p></div><div class="edition">观潮日报<span>PERSONAL EDITION</span></div></section>
+    <section class="intro"><div><div class="eyebrow" id="date">THE DAILY BRIEF</div><h1 id="page-title">今日概览</h1></div></section>
     <section id="desk-mode-bar" class="daily-only" aria-label="首页阅读方式"></section>
     <section id="assistant-brief" class="daily-only" aria-label="今日简报"></section>
 
-    <section id="market-section" aria-labelledby="market-title"><div class="section-heading"><h2 id="market-title">全球市场 <small>GLOBAL PULSE</small></h2><a class="text-button" href="#/global">进入完整看板 →</a></div><div id="market-scope-control" class="market-scope-control"></div><div class="markets" id="markets"><div class="empty">正在读取行情快照…</div></div></section>
+    <section id="market-section" aria-labelledby="market-title"><div class="section-heading"><h2 id="market-title">全球市场</h2><a class="text-button" href="#/global">进入完整看板 →</a></div><div id="market-scope-control" class="market-scope-control"></div><div class="markets" id="markets"><div class="empty">正在读取行情快照…</div></div></section>
     <div id="data-notice" class="data-notice" role="status"></div>
     <section id="home-changes" class="daily-only" tabindex="-1" aria-label="最近的变化"></section>
     <section id="detail-page" hidden tabindex="-1" aria-label="详情内容"></section>
     <section id="daily-overview" class="daily-only" aria-label="市场速读"><div class="paper empty">正在整理市场速读…</div></section>
-    <div class="overview-news-layout daily-only">    <section id="headlines-section" tabindex="-1" aria-labelledby="headlines-title"><div class="section-heading"><h2 id="headlines-title">今日要闻 <small>THE BIG PICTURE</small></h2><a href="#/events" class="text-button">查看事件追踪库 →</a></div><div id="headlines-grid"></div></section>
-<aside class="overview-agenda">      <section class="calendar-panel"><div class="section-heading"><h2>数据日历 <small>UP NEXT</small></h2><a class="calendar-icon" href="#/calendar" aria-label="查看完整数据日历">▦</a></div><p class="panel-caption">官方发布安排 · 已知时刻为北京时间</p><div id="calendar-list"><div class="empty">正在读取日历…</div></div></section><section class="desk-note"><span class="eyebrow">YOUR PERSONAL DESK</span><h3>把信息接成线索。</h3><p>要闻先了解，事件继续跟，判断留给自己。</p><a href="#/events">打开事件库 →</a></section></aside></div>
+    <div class="overview-news-layout daily-only">    <section id="headlines-section" tabindex="-1" aria-labelledby="headlines-title"><div class="section-heading"><h2 id="headlines-title">今日要闻</h2><a href="#/events" class="text-button">查看事件追踪库 →</a></div><div id="headlines-grid"></div></section>
+<aside class="overview-agenda">      <section class="calendar-panel"><div class="section-heading"><h2>数据日历</h2><a class="calendar-icon" href="#/calendar" aria-label="查看完整数据日历">▦</a></div><p class="panel-caption">官方发布安排 · 已知时刻为北京时间</p><div id="calendar-list"><div class="empty">正在读取日历…</div></div></section></aside></div>
     <section id="home-research" class="daily-only" tabindex="-1" aria-label="研究桌速览"></section>
     <section id="home-technical" class="daily-only" tabindex="-1" aria-label="首页技术面总结"></section>
     <section id="home-topics" class="daily-only" tabindex="-1" aria-label="我的关注主线"></section>
     <section id="personal-reading" class="daily-only" tabindex="-1" aria-label="个性阅读推荐"></section>
     <div class="columns"><section class="news-panel" id="news-section" tabindex="-1" aria-labelledby="news-title">
-      <div class="section-heading"><h2 id="news-title">值得关注 <small>NEWS RADAR</small></h2><span id="news-total" class="subtle"></span></div>
+      <div class="section-heading"><h2 id="news-title">值得关注</h2><span id="news-total" class="subtle"></span></div>
       <div class="news-tiers" role="group" aria-label="资讯类型"><button data-tier="headline" class="selected">媒体要闻</button><button data-tier="all">全部资讯</button><button data-tier="flash">即时快讯</button></div>
       <div class="news-tools"><div class="tabs" role="group" aria-label="新闻分类"><button class="selected" data-category="全部">全部</button><button data-category="科技">科技</button><button data-category="金融">金融</button><button data-category="全球">全球</button><button data-category="政治">政治</button></div><label class="search"><span>⌕</span><input id="search" type="search" placeholder="搜索新闻" aria-label="搜索新闻标题或来源"></label></div>
       <div class="filter-line"><label>排序 <select id="news-sort" aria-label="新闻排序"><option value="personal">结合偏好</option><option value="time">发布时间</option></select></label><span id="filter-note">点击标题浮窗阅读 · 完整新闻可切换时间排序</span><label><input id="group-events" type="checkbox" checked> 合并相似报道</label><label><input id="unread" type="checkbox"> 只看未读</label></div>
@@ -50,38 +50,38 @@
     </section>
     <aside class="right-column">
       <section id="home-wire" class="daily-only paper" aria-label="最新快讯"></section>
-      <section class="watch-panel"><div class="section-heading"><h2>自选观察 <small>WATCHLIST</small></h2><button id="edit-watch" class="text-button">编辑</button></div><p class="panel-caption">关注你的主线，而不是每一次波动。</p><div id="watch-list"></div><div id="watch-editor" hidden><p class="subtle">选择关注的市场</p><div id="watch-options"></div><button id="save-watch" class="solid-button">保存自选</button></div><div class="private-note">⌁ 自选与收藏仅保存在当前浏览器</div></section>
+      <section class="watch-panel"><div class="section-heading"><h2>自选观察</h2><button id="edit-watch" class="text-button">编辑</button></div><div id="watch-list"></div><div id="watch-editor" hidden><p class="subtle">选择关注的市场</p><div id="watch-options"></div><button id="save-watch" class="solid-button">保存自选</button></div><div class="private-note">⌁ 自选与收藏仅保存在当前浏览器</div></section>
 
-      <section class="reading-note"><span>给自己留一点空间</span><p>信息是用来帮助判断的，<br>不必每条都追，不必每次都动。</p><div>READ SLOWLY. THINK CLEARLY.</div></section>
+      
     </aside></div>
-    <footer><span><b>观潮</b> · A quieter view of a moving world.</span><span id="updated-at">数据准备中</span></footer>
+    <footer><span><b>观潮</b></span><span id="updated-at">数据准备中</span></footer>
   </div>
 </main>
 <dialog id="research-pin-dialog" aria-labelledby="research-pin-title"></dialog>
 <dialog id="sources-dialog"><div class="dialog-heading"><div><span class="eyebrow">TRANSPARENCY</span><h2>数据来源与更新状态</h2></div><button id="close-sources" aria-label="关闭">×</button></div><p>页面展示公开来源的报价快照与新闻。点击标题可浮窗阅读来源提供的 RSS 内容或摘要。抓取时间不等于行情时间；失败时保留上次成功数据。</p><div id="source-status"></div><p class="subtle">定时任务计划每 20 分钟更新，实际运行可能延迟。新闻分类采用检索词及简单规则，可能有交叉；简报由固定规则与来源摘录整理，事件按相似标题聚合，可能漏合并或误合并；多来源不等于独立核实。事件观察最多保留 30 天，且受容量限制。公开站点不保存个人持仓。</p><a href="https://github.com/xxbo/xxbo.github.io/actions" target="_blank" rel="noopener noreferrer">查看更新任务 ↗</a></dialog>
 <dialog id="reader-dialog" aria-labelledby="reader-title"><div class="reader-toolbar"><div class="reader-trail"><button id="reader-back" aria-label="返回上一层阅读" disabled>← 返回</button><span id="reader-position">观潮 · 阅读</span></div><div class="reader-tools"><button id="reader-prev" aria-label="上一篇报道" disabled>↑ 上一篇</button><button id="reader-next" aria-label="下一篇报道" disabled>下一篇 ↓</button><button data-reader-font="-1" aria-label="减小正文字号">A−</button><button data-reader-font="1" aria-label="增大正文字号">A+</button></div><button id="reader-close" aria-label="关闭阅读窗口">关闭 ×</button></div><div id="reader-content"></div></dialog>
 <div id="toast" role="status"></div>
-<script src="technical.js?v=21" defer></script>
-<script src="market-context.js?v=21" defer></script>
-<script src="brief.js?v=21" defer></script>
-<script src="events.js?v=21" defer></script>
-<script src="reading.js?v=21" defer></script>
-<script src="topics.js?v=21" defer></script>
-<script src="calendar.js?v=21" defer></script>
-<script src="global.js?v=21" defer></script>
-<script src="global-pages.js?v=21" defer></script>
-<script src="desk.js?v=21" defer></script>
-<script src="desk-pages.js?v=21" defer></script>
-<script src="home.js?v=21" defer></script>
-<script src="topic-pages.js?v=21" defer></script>
-<script src="calendar-pages.js?v=21" defer></script>
-<script src="health-pages.js?v=21" defer></script>
-<script src="event-pages.js?v=21" defer></script>
-<script src="context-pages.js?v=21" defer></script>
-<script src="reading-pages.js?v=21" defer></script>
-<script src="ui.js?v=21" defer></script>
-<script src="app.js?v=21" defer></script>
-<script src="analysis-pages.js?v=21" defer></script>
-<script src="pages.js?v=21" defer></script>
-<script src="reader.js?v=21" defer></script>
+<script src="technical.js?v=22" defer></script>
+<script src="market-context.js?v=22" defer></script>
+<script src="brief.js?v=22" defer></script>
+<script src="events.js?v=22" defer></script>
+<script src="reading.js?v=22" defer></script>
+<script src="topics.js?v=22" defer></script>
+<script src="calendar.js?v=22" defer></script>
+<script src="global.js?v=22" defer></script>
+<script src="global-pages.js?v=22" defer></script>
+<script src="desk.js?v=22" defer></script>
+<script src="desk-pages.js?v=22" defer></script>
+<script src="home.js?v=22" defer></script>
+<script src="topic-pages.js?v=22" defer></script>
+<script src="calendar-pages.js?v=22" defer></script>
+<script src="health-pages.js?v=22" defer></script>
+<script src="event-pages.js?v=22" defer></script>
+<script src="context-pages.js?v=22" defer></script>
+<script src="reading-pages.js?v=22" defer></script>
+<script src="ui.js?v=22" defer></script>
+<script src="app.js?v=22" defer></script>
+<script src="analysis-pages.js?v=22" defer></script>
+<script src="pages.js?v=22" defer></script>
+<script src="reader.js?v=22" defer></script>
 </body></html>
