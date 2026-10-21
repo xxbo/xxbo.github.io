@@ -4,11 +4,14 @@ import json
 import re
 import urllib.parse
 from zoneinfo import ZoneInfo
+from global_markets import INSTRUMENTS, quote_candidates as global_quotes, history_candidates as global_history
 
 SYMBOLS={'sh000001':'000001.SS','sz399006':'399006.SZ','sh000688':'000688.SS','hkHSI':'^HSI','hkHSTECH':'HSTECH.HK','usIXIC':'^IXIC'}
 NAMES={'sh000001':('上证指数','A股'),'sz399006':('创业板指','A股'),'sh000688':('科创50','A股'),'hkHSI':('恒生指数','港股'),'hkHSTECH':('恒生科技','港股'),'usIXIC':('纳斯达克','美股')}
-TENCENT_URL='https://qt.gtimg.cn/q='+','.join(NAMES)
-SINA_URL='https://hq.sinajs.cn/list='+','.join(code for code in NAMES if code!='usIXIC')
+NAMES.update({code:(d['name'],d['region']) for code,d in INSTRUMENTS.items()})
+LEGACY_CODES=[code for code in NAMES if code not in INSTRUMENTS]
+TENCENT_URL='https://qt.gtimg.cn/q='+','.join(LEGACY_CODES)
+SINA_URL='https://hq.sinajs.cn/list='+','.join(code for code in LEGACY_CODES if code!='usIXIC')
 
 
 def number(value):
@@ -16,7 +19,7 @@ def number(value):
     except (ValueError,TypeError):return None
 
 
-def zone(code):return ZoneInfo('America/New_York' if code=='usIXIC' else 'Asia/Shanghai')
+def zone(code):return ZoneInfo(INSTRUMENTS[code]['timezone'] if code in INSTRUMENTS else 'America/New_York' if code=='usIXIC' else 'Asia/Shanghai')
 
 
 def base(code,source,url,now):
@@ -75,6 +78,7 @@ def yahoo_quote(code,request,now):
 
 
 def quote_candidates(code,request,now):
+    if code in INSTRUMENTS:return global_quotes(code,request,now)
     result=[('腾讯财经',lambda:tencent_quote(code,request,now))]
     if code!='usIXIC':result.append(('新浪财经',lambda:sina_quote(code,request,now)))
     result.append(('Yahoo Finance',lambda:yahoo_quote(code,request,now)))
@@ -106,6 +110,7 @@ def yahoo_history(code,request):
 
 
 def history_candidates(code,request):
+    if code in INSTRUMENTS:return global_history(code,request)
     result=[('腾讯日线',lambda:tencent_history(code,request))]
     if NAMES[code][1]=='A股':result.append(('新浪日线',lambda:sina_history(code,request)))
     if code in ('hkHSI','usIXIC'):result.append(('Yahoo Finance 日线',lambda:yahoo_history(code,request)))
@@ -113,12 +118,17 @@ def history_candidates(code,request):
     return result
 
 
+def close_minute(code):
+    value=INSTRUMENTS[code]['close'] if code in INSTRUMENTS else '15:00' if NAMES[code][1]=='A股' else '16:00'
+    hour,minute=map(int,value.split(':'));return hour*60+minute
+
+
 def session_key(code,now):
-    local=dt.datetime.fromisoformat(now).astimezone(zone(code));close_hour=15 if NAMES[code][1]=='A股' else 16
-    return local.date().isoformat()+('-closed' if local.hour>=close_hour else '-open')
+    local=dt.datetime.fromisoformat(now).astimezone(zone(code));closed_at=close_minute(code)
+    return local.date().isoformat()+('-closed' if local.hour*60+local.minute>=closed_at else '-open')
 
 
 def mark_partial(rows,code,now):
-    local=dt.datetime.fromisoformat(now).astimezone(zone(code));close_hour=15 if NAMES[code][1]=='A股' else 16
-    for row in rows:row['partial']=row['date']==local.date().isoformat() and local.hour<close_hour
+    local=dt.datetime.fromisoformat(now).astimezone(zone(code));closed_at=close_minute(code)
+    for row in rows:row['partial']=row['date']==local.date().isoformat() and local.hour*60+local.minute<closed_at
     return rows

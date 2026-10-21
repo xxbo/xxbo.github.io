@@ -1,0 +1,4 @@
+const assert=require('node:assert/strict'),G=require('../global.js');
+assert.equal(G.number({price:7.12345,asset_class:'fx',unit:'人民币/美元'}),'7.1235');assert.equal(G.value({price:4.125,asset_class:'rates',precision:3}),'4.125%');assert.equal(G.delta({asset_class:'rates',change:.05}),'+5.0 bp');assert.equal(G.delta({asset_class:'rates',change:-.012}),'-1.2 bp');assert.equal(G.delta({asset_class:'stocks',change_pct:1.234}),'+1.23%');assert.equal(G.value({price:null}),'—');
+const rows=[{id:'rateUS10Y',price:5.2,observations:[{date:'2026-10-19',value:5.1},{date:'2026-10-20',value:5.2}]},{id:'rateUS2Y',price:4.2,observations:[{date:'2026-10-19',value:4.2}]}];const spread=G.spread(rows);assert.equal(spread.date,'2026-10-19');assert(Math.abs(spread.bp-90)<1e-8);assert.equal(G.spread([rows[0]]),null);assert.equal(G.groups.length,4);
+console.log('Global display checks passed: FX precision, yield units, basis points and matched-date curve spread.');

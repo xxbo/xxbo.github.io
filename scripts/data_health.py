@@ -8,6 +8,7 @@ import re
 import time
 import urllib.error
 import urllib.parse
+from zoneinfo import ZoneInfo
 
 
 class DataInvalid(ValueError):
@@ -80,6 +81,21 @@ def finite(value):
 def validate_quote(rows, now, previous=None):
     if not isinstance(rows,list) or len(rows)!=1:raise DataInvalid('单个指数报价结构不完整')
     row=rows[0]
+    if row.get('asset_class')=='rates':
+        if not finite(row.get('price')) or not -10<=row['price']<=40 or not finite(row.get('change')):raise DataInvalid('日度收益率或变化值非法')
+        try:day=dt.date.fromisoformat(row['quote_date'])
+        except (ValueError,KeyError):raise DataInvalid('收益率缺少观测日期')
+        current=date_time(now).astimezone(ZoneInfo('America/New_York')).date()
+        if day>current or (current-day).days>10:raise DataInvalid('收益率观测日期在未来或超过十天')
+        if previous and previous.get('quote_date') and day<dt.date.fromisoformat(previous['quote_date']):raise DataInvalid('收益率观测日期回退')
+        observations=row.get('observations',[])
+        if len(observations)<2 or observations[-1].get('date')!=row['quote_date'] or observations[-1].get('value')!=row['price']:raise DataInvalid('收益率观测序列与当前值不一致')
+        if any(not finite(r.get('value')) or not -10<=r['value']<=40 for r in observations):raise DataInvalid('收益率序列含非法数值')
+        if abs(row['change']-(observations[-1]['value']-observations[-2]['value']))>1e-8:raise DataInvalid('收益率变化与前一有效观测不一致')
+        dates=[r.get('date','') for r in observations]
+        if dates!=sorted(set(dates)) or any(d>row['quote_date'] for d in dates):raise DataInvalid('收益率观测日期重复、乱序或晚于当前观测')
+        if not row.get('quote_date_only') or row.get('quote_at'):raise DataInvalid('日度观测不得补造报价时刻')
+        return rows,[]
     if not finite(row.get('price')) or row['price']<=0 or not finite(row.get('change_pct')) or abs(row['change_pct'])>100:
         raise DataInvalid('点位或涨跌幅非法')
     stamp=date_time(row.get('quote_at'))
@@ -96,13 +112,17 @@ def validate_quote(rows, now, previous=None):
 
 def validate_history(rows, now, previous=None):
     if not isinstance(rows,list):raise DataInvalid('日线不是列表')
+    close_only=bool(rows) and all(r.get('close_only') is True for r in rows)
+    if any(r.get('close_only') for r in rows) and not close_only:raise DataInvalid('不能混用日收盘序列与 OHLC 日线')
     clean={};bad=0;duplicates=0;current=date_time(now).astimezone(dt.timezone(dt.timedelta(hours=8))).date()
     for row in rows:
         try:
             day=dt.date.fromisoformat(row['date'])
             if day>current:raise ValueError()
             o,c,h,l=(row.get(k) for k in ('open','close','high','low'))
-            if not all(finite(v) and v>0 for v in (o,c,h,l)) or h<max(o,c,l) or l>min(o,c,h):raise ValueError()
+            if close_only:
+                if not finite(c) or c<=0 or any(v is not None for v in (o,h,l)):raise ValueError()
+            elif not all(finite(v) and v>0 for v in (o,c,h,l)) or h<max(o,c,l) or l>min(o,c,h):raise ValueError()
             if row.get('volume') is not None and (not finite(row['volume']) or row['volume']<0):raise ValueError()
             if day.isoformat() in clean:duplicates+=1
             clean[day.isoformat()]=row
@@ -113,6 +133,7 @@ def validate_history(rows, now, previous=None):
     if previous and result[-1]['date']<previous[-1]['date']:raise DataInvalid('日线末日回退')
     if (current-dt.date.fromisoformat(result[-1]['date'])).days>14:raise DataInvalid('最新日线超过十四天未更新')
     issues=[]
+    if close_only:issues.append('只采用来源真实收盘值；无开高低或成交量，不计算 ATR、量价指标')
     if bad:issues.append(f'已剔除 {bad} 条非法日线')
     if duplicates:issues.append(f'已去重 {duplicates} 条同日期日线')
     if any((dt.date.fromisoformat(b['date'])-dt.date.fromisoformat(a['date'])).days>10 for a,b in zip(result,result[1:])):

@@ -5,7 +5,7 @@ on:
     - cron: '7,27,47 * * * *'
   push:
     branches: [main]
-    paths: ['index.html', 'style.css', 'app.js', 'home.js', 'brief.js', 'topics.js', 'topic-pages.js', 'calendar.js', 'calendar-pages.js', 'health-pages.js', 'events.js', 'event-pages.js', 'market-context.js', 'context-pages.js', 'reading.js', 'reading-pages.js', 'ui.js', 'desk.js', 'desk-pages.js', 'pages.js', 'reader.js', 'technical.js', 'analysis-pages.js', 'scripts/**', '.github/workflows/refresh-dashboard.yml']
+    paths: ['index.html', 'style.css', 'app.js', 'home.js', 'brief.js', 'topics.js', 'topic-pages.js', 'calendar.js', 'calendar-pages.js', 'health-pages.js', 'events.js', 'event-pages.js', 'market-context.js', 'context-pages.js', 'reading.js', 'reading-pages.js', 'ui.js', 'desk.js', 'desk-pages.js', 'global.js', 'global-pages.js', 'pages.js', 'reader.js', 'technical.js', 'analysis-pages.js', 'scripts/**', '.github/workflows/refresh-dashboard.yml']
 permissions:
   contents: write
 concurrency:
@@ -34,6 +34,7 @@ jobs:
           node scripts/test_dashboard.cjs
           node scripts/test_themes.cjs
           node scripts/test_desk.cjs
+          node scripts/test_global.cjs
           python -m unittest discover -s scripts -p "test_*.py"
       - name: Collect public data
         run: |
@@ -53,7 +54,7 @@ jobs:
       - name: Stage public files
         run: |
           mkdir -p _site/data
-          cp desk.js desk-pages.js ui.js reading.js reading-pages.js market-context.js context-pages.js events.js event-pages.js index.html style.css brief.js topics.js topic-pages.js calendar.js calendar-pages.js health-pages.js home.js app.js pages.js reader.js technical.js analysis-pages.js _site/
+          cp global.js global-pages.js desk.js desk-pages.js ui.js reading.js reading-pages.js market-context.js context-pages.js events.js event-pages.js index.html style.css brief.js topics.js topic-pages.js calendar.js calendar-pages.js health-pages.js home.js app.js pages.js reader.js technical.js analysis-pages.js _site/
           cp data/dashboard.json _site/data/
       - uses: actions/upload-pages-artifact@v3
         with:

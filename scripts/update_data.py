@@ -18,6 +18,7 @@ import copy
 import xml.etree.ElementTree as ET
 from event_digest import build_events, fingerprint, RETENTION_DAYS, MAX_EVENTS
 from economic_calendar import calendar_candidates, SOURCES as CALENDAR_SOURCES
+from global_markets import INSTRUMENTS, meta as global_meta
 from market_adapters import NAMES, quote_candidates, history_candidates, session_key, mark_partial
 from data_health import run_chain, validate_quote, validate_history, validate_news, validate_calendar, classify_news, date_time, finite
 
@@ -275,7 +276,7 @@ def collect_dashboard(previous,now):
         key='quote:'+code
         if key not in old_states and old.get('fetched_at'):
             old_states[key]={'status':old.get('quote_status',old.get('status','ok')),'mode':'primary','selected_source':old.get('source'),'last_success':old.get('fetched_at')}
-        jobs[key]=(quote_candidates(code,request,now),[old] if finite(old.get('price')) and old['price']>0 else [],lambda rows,o=old:validate_quote(rows,now,o),lambda rows:[{k:r.get(k) for k in ('id','price','change','change_pct','quote_at')} for r in rows])
+        jobs[key]=(quote_candidates(code,request,now),[old] if finite(old.get('price')) and (old['price']>0 or old.get('asset_class')=='rates') else [],lambda rows,o=old:validate_quote(rows,now,o),lambda rows:[{k:r.get(k) for k in ('id','price','change','change_pct','quote_at','quote_date')} for r in rows])
     for key,chain in news_candidates().items():
         prior=[r for r in previous.get('news',[]) if r.get('feed_id')==key]
         jobs[key]=(chain,prior,lambda rows:validate_news(rows,now),lambda rows:sorted((n['id'],fingerprint(n)) for n in rows))
@@ -308,10 +309,17 @@ def collect_dashboard(previous,now):
                 result['news'].extend(rows)
             result['sources'].append(status)
             print(f"{key}: {status['mode']} ({status['selected_source'] or 'none'}, {len(rows)})",flush=True)
+    for market in result['markets']:
+        market.update(global_meta(market['id']) if market['id'] in INSTRUMENTS else {'asset_class':'stocks','unit':'点','currency':'USD' if market['id']=='usIXIC' else 'HKD' if market['id'].startswith('hk') else 'CNY'})
     result['markets'].sort(key=lambda m:list(NAMES).index(m['id']))
     # Each index is evaluated independently. Reuse valid history only within its collection window/session.
     def collect_history(market):
         code=market['id'];key='history:'+code;old=old_markets.get(code,{})
+        if market.get('asset_class')=='rates':
+            source=next((s for s in result['sources'] if s['id']=='quote:'+code),{})
+            market.update(history=[],history_source=market.get('source'),history_status='not_applicable',history_fetched_at=market.get('fetched_at'),volume_basis='官方日度观测，无盘中 OHLC 或成交量')
+            return {**source,'id':key,'count':len(market.get('observations',[])),'observation_only':True}
+
         prior=old.get('history',[]);prior_state=old_states.get(key) or {'status':old.get('history_status','ok'),'mode':'primary','selected_source':old.get('history_source') or '腾讯日线','last_success':old.get('history_fetched_at')}
         fetched=date_time(old.get('history_fetched_at'));age=(date_time(now)-fetched).total_seconds() if fetched else float('inf')
         if len(prior)>=120 and old.get('history_session_key')==session_key(code,now) and 0<=age<6*3600 and old.get('history_status')=='ok':
@@ -355,7 +363,7 @@ def collect_dashboard(previous,now):
     result['event_tracking_since']=previous.get('event_tracking_since') or previous.get('generated_at') or now
     result['desk_history']=previous.get('desk_history',[])
     result['desk_history_policy']=previous.get('desk_history_policy',{})
-    result['source_policy_version']=1
+    result['source_policy_version']=2
     return result
 
 

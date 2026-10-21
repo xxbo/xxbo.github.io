@@ -18,7 +18,9 @@ async function check(snapshot){
 
  assert(storage.has('current:briefVisit'));
  assert(element('#home-changes').innerHTML.includes('WHAT CHANGED'));assert(element('#home-research').innerHTML.includes('OPEN QUESTIONS'));
- for(const route of ['#/research','#/research/new','#/changes','#/review']){context.location.hash=route;vm.runInContext('renderRoute(false)',context);assert(!element('#detail-page').innerHTML.includes('没有找到这个页面'),route);assert(element('#detail-page').innerHTML.length>100,route);}
+ if(snapshot.markets?.some(m=>m.asset_class==='rates')){const rate=snapshot.markets.find(m=>m.asset_class==='rates');context.location.hash='#/markets/'+rate.id;vm.runInContext('renderRoute(false)',context);assert(element('#detail-page').innerHTML.includes('OFFICIAL DAILY OBSERVATIONS'));assert(element('#detail-page').innerHTML.includes('基点')||element('#detail-page').innerHTML.includes('bp'));assert(!element('#detail-page').innerHTML.includes('ATR(14)'));}
+
+ for(const route of ['#/global','#/research','#/research/new','#/changes','#/review']){context.location.hash=route;vm.runInContext('renderRoute(false)',context);assert(!element('#detail-page').innerHTML.includes('没有找到这个页面'),route);assert(element('#detail-page').innerHTML.length>100,route);}
  vm.runInContext("researchItems=[{id:'test-question',title:'Test research',topic:'growth',keywords:[],evidence:[],versions:[],reviews:[],created_at:new Date().toISOString()}]",context);context.location.hash='#/research/test-question';vm.runInContext('renderRoute(false)',context);assert(element('#detail-page').innerHTML.includes('Test research'));assert(element('#detail-page').innerHTML.includes('data-research-review'));vm.runInContext('researchItems=[]',context);context.location.hash='#/overview';vm.runInContext('renderRoute(false)',context);
  assert(element('#personal-reading').innerHTML.includes('YOUR READING DESK'));
  for(const [route,expected] of [['#/preferences','YOUR READING PREFERENCES'],['#/events','EVENT TRACKER'],['#/health','DATA RELIABILITY'],['#/topics/chips','近期变化与报道'],['#/calendar','来源覆盖与状态']]){
