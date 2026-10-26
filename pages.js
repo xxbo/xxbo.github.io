@@ -59,7 +59,7 @@ function marketPage(m,mode="overview") {
 function renderRoute(scroll=true) {
   let parts;try {parts=location.hash.replace(/^#\/?/,'').split('/').filter(Boolean).map(decodeURIComponent);}catch{parts=['missing'];}
   if(parts[0]==='main')return;
-  const root=parts[0]||'overview';syncNavigation(root);const detail=(root==='news'&&parts[2]==='article')||root==='markets'||root==='calendar'||root==='topics'||root==='health'||root==='events'||root==='preferences'||root==='research'||root==='changes'||root==='review'||root==='global';
+  const root=parts[0]||'overview';document.body.classList.toggle('feed-home',root==='overview');syncNavigation(root);const detail=(root==='news'&&parts[2]==='article')||root==='markets'||root==='calendar'||root==='topics'||root==='health'||root==='events'||root==='preferences'||root==='research'||root==='changes'||root==='review'||root==='global';
   document.body.classList.toggle('detail-mode',detail);$('#detail-page').hidden=!detail;
   if(!detail) {
     if(!['overview','news','watch','saved'].includes(root)){document.body.classList.add('detail-mode');$('#detail-page').hidden=false;$('#detail-page').innerHTML='<div class="paper empty"><h2>没有找到这个页面</h2><a href="#/overview">返回今日概览 →</a></div>';return;}

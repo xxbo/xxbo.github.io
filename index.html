@@ -5,20 +5,21 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="XXBO 的个人财经与新闻工作台：关注市场，理解变化。">
 <meta name="color-scheme" content="light dark"><title>观潮 · XXBO 财经与新闻</title>
-<link rel="stylesheet" href="style.css?v=24">
+<link rel="stylesheet" href="style.css?v=25">
+<link rel="stylesheet" href="feed.css?v=25">
 </head>
-<body>
+<body class="feed-home">
 <a class="skip" href="#main">跳到主要内容</a>
 <aside class="sidebar">
   <a class="brand" href="#/overview" aria-label="观潮首页"><span class="brand-icon">≈</span><span>观潮<small>THE DAILY CURRENT</small></span></a>
   <div class="workspace">XXBO / PERSONAL DESK</div>
   <nav aria-label="主导航">
-    <button class="nav active" data-view="overview"><span aria-hidden="true">◫</span> 今日概览 <i>01</i></button>
-    <button class="nav" data-view="global"><span aria-hidden="true">◎</span> 全球市场 <i>02</i></button>
-    <button class="nav" data-view="news"><span aria-hidden="true">▤</span> 新闻雷达 <i>03</i></button>
-    <button class="nav" data-view="events"><span aria-hidden="true">⌘</span> 事件追踪 <i>04</i></button>
-    <button class="nav" data-view="research"><span aria-hidden="true">◈</span> 研究桌 <i>05</i></button>
-    <button class="nav" data-view="topics"><span aria-hidden="true">⌁</span> 关注主线 <i>06</i></button>
+    <button class="nav active" data-view="overview"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M3 10h18M10 10v11"/></svg></span> 今日概览 <i>01</i></button>
+    <button class="nav" data-view="global"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></svg></span> 全球市场 <i>02</i></button>
+    <button class="nav" data-view="news"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8m-8 4h8m-8 4h5"/></svg></span> 新闻雷达 <i>03</i></button>
+    <button class="nav" data-view="events"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="5" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="5" cy="19" r="2"/><path d="M11 5h9m-9 7h9m-9 7h9"/></svg></span> 事件追踪 <i>04</i></button>
+    <button class="nav" data-view="research"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6a3 3 0 013 3v14a4 4 0 00-4-3H4zm16 0h-4a3 3 0 00-3 3v14a4 4 0 014-3h3z"/></svg></span> 研究桌 <i>05</i></button>
+    <button class="nav" data-view="topics"><span aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 1v3m0 16v3M1 12h3m16 0h3"/></svg></span> 关注主线 <i>06</i></button>
   </nav>
   
   <div class="side-bottom"><a href="#/preferences">◷ 阅读偏好</a><button id="source-button">◉ 数据来源与健康</button><a href="https://github.com/xxbo/xxbo.github.io" target="_blank" rel="noopener noreferrer">GitHub ↗</a><div class="profile"><span>X</span><div>XXBO<small>个人工作台</small></div></div></div>
@@ -27,6 +28,7 @@
   <header class="topbar"><span class="breadcrumb">个人工作台 <span>/</span> <b id="view-label">今日概览</b></span><div class="top-actions"><span id="clock"></span><details class="theme-picker" id="theme-picker"><summary aria-label="选择界面主题">◐ <span id="theme-label">清晰白</span></summary><div class="theme-picker-panel" role="group" aria-label="界面主题"><p>主题会保存在当前浏览器</p><button data-theme-choice="clear" aria-pressed="true"><span class="theme-swatch clear" aria-hidden="true"></span><span><strong>清晰白</strong><small>白底深字 · 默认高对比</small></span></button><button data-theme-choice="paper" aria-pressed="false"><span class="theme-swatch paper" aria-hidden="true"></span><span><strong>暖纸</strong><small>暖色纸面 · 深棕文字</small></span></button><button data-theme-choice="blue" aria-pressed="false"><span class="theme-swatch blue" aria-hidden="true"></span><span><strong>冷蓝</strong><small>清冷蓝调 · 深蓝文字</small></span></button><button data-theme-choice="night" aria-pressed="false"><span class="theme-swatch night" aria-hidden="true"></span><span><strong>极夜</strong><small>深色背景 · 明亮文字</small></span></button></div></details><details class="workspace-menu" id="workspace-menu"><summary aria-label="打开工作台菜单">工作台 <span aria-hidden="true">⌄</span></summary><div class="workspace-menu-panel"><a href="#/watch">我的自选 <span>自选市场与观察范围</span></a><a href="#/changes">变化清单 <span>接上上次阅读</span></a><a href="#/review">存档与复盘 <span>当时的快照与判断</span></a><a href="#/calendar">经济日历 <span>日程与发布安排</span></a><a href="#/saved">我的收藏 <span id="saved-count">0</span></a><a href="#/preferences">阅读偏好 <span>推荐与本机数据</span></a><a href="#/health">数据健康 <span>来源与采集状态</span></a><div class="density-controls" role="group" aria-label="页面密度"><span>页面密度</span><button data-density="comfortable" aria-pressed="true">舒展</button><button data-density="compact" aria-pressed="false">紧凑</button></div></div></details><button id="refresh" title="重新读取资讯快照并直连 A 股报价">↻ <span>刷新</span></button></div></header>
   <div class="content">
     <section class="intro"><div><div class="eyebrow" id="date">THE DAILY BRIEF</div><h1 id="page-title">今日概览</h1></div></section>
+    <section id="home-feed" class="daily-only" tabindex="-1" aria-label="首页信息流"><div class="feed-skeleton" aria-label="正在读取动态"></div></section>
     <section id="desk-mode-bar" class="daily-only" aria-label="首页阅读方式"></section>
     <section id="assistant-brief" class="daily-only" aria-label="今日简报"></section>
 
@@ -61,28 +63,30 @@
 <dialog id="sources-dialog"><div class="dialog-heading"><div><span class="eyebrow">TRANSPARENCY</span><h2>数据来源与更新状态</h2></div><button id="close-sources" aria-label="关闭">×</button></div><p>A 股指数报价由浏览器直连公开来源，完整日线与新闻采用后台快照。点击标题可浮窗阅读来源提供的 RSS 内容或摘要。抓取时间不等于行情时间；失败时保留上次成功数据。</p><div id="source-status"></div><p class="subtle">定时任务计划每 20 分钟更新，实际运行可能延迟。新闻分类采用检索词及简单规则，可能有交叉；简报由固定规则与来源摘录整理，事件按相似标题聚合，可能漏合并或误合并；多来源不等于独立核实。事件观察最多保留 30 天，且受容量限制。公开站点不保存个人持仓。</p><a href="https://github.com/xxbo/xxbo.github.io/actions" target="_blank" rel="noopener noreferrer">查看更新任务 ↗</a></dialog>
 <dialog id="reader-dialog" aria-labelledby="reader-title"><div class="reader-toolbar"><div class="reader-trail"><button id="reader-back" aria-label="返回上一层阅读" disabled>← 返回</button><span id="reader-position">观潮 · 阅读</span></div><div class="reader-tools"><button id="reader-prev" aria-label="上一篇报道" disabled>↑ 上一篇</button><button id="reader-next" aria-label="下一篇报道" disabled>下一篇 ↓</button><button data-reader-font="-1" aria-label="减小正文字号">A−</button><button data-reader-font="1" aria-label="增大正文字号">A+</button></div><button id="reader-close" aria-label="关闭阅读窗口">关闭 ×</button></div><div id="reader-content"></div></dialog>
 <div id="toast" role="status"></div>
-<script src="technical.js?v=24" defer></script>
-<script src="market-context.js?v=24" defer></script>
-<script src="brief.js?v=24" defer></script>
-<script src="events.js?v=24" defer></script>
-<script src="reading.js?v=24" defer></script>
-<script src="topics.js?v=24" defer></script>
-<script src="calendar.js?v=24" defer></script>
-<script src="global.js?v=24" defer></script>
-<script src="global-pages.js?v=24" defer></script>
-<script src="desk.js?v=24" defer></script>
-<script src="desk-pages.js?v=24" defer></script>
-<script src="home.js?v=24" defer></script>
-<script src="topic-pages.js?v=24" defer></script>
-<script src="calendar-pages.js?v=24" defer></script>
-<script src="health-pages.js?v=24" defer></script>
-<script src="event-pages.js?v=24" defer></script>
-<script src="context-pages.js?v=24" defer></script>
-<script src="reading-pages.js?v=24" defer></script>
-<script src="ui.js?v=24" defer></script>
-<script src="live-quotes.js?v=24" defer></script>
-<script src="app.js?v=24" defer></script>
-<script src="analysis-pages.js?v=24" defer></script>
-<script src="pages.js?v=24" defer></script>
-<script src="reader.js?v=24" defer></script>
+<script src="technical.js?v=25" defer></script>
+<script src="market-context.js?v=25" defer></script>
+<script src="brief.js?v=25" defer></script>
+<script src="events.js?v=25" defer></script>
+<script src="reading.js?v=25" defer></script>
+<script src="topics.js?v=25" defer></script>
+<script src="calendar.js?v=25" defer></script>
+<script src="global.js?v=25" defer></script>
+<script src="global-pages.js?v=25" defer></script>
+<script src="desk.js?v=25" defer></script>
+<script src="desk-pages.js?v=25" defer></script>
+<script src="feed.js?v=25" defer></script>
+<script src="home-feed.js?v=25" defer></script>
+<script src="home.js?v=25" defer></script>
+<script src="topic-pages.js?v=25" defer></script>
+<script src="calendar-pages.js?v=25" defer></script>
+<script src="health-pages.js?v=25" defer></script>
+<script src="event-pages.js?v=25" defer></script>
+<script src="context-pages.js?v=25" defer></script>
+<script src="reading-pages.js?v=25" defer></script>
+<script src="ui.js?v=25" defer></script>
+<script src="live-quotes.js?v=25" defer></script>
+<script src="app.js?v=25" defer></script>
+<script src="analysis-pages.js?v=25" defer></script>
+<script src="pages.js?v=25" defer></script>
+<script src="reader.js?v=25" defer></script>
 </body></html>
