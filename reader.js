@@ -19,9 +19,16 @@ function readerBack(){const item=readerTrail.pop();if(!item)return;readerQueue=i
 function articleQueue(anchor,n){const scope=anchor?.closest('section[id],.reader-related,.event-dossier');const ids=scope?[...scope.querySelectorAll('a[href*="/article/"]')].flatMap(a=>{try{return [decodeURIComponent(a.getAttribute('href').split('/article/')[1])];}catch{return [];}}).filter(id=>newsById(id)):[];return [...new Set(ids.includes(n.id)?ids:[n.id,...(state.data.news||[]).filter(x=>x.kind==='headline'&&x.id!==n.id).map(x=>x.id)])];}
 
 function readerBody(n) {
-  const text=(n.reader_text||n.summary||'').trim();
-  const rss=!!n.reader_text;
-  return `<div class="reader-content-label">${rss?'RSS 来源内容':text?'来源摘要':'仅有标题'}</div>${text?text.split(/\n\s*\n/).map(p=>`<p>${esc(p)}</p>`).join(''):'<p>当前来源只提供标题和链接，尚未提供正文或摘要。</p>'}<p class="reader-disclosure">${rss?'内容由媒体 RSS 提供，可能是正文或节选；图片、图表和部分排版请查看原文。':text?'来源提供的摘要，非 AI 生成。':'可收藏这条报道，或按需打开原始来源。'}${n.reader_truncated?' 内容较长，浮窗已截取前 14,000 字符。':''}</p>`;
+  const text=(n.reader_text||n.summary||'').trim(),rss=!!n.reader_text,images=newsImages(n);
+  const paragraphs=text?text.split(/\n\s*\n/):[],placed=new Set();
+  const at=(position)=>images.map((row,i)=>{
+    const slot=rss&&Number.isInteger(row.after_paragraph)?row.after_paragraph:0;
+    if(slot!==position||placed.has(i))return '';placed.add(i);
+    return newsImage({...n,image_url:null,images:[row]},'detail');
+  }).join('');
+  const content=at(0)+(text?paragraphs.map((p,i)=>`<p>${esc(p)}</p>${at(i+1)}`).join(''):'<p>当前来源只提供标题和链接，尚未提供正文或摘要。</p>');
+  const remaining=images.filter((row,i)=>!placed.has(i)&&!n.reader_truncated);
+  return `<div class="reader-content-label">${rss?'RSS 来源内容':text?'来源摘要':'仅有标题'}</div>${content}${newsImage({...n,image_url:null,images:remaining},'detail')}<p class="reader-disclosure">${rss?'内容由媒体 RSS 提供，可能是正文或节选；配图取自该来源，完整图表和排版请查看原文。':text?'来源提供的摘要，非 AI 生成。':'可收藏这条报道，或按需打开原始来源。'}${n.reader_truncated?' 内容较长，已截取前 14,000 字符。':''}</p>`;
 }
 function openReader(n,options={}) {
   readerStart('article',n.id,options);

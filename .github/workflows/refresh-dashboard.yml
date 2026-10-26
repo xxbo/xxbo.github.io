@@ -6,7 +6,7 @@ on:
     - cron: '5,15 7 * * 1-5'
   push:
     branches: [main]
-    paths: ['index.html', 'style.css', 'feed.css', 'feed.js', 'home-feed.js', 'app.js', 'live-quotes.js', 'home.js', 'brief.js', 'topics.js', 'topic-pages.js', 'calendar.js', 'calendar-pages.js', 'health-pages.js', 'events.js', 'event-pages.js', 'market-context.js', 'context-pages.js', 'reading.js', 'reading-pages.js', 'ui.js', 'desk.js', 'desk-pages.js', 'global.js', 'global-pages.js', 'pages.js', 'reader.js', 'split-reader.js', 'technical.js', 'analysis-pages.js', 'scripts/**', '.github/workflows/refresh-dashboard.yml']
+    paths: ['index.html', 'style.css', 'feed.css', 'feed.js', 'home-feed.js', 'news-media.js', 'app.js', 'live-quotes.js', 'home.js', 'brief.js', 'topics.js', 'topic-pages.js', 'calendar.js', 'calendar-pages.js', 'health-pages.js', 'events.js', 'event-pages.js', 'market-context.js', 'context-pages.js', 'reading.js', 'reading-pages.js', 'ui.js', 'desk.js', 'desk-pages.js', 'global.js', 'global-pages.js', 'pages.js', 'reader.js', 'split-reader.js', 'technical.js', 'analysis-pages.js', 'scripts/**', '.github/workflows/refresh-dashboard.yml']
 permissions:
   contents: write
 concurrency:
@@ -58,7 +58,7 @@ jobs:
       - name: Stage public files
         run: |
           mkdir -p _site/data
-          cp split-reader.js feed.js home-feed.js feed.css live-quotes.js global.js global-pages.js desk.js desk-pages.js ui.js reading.js reading-pages.js market-context.js context-pages.js events.js event-pages.js index.html style.css brief.js topics.js topic-pages.js calendar.js calendar-pages.js health-pages.js home.js app.js pages.js reader.js technical.js analysis-pages.js _site/
+          cp news-media.js split-reader.js feed.js home-feed.js feed.css live-quotes.js global.js global-pages.js desk.js desk-pages.js ui.js reading.js reading-pages.js market-context.js context-pages.js events.js event-pages.js index.html style.css brief.js topics.js topic-pages.js calendar.js calendar-pages.js health-pages.js home.js app.js pages.js reader.js technical.js analysis-pages.js _site/
           cp data/dashboard.json _site/data/
       - uses: actions/upload-pages-artifact@v3
         with:

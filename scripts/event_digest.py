@@ -105,7 +105,7 @@ def fingerprint(row):
 def compact(row):
     keys = ('id', 'title', 'url', 'source', 'category', 'published_at', 'fetched_at',
             'feed_id', 'kind', 'first_seen', 'updated_at', 'fingerprint', 'event_id',
-            'source_type', 'distribution', 'content_type')
+            'source_type', 'distribution', 'content_type', 'image_url', 'images')
     result = {k: row.get(k) for k in keys}
     result['summary'] = (row.get('summary') or '')[:500]
     return result

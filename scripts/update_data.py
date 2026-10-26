@@ -16,6 +16,7 @@ import socket
 import time
 import copy
 import xml.etree.ElementTree as ET
+from feed_images import feed_images
 from event_digest import build_events, fingerprint, RETENTION_DAYS, MAX_EVENTS
 from economic_calendar import calendar_candidates, SOURCES as CALENDAR_SOURCES
 from calendar_results import collect_results
@@ -117,7 +118,7 @@ def publisher_feed(url, source, limit=8):
         rows.append({'id': 'rss:'+hashlib.sha256(link.encode()).hexdigest()[:20],
                      'title': title, 'url': link, 'source': source, 'category': '科技',
                      'published_at': published, 'fetched_at': NOW, 'kind': 'headline',
-                     'selection': '科技媒体 RSS', **reader_fields(raw, url)})
+                     'selection': '科技媒体 RSS', **reader_fields(raw, url), **feed_images(item, raw, link)})
     if not rows:
         raise ValueError(source+' RSS 未返回条目')
     return rows
@@ -132,7 +133,7 @@ def rss_rows(payload, category):
         link = next((x.get('href', '') for x in links if x.get('rel', 'alternate') == 'alternate'), '')
         rows.append({'id': hashlib.sha256(link.encode()).hexdigest()[:20], 'title': title,
                      'url': link, 'source': 'The Verge', 'category': category,
-                     'published_at': entry.findtext('a:published', namespaces=atom) or entry.findtext('a:updated', namespaces=atom), 'fetched_at': NOW, **reader_fields(entry.findtext('a:content', namespaces=atom) or entry.findtext('a:summary', namespaces=atom), '')})
+                     'published_at': entry.findtext('a:published', namespaces=atom) or entry.findtext('a:updated', namespaces=atom), 'fetched_at': NOW, **reader_fields(entry.findtext('a:content', namespaces=atom) or entry.findtext('a:summary', namespaces=atom), ''), **feed_images(entry, entry.findtext('a:content', namespaces=atom) or entry.findtext('a:summary', namespaces=atom), link)})
     for item in root.findall('./channel/item')[:24]:
         title = clean(item.findtext('title'))
         source = clean(item.findtext('source')) or 'BBC 中文'
@@ -147,7 +148,7 @@ def rss_rows(payload, category):
             published = None
         rows.append({'id': hashlib.sha256(link.encode()).hexdigest()[:20], 'title': title,
                      'url': link, 'source': source, 'category': category,
-                     'published_at': published, 'fetched_at': NOW, 'summary':clean(item.findtext('description'))[:180]})
+                     'published_at': published, 'fetched_at': NOW, 'summary':clean(item.findtext('description'))[:180], **feed_images(item, item.findtext('description'), link)})
     return rows
 
 
@@ -224,7 +225,7 @@ def wallstreet_headlines():
                      'url': link, 'source': '华尔街见闻', 'category': classify(title),
                      'published_at': published, 'fetched_at': NOW, 'kind': 'headline',
                      'selection': '媒体资讯', 'featured': False,
-                     **reader_fields(item.findtext('description'), 'https://dedicated.wallstreetcn.com/rss.xml')})
+                     **reader_fields(item.findtext('description'), 'https://dedicated.wallstreetcn.com/rss.xml'), **feed_images(item, item.findtext('description'), link)})
     if not rows:
         raise ValueError('华尔街见闻 RSS 未返回条目')
     return rows

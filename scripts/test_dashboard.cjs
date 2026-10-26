@@ -49,6 +49,12 @@ async function check(snapshot){
   assert.equal(Object.keys(JSON.parse(storage.get('current:eventFollows'))).length,0);
  }
 
+ assert.equal(vm.runInContext('newsImage({})',context),'');
+ const positioned=vm.runInContext('readerBody({reader_text:"First\\n\\nSecond",images:[{url:"https://example.com/middle.jpg",after_paragraph:1}]})',context);assert(positioned.indexOf('First')<positioned.indexOf('middle.jpg'));assert(positioned.indexOf('middle.jpg')<positioned.indexOf('Second'));
+ context.mediaArticle={source:'Example',images:[{url:'https://example.com/a.jpg',alt:'<script>bad</script>',caption:'<b>Caption</b>'},{url:'javascript:bad()'},{url:'https://example.com/a.jpg'}]};
+ assert.equal(vm.runInContext('newsImages(mediaArticle).length',context),1);
+ const mediaHTML=vm.runInContext('newsImage(mediaArticle,"detail")',context);
+ assert(mediaHTML.includes('referrerpolicy="no-referrer"'));assert(!mediaHTML.includes('<script>'));assert(!mediaHTML.includes('<b>Caption</b>'));assert(mediaHTML.includes('&lt;b&gt;Caption'));
  if(snapshot.news?.length){
   context.location.hash='#/overview';vm.runInContext('readerDialog.close();closeSplitReader();renderRoute(false);openReader(state.data.news[0])',context);
   assert.equal(element('#reader-dialog').mode,'nonmodal','home details must leave the feed interactive');
