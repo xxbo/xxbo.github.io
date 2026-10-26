@@ -14,10 +14,10 @@ class RSSReaderTests(unittest.TestCase):
         self.assertEqual(row['url'], 'https://www.geekpark.net/news/1')
         self.assertEqual(row['reader_text'], 'Content')
 
-    def test_length_is_bounded_and_disclosed(self):
+    def test_full_text_is_preserved(self):
         data = reader_fields('<p>'+'字'*15000+'</p>', 'https://example.com/rss')
-        self.assertEqual(len(data['reader_text']), 14000)
-        self.assertTrue(data['reader_truncated'])
+        self.assertEqual(len(data['reader_text']), 15000)
+        self.assertFalse(data['reader_truncated'])
         self.assertEqual(len(data['summary']), 180)
 
 if __name__ == '__main__':

@@ -26,7 +26,8 @@ class FeedImagesTests(unittest.TestCase):
         raw = '<script><img src="https://example.com/bad.jpg"></script><img src="https://example.com/small.jpg" width="1"><img src="https://example.com/a.jpg" onerror="evil()">'
         self.assertEqual(feed_images(None, raw)['images'], [{'url': 'https://example.com/a.jpg', 'after_paragraph': 0}])
         self.assertEqual(feed_images(None, '<p>文字</p>'), {})
-        self.assertEqual(len(feed_images(None, ''.join(f'<img src="https://example.com/{i}.jpg">' for i in range(20)))['images']), 6)
+        self.assertEqual(len(feed_images(None, '<img src="https://example.com/logo.png" width="24" height="24">')['images']), 1)
+        self.assertEqual(len(feed_images(None, ''.join(f'<img src="https://example.com/{i}.jpg">' for i in range(120)))['images']), 120)
 
     def test_existing_rss_and_atom_entry_points_preserve_images(self):
         rss = b'''<rss><channel><item><title>Test</title><link>https://example.com/a</link><description>&lt;p&gt;Text&lt;/p&gt;&lt;img src="/a.jpg"&gt;</description></item></channel></rss>'''

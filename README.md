@@ -57,7 +57,7 @@ The homepage presents regional quote observations, a technical summary for each 
 The update workflow is scheduled every 20 minutes. Daily history is cached for up to 6 hours within the same market date/open-or-closed phase and refreshed across phase changes. Quote and news snapshots refresh independently of historical bars. Schedule timing is approximate; front-end refresh reloads the latest published data.
 
 ## RSS 浮窗阅读
-新闻标题默认打开原地阅读浮窗，支持 Escape、关闭按钮和点击遮罩关闭；修饰键点击仍可打开独立站内详情。华尔街见闻、爱范儿、极客公园使用官方 RSS 提供的内容，不抓取文章页；内容转为纯文本，保留段落，最多 14,000 字符并标明截取。财联社等只提供摘要的条目如实展示摘要，原文链接由用户按需打开。浮窗支持本机收藏、笔记，关闭保留浏览位置。
+新闻标题默认打开原地阅读浮窗，支持 Escape、关闭按钮和点击遮罩关闭；修饰键点击仍可打开独立站内详情。华尔街见闻、爱范儿、极客公园使用官方 RSS 提供的内容，不抓取文章页；内容转为纯文本，保留段落，完整保留来源提供的正文，不按字数截取。财联社等只提供摘要的条目如实展示摘要，原文链接由用户按需打开。浮窗支持本机收藏、笔记，关闭保留浏览位置。
 
 ## 有依据的首页简报与事件记录
 - `brief.js` 提供纯函数：采集时效、事件选择、上次访问对照、技术验证条件；不调用模型、不推断新闻对涨跌的因果。首页区分源端摘录与指标规则，支持展开依据。
@@ -195,4 +195,6 @@ The update workflow is scheduled every 20 minutes. Daily history is cached for u
 
 ### RSS 配图
 
-现有 RSS/Atom 采集同时提取 Media RSS、image enclosure、正文 HTML 的图片（含常见懒加载字段），每条最多六张，保留源中提供的替代文字、图注和署名。不抓取文章页、不增加新闻源、不生成配图。封面优先使用媒体字段，按 URL 去重，过滤明显小图、追踪图片和非 HTTP(S) 地址；HTTP 图片使用 HTTPS，加载失败则自动隐藏。首页显示小封面，分栏阅读器按来源正文段落位置展示配图，报道详情也展示配图。图片仍由原媒体托管，原源缺图或防盗链时保留文字阅读；懒加载且不发送 Referer。图片字段随事件报道保留，单独补图不会被记成文字内容修订。
+现有 RSS/Atom 采集同时提取 Media RSS、image enclosure、正文 HTML 的图片（含常见懒加载字段），不限制每条报道的图片数量，保留源中提供的替代文字、图注和署名。不抓取文章页、不增加新闻源、不生成配图。封面优先使用媒体字段，按 URL 去重，仅过滤追踪像素、已知追踪地址和非 HTTP(S) 地址，保留正文中的小图和标志图；HTTP 图片使用 HTTPS，加载失败则自动隐藏。首页显示小封面，分栏阅读器按来源正文段落位置展示配图，报道详情也展示配图。图片仍由原媒体托管，原源缺图或防盗链时保留文字阅读；懒加载且不发送 Referer。图片字段随事件报道保留，单独补图不会被记成文字内容修订。
+
+RSS 详情不再按图片数量或正文字数截取；首页仍使用封面和简短摘要，详情中的全部图片按段落穿插、懒加载。独立报道页与分栏阅读器共用同一完整正文渲染。旧缓存若仍带截取标记会如实说明，成功重采集后移除标记。

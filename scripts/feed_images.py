@@ -5,7 +5,6 @@ import re
 import urllib.parse
 from html.parser import HTMLParser
 
-MAX_IMAGES = 6
 MEDIA = 'http://search.yahoo.com/mrss/'
 ATOM = 'http://www.w3.org/2005/Atom'
 
@@ -26,7 +25,7 @@ def image_url(value, base=''):
                 return ''
         except ValueError:
             pass
-        if re.search(r'(?:^|[/_.-])(?:pixel|spacer|tracking|beacon|favicon|logo)(?:[/_.-]|$)', url.path, re.I):
+        if re.search(r'(?:^|[/_.-])(?:pixel|spacer|tracking|beacon)(?:[/_.-]|$)', url.path, re.I):
             return ''
         # Avoid mixed content on the HTTPS site. Unsupported HTTPS images fail closed in the UI.
         return urllib.parse.urlunsplit(('https', url.netloc, url.path, url.query, ''))
@@ -38,7 +37,7 @@ def small(attrs):
     for key in ('width', 'height'):
         value = str(attrs.get(key) or '').strip().lower().removesuffix('px')
         try:
-            if 0 <= float(value) <= 32:
+            if 0 <= float(value) <= 1:
                 return True
         except ValueError:
             pass
@@ -103,8 +102,6 @@ def feed_images(item, raw='', base=''):
         if url in seen:
             if 'after_paragraph' in row:
                 seen[url].setdefault('after_paragraph', row['after_paragraph'])
-            continue
-        if len(result) == MAX_IMAGES:
             continue
         clean = {'url': url}
         if 'after_paragraph' in row:

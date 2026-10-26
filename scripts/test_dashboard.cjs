@@ -53,6 +53,10 @@ async function check(snapshot){
  const positioned=vm.runInContext('readerBody({reader_text:"First\\n\\nSecond",images:[{url:"https://example.com/middle.jpg",after_paragraph:1}]})',context);assert(positioned.indexOf('First')<positioned.indexOf('middle.jpg'));assert(positioned.indexOf('middle.jpg')<positioned.indexOf('Second'));
  context.mediaArticle={source:'Example',images:[{url:'https://example.com/a.jpg',alt:'<script>bad</script>',caption:'<b>Caption</b>'},{url:'javascript:bad()'},{url:'https://example.com/a.jpg'}]};
  assert.equal(vm.runInContext('newsImages(mediaArticle).length',context),1);
+ context.fullMedia={reader_text:Array.from({length:121},(_,i)=>'Paragraph '+i).join('\n\n'),images:Array.from({length:120},(_,i)=>({url:'https://example.com/'+i+'.jpg',after_paragraph:i+1}))};
+ assert.equal(vm.runInContext('newsImages(fullMedia).length',context),120);
+ const fullHTML=vm.runInContext('readerBody(fullMedia)',context);assert.equal((fullHTML.match(/data-news-image/g)||[]).length,120);assert(fullHTML.includes('Paragraph 120'));assert(fullHTML.indexOf('119.jpg')>fullHTML.indexOf('Paragraph 119'));
+
  const mediaHTML=vm.runInContext('newsImage(mediaArticle,"detail")',context);
  assert(mediaHTML.includes('referrerpolicy="no-referrer"'));assert(!mediaHTML.includes('<script>'));assert(!mediaHTML.includes('<b>Caption</b>'));assert(mediaHTML.includes('&lt;b&gt;Caption'));
  if(snapshot.news?.length){

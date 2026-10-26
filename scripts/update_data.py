@@ -96,8 +96,8 @@ def reader_fields(raw, rss_url):
     parser.feed(raw or '')
     lines = [re.sub(r'\s+', ' ', line).strip() for line in ''.join(parser.parts).split('\n')]
     text = '\n\n'.join(line for line in lines if line)
-    return {'reader_text': text[:14000], 'reader_kind': 'rss',
-            'reader_truncated': len(text)>14000, 'rss_url': rss_url,
+    return {'reader_text': text, 'reader_kind': 'rss',
+            'reader_truncated': False, 'rss_url': rss_url,
             'summary': re.sub(r'\s+', ' ', text)[:180]}
 
 
@@ -146,9 +146,10 @@ def rss_rows(payload, category):
             published = email.utils.parsedate_to_datetime(item.findtext('pubDate')).isoformat()
         except (TypeError, ValueError):
             published = None
+        raw = item.findtext('{http://purl.org/rss/1.0/modules/content/}encoded') or item.findtext('description') or ''
         rows.append({'id': hashlib.sha256(link.encode()).hexdigest()[:20], 'title': title,
                      'url': link, 'source': source, 'category': category,
-                     'published_at': published, 'fetched_at': NOW, 'summary':clean(item.findtext('description'))[:180], **feed_images(item, item.findtext('description'), link)})
+                     'published_at': published, 'fetched_at': NOW, **reader_fields(raw, ''), **feed_images(item, raw, link)})
     return rows
 
 
