@@ -1,7 +1,7 @@
 'use strict';
 const readerDialog = document.querySelector('#reader-dialog');
 let readerArticle=null,readerFocus=null,readerCurrent=null,readerTrail=[],readerQueue=[],readerReturnId='main';
-function readerSnapshot(){return readerCurrent?{...readerCurrent,queue:[...readerQueue],scroll:readerDialog.scrollTop}:null;}
+function readerSnapshot(){return readerCurrent?{...readerCurrent,queue:[...readerQueue],scroll:readerScrollPosition()}:null;}
 function readerStart(type,id,options={}){
  if(!readerDialog.open){readerFocus=document.activeElement;readerTrail=[];readerCurrent=null;readerReturnId=options.returnId||'main';}
  if(readerCurrent&&!options.fromHistory&&(readerCurrent.type!==type||readerCurrent.id!==id))readerTrail.push(readerSnapshot());
@@ -10,12 +10,12 @@ function readerStart(type,id,options={}){
 }
 function readerToolbar(){
  const index=readerArticle?readerQueue.indexOf(readerArticle.id):-1;
- $('#reader-position').textContent=readerArticle&&index>=0?`${index+1} / ${readerQueue.length}`:'事件档案';
+ $('#reader-position').textContent=readerArticle&&index>=0?`${index+1} / ${readerQueue.length}`:readerCurrent?.type==='route'?splitRouteLabel(readerCurrent.id):'事件档案';
  $('#reader-back').disabled=!readerTrail.length;$('#reader-prev').disabled=!readerArticle||index<=0;$('#reader-next').disabled=!readerArticle||index<0||index>=readerQueue.length-1;
  applyLayout();
 }
 function readerMove(direction){if(!readerArticle)return;const index=readerQueue.indexOf(readerArticle.id),n=newsById(readerQueue[index+direction]);if(index>=0&&n)openReader(n,{keepQueue:true});}
-function readerBack(){const item=readerTrail.pop();if(!item)return;readerQueue=item.queue||[];if(item.type==='article'){const n=newsById(item.id);if(n)openReader(n,{fromHistory:true,keepQueue:true,scroll:item.scroll});}else{const e=trackedEvent(item.id);if(e)openEventReader(e,{fromHistory:true,scroll:item.scroll});}}
+function readerBack(){const item=readerTrail.pop();if(!item)return;readerQueue=item.queue||[];if(item.type==='article'){const n=newsById(item.id);if(n)openReader(n,{fromHistory:true,keepQueue:true,scroll:item.scroll});}else if(item.type==='route'){openSplitRoute(item.id,{fromHistory:true,scroll:item.scroll});}else{const e=trackedEvent(item.id);if(e)openEventReader(e,{fromHistory:true,scroll:item.scroll});}}
 function articleQueue(anchor,n){const scope=anchor?.closest('section[id],.reader-related,.event-dossier');const ids=scope?[...scope.querySelectorAll('a[href*="/article/"]')].flatMap(a=>{try{return [decodeURIComponent(a.getAttribute('href').split('/article/')[1])];}catch{return [];}}).filter(id=>newsById(id)):[];return [...new Set(ids.includes(n.id)?ids:[n.id,...(state.data.news||[]).filter(x=>x.kind==='headline'&&x.id!==n.id).map(x=>x.id)])];}
 
 function readerBody(n) {
@@ -33,8 +33,8 @@ function openReader(n,options={}) {
   const related=(state.data.news||[]).filter(x=>x.id!==n.id&&x.category===n.category&&x.reader_text).slice(0,3);
   document.querySelector('#reader-content').innerHTML=`<article class="reader-article"><div class="news-meta"><span class="tag ${esc(n.category)}">${esc(n.category)}</span><span>${esc(n.source)}</span></div><h1 id="reader-title">${esc(n.title)}</h1><div class="article-meta">发布 ${esc(fmt(n.published_at))} · 北京时间</div>${newsContext(n)}<div class="reader-actions"><button class="outline-button" id="reader-save" aria-pressed="${!!state.saved[n.id]}">${state.saved[n.id]?'◆ 已收藏':'◇ 收藏报道'}</button><a href="${safeUrl(n.url)}" target="_blank" rel="noopener noreferrer">打开原文 ↗</a></div><div class="reader-actions"><button class="outline-button" data-research-pin="article:${esc(n.id)}">＋ 放进研究桌</button></div><section class="reader-body">${readerBody(n)}</section>${eventTimeline(n)}${readingFeedbackMarkup(n)}<section class="personal-notes"><label for="reader-note">我的笔记 <small>仅存当前浏览器</small></label><textarea id="reader-note" maxlength="10000" placeholder="记下你的判断或疑问…">${esc(notes[n.id]||'')}</textarea><div id="reader-note-status" class="note-status">输入后自动保存到本机</div></section>${related.length?`<section class="reader-related"><h2>继续阅读</h2>${related.map(articleCard).join('')}</section>`:''}</article>`;
   document.body.classList.add('reader-open');
-  if(!readerDialog.open)readerDialog.showModal();
-  readerToolbar();readerDialog.scrollTop=options.scroll||0;
+  splitState.route=null;presentReader();
+  readerToolbar();scrollReaderTo(options.scroll||0);
   document.querySelector('#reader-close').focus({preventScroll:true});
 }
 document.addEventListener('click',e=>{
@@ -49,7 +49,7 @@ function openEventReader(event,options={}){
  readerStart('event',event.id,options);
  readerArticle=null;readingOpen(Brief.representative(state.data,event)||event.articles[0]);markEventSeen(event);
  document.querySelector('#reader-content').innerHTML=eventDossier(event,true);
- document.body.classList.add('reader-open');if(!readerDialog.open)readerDialog.showModal();readerToolbar();readerDialog.scrollTop=options.scroll||0;
+ splitState.route=null;presentReader();readerToolbar();scrollReaderTo(options.scroll||0);
  document.querySelector('#reader-close').focus({preventScroll:true});
  renderTopicsHome();
 }

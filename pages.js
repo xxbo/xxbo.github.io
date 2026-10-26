@@ -59,7 +59,7 @@ function marketPage(m,mode="overview") {
 function renderRoute(scroll=true) {
   let parts;try {parts=location.hash.replace(/^#\/?/,'').split('/').filter(Boolean).map(decodeURIComponent);}catch{parts=['missing'];}
   if(parts[0]==='main')return;
-  const root=parts[0]||'overview';document.body.classList.toggle('feed-home',root==='overview');syncNavigation(root);const detail=(root==='news'&&parts[2]==='article')||root==='markets'||root==='calendar'||root==='topics'||root==='health'||root==='events'||root==='preferences'||root==='research'||root==='changes'||root==='review'||root==='global';
+  const root=parts[0]||'overview';if(root==='overview'&&scroll===false&&typeof splitState!=='undefined'&&splitState.active&&splitState.route&&!splitState.rendering){renderSplitRoute({preserveScroll:true});return;}document.body.classList.toggle('feed-home',root==='overview');syncNavigation(root);const detail=(root==='news'&&parts[2]==='article')||root==='markets'||root==='calendar'||root==='topics'||root==='health'||root==='events'||root==='preferences'||root==='research'||root==='changes'||root==='review'||root==='global';
   document.body.classList.toggle('detail-mode',detail);$('#detail-page').hidden=!detail;
   if(!detail) {
     if(!['overview','news','watch','saved'].includes(root)){document.body.classList.add('detail-mode');$('#detail-page').hidden=false;$('#detail-page').innerHTML='<div class="paper empty"><h2>没有找到这个页面</h2><a href="#/overview">返回今日概览 →</a></div>';return;}
@@ -87,13 +87,15 @@ function renderRoute(scroll=true) {
   if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#detail-page').focus({preventScroll:true});}
 }
 document.addEventListener('click',e=>{const a=e.target.closest('a[href^="#/"]');if(a&&a.href.includes('/article/')&&!location.hash.includes('/article/'))returnRoute=location.hash.startsWith('#/')?location.hash:'#/overview';});
-$('#detail-page').addEventListener('click',async e=>{
+async function handleDetailClick(e){
   const save=e.target.closest('[data-detail-save]'),watch=e.target.closest('[data-watch-toggle]'),period=e.target.closest('[data-period]');
   if(save){const id=save.dataset.detailSave,n=newsById(id);if(state.saved[id])delete state.saved[id];else if(n)state.saved[id]=n;persist('saved',state.saved);readingUpdated();renderRoute(false);}
   if(watch){const id=watch.dataset.watchToggle;state.watch=state.watch.includes(id)?state.watch.filter(x=>x!==id):[...state.watch,id];persist('watch',state.watch);renderWatch();renderRoute(false);}
   if(period){chartPeriod=Number(period.dataset.period);renderRoute(false);}
   const techP=e.target.closest('[data-tech-period]'),overlay=e.target.closest('[data-tech-overlay]');if(techP){techPeriod=Number(techP.dataset.techPeriod);renderRoute(false);}if(overlay){techOverlay=overlay.dataset.techOverlay;renderRoute(false);}
   if(e.target.closest('[data-copy-link]')){try{await navigator.clipboard.writeText(location.href);toast('站内详情链接已复制');}catch{toast('复制暂不可用，可复制地址栏中的链接');}}
-});
+}
+$('#detail-page').addEventListener('click',handleDetailClick);
+$('#reader-dialog').addEventListener('click',handleDetailClick);
 $('#detail-page').addEventListener('input',e=>{if(e.target.matches('[data-note-id]')){notes[e.target.dataset.noteId]=e.target.value;persist('notes',notes);$('#note-status').textContent='已保存到当前浏览器 ✓';}});
 window.addEventListener('hashchange',()=>renderRoute());renderRoute(false);

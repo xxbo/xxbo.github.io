@@ -4,7 +4,7 @@ const root=path.resolve(__dirname,'..'),data=JSON.parse(fs.readFileSync(path.joi
 const scripts=[...fs.readFileSync(path.join(root,'index.html'),'utf8').matchAll(/<script src="([^?]+)\?/g)].map(m=>m[1]);
 async function check(snapshot){
  const nodes={},events={},listeners={},storage=new Map();let fetchCount=0;
- function element(id){return nodes[id]??={innerHTML:'',textContent:'',value:'',checked:false,hidden:false,open:false,isConnected:true,classList:{toggle(){},add(){},remove(){}},addEventListener(t,f){events[id+':'+t]=f},setAttribute(){},querySelector(){return null},focus(){},showModal(){this.open=true},close(){this.open=false}};}
+ function element(id){return nodes[id]??={innerHTML:'',textContent:'',value:'',checked:false,hidden:false,open:false,isConnected:true,classList:{toggle(){},add(){},remove(){}},addEventListener(t,f){events[id+':'+t]=f},setAttribute(){},querySelector(){return null},focus(){},show(){this.open=true;this.mode='nonmodal'},removeAttribute(){},showModal(){this.open=true;this.mode='modal'},close(){this.open=false}};}
  element('#group-events').checked=true;
  const context={console,Date,URL,setTimeout:()=>0,clearTimeout(){},setInterval(){},fetch:async()=>{fetchCount++;return {ok:true,json:async()=>snapshot}},localStorage:{getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)},document:{documentElement:{setAttribute(){}},querySelector:element,querySelectorAll:()=>[],getElementById:element,addEventListener(t,f){(listeners[t]??=[]).push(f)},body:{classList:{toggle(){},add(){},remove(){}}}},window:{scrollTo(){},addEventListener(){},matchMedia:()=>({matches:false})},location:{hash:'#/overview'}};
  vm.createContext(context);
@@ -48,6 +48,17 @@ async function check(snapshot){
   for(const handler of listeners.click||[])handler({button:0,target:{closest:s=>s==='[data-follow-event]'?follow:null}});
   assert.equal(Object.keys(JSON.parse(storage.get('current:eventFollows'))).length,0);
  }
+
+ if(snapshot.news?.length){
+  context.location.hash='#/overview';vm.runInContext('readerDialog.close();closeSplitReader();renderRoute(false);openReader(state.data.news[0])',context);
+  assert.equal(element('#reader-dialog').mode,'nonmodal','home details must leave the feed interactive');
+  assert.equal(context.location.hash,'#/overview');assert(vm.runInContext('splitState.active',context));
+  const market=snapshot.markets?.find(m=>m.asset_class!=='rates');
+  if(market){context.panelMarket=market.id;vm.runInContext("openSplitRoute('#/markets/'+panelMarket+'/technical')",context);assert(element('#reader-content').innerHTML.includes('相对强弱'));vm.runInContext("handleDetailClick({target:{closest:s=>s==='[data-tech-overlay]'?{dataset:{techOverlay:'boll'}}:null}})",context);assert(element('#reader-content').innerHTML.includes('布林带叠加'));assert.equal(context.location.hash,'#/overview');}
+  if(snapshot.calendar?.length){context.panelCalendar=snapshot.calendar[0].id;vm.runInContext("openSplitRoute('#/calendar/'+encodeURIComponent(panelCalendar))",context);assert(element('#reader-content').innerHTML.includes('经济日历'));vm.runInContext('readerBack()',context);assert(vm.runInContext('readerCurrent.type==="route"||readerCurrent.type==="article"',context));}
+  vm.runInContext('closeSplitReader();readerDialog.close()',context);assert(!vm.runInContext('splitState.active',context));
+ }
+
  if(snapshot.news?.length){
   vm.runInContext('readingProfile=Reading.clean({});openReader(state.data.news[0])',context);assert(element('#reader-content').innerHTML.includes('reader-title'));assert(element('#reader-content').innerHTML.includes('少看这类'));
   if(snapshot.news.length>1){vm.runInContext('readerQueue=state.data.news.slice(0,3).map(n=>n.id);openReader(state.data.news[0],{keepQueue:true});readerMove(1)',context);assert.equal(vm.runInContext('readerArticle.id',context),snapshot.news[1].id);vm.runInContext('readerBack()',context);assert.equal(vm.runInContext('readerArticle.id',context),snapshot.news[0].id);vm.runInContext('readingProfile=Reading.clean({});openReader(state.data.news[0])',context);}

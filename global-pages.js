@@ -19,6 +19,6 @@ function globalRatePage(m,history=false){document.title=m.name+' · 观潮';cons
 document.addEventListener('click',e=>{
  const scope=e.target.closest('[data-market-scope]');if(scope&&['global','china','watch'].includes(scope.dataset.marketScope)){homeMarketScope=scope.dataset.marketScope;persist('marketScope',homeMarketScope);renderMarkets();}
  const group=e.target.closest('[data-global-group]');if(group&&['all',...GlobalMarkets.groups.map(g=>g.id)].includes(group.dataset.globalGroup)){globalGroup=group.dataset.globalGroup;renderRoute(false);}
- const watch=e.target.closest('[data-global-watch]');if(watch){const id=watch.dataset.globalWatch;state.watch=state.watch.includes(id)?state.watch.filter(x=>x!==id):[...state.watch,id];persist('watch',state.watch);renderWatch();renderHomeOverview();if(location.hash.startsWith('#/global')||location.hash.startsWith('#/markets'))renderRoute(false);toast('自选观察已更新');}
+ const watch=e.target.closest('[data-global-watch]');if(watch){const id=watch.dataset.globalWatch;state.watch=state.watch.includes(id)?state.watch.filter(x=>x!==id):[...state.watch,id];persist('watch',state.watch);renderWatch();renderHomeOverview();if(location.hash.startsWith('#/global')||location.hash.startsWith('#/markets')||(typeof splitState!=='undefined'&&splitState.active&&splitState.route?.startsWith('#/global')))renderRoute(false);toast('自选观察已更新');}
 });
 document.addEventListener('change',e=>{if(e.target.id==='global-region'){globalRegion=e.target.value;$('#global-results').innerHTML=globalResults();}});

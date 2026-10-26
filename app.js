@@ -54,6 +54,7 @@ async function refreshAQuotes(){
    state.liveQuotesReport=report;state.data=LiveQuotes.apply(data,report);
    renderMarkets();renderStatus();
    const route=location.hash||'#/overview';
+   if((!route||route==='#/overview')&&typeof refreshSplitReader==='function')refreshSplitReader();
    if(route==='#/overview'){renderHomeOverview();if($('#watch-editor').hidden)renderWatch();}
    if(/^#\/(global|markets|health)(\/|$)/.test(route))renderRoute(false);
    return report;
