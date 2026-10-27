@@ -15,3 +15,5 @@ assert(F.select(items,'news').every(i=>i.type==='news'));assert(F.select(items,'
 assert(F.calendar({calendar:[upcoming]},Date.parse('2026-10-29T02:00:00Z')).future.length,'date-only US meetings retain their final local day');
 assert.equal(F.compose({news:[],events:[],markets:[],calendar:[]},{now}).length,1,'empty data retains one honest market placeholder');
 console.log('Feed checks passed: event deduplication, source dates, zero releases, history bounds and single-item filters.');
+const leisure=Array.from({length:9},(_,i)=>article('l'+i,'休闲内容'+i,'2026-10-26T03:00:00Z',{leisure:true,category:['数码','游戏','摄影'][i%3]}));
+const mixed=F.compose({news:[...many,...leisure],markets:[],calendar:[]},{now});assert(!F.stories({news:leisure},now).length);assert(F.select(mixed,'leisure').length===9);assert.equal(new Set(F.select(mixed,'leisure').slice(0,3).map(i=>i.article.category)).size,3);assert(mixed.slice(0,18).filter(i=>i.type==='leisure').length<=3);assert(F.compose({news:leisure,markets:[]},{now}).some(i=>i.type==='leisure'));

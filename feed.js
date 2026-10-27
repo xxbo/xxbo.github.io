@@ -6,11 +6,11 @@ const HomeFeed=(()=>{
  function url(value){try{const u=new URL(value);u.hash='';for(const k of [...u.searchParams.keys()])if(/^(utm_|spm|from$|source$|fbclid$)/i.test(k))u.searchParams.delete(k);return u.href;}catch{return '';}}
  const hasValue=v=>v!==null&&v!==undefined&&String(v).trim()!=='';
  function stories(data,now=Date.now()){
-  const news=new Map((data.news||[]).map(n=>[n.id,n])),pool=[],linked=new Set();
+  const news=new Map((data.news||[]).filter(n=>!n.leisure).map(n=>[n.id,n])),pool=[],linked=new Set();
   const recent=n=>n?.title&&time(n.published_at)>now-7*86400000&&time(n.published_at)<=now+5*60000;
   for(const event of data.events||[]){
    if(event.active===false)continue;
-   const reports=(event.articles||[]).map(n=>news.get(n.id)||n).filter(recent);
+   const reports=(event.articles||[]).map(n=>news.get(n.id)||n).filter(n=>!n.leisure&&recent(n));
    const articles=reports.filter(n=>n.kind==='headline'||n.featured).sort((a,b)=>time(b.published_at)-time(a.published_at));
    if(!articles.length)continue;
    const article=articles[0],groups=new Set(reports.map(n=>title(n.title))),multiple=groups.size>1||(event.changes||[]).some(c=>c.type==='content_updated');
@@ -38,11 +38,15 @@ const HomeFeed=(()=>{
  }
  function compose(data,{now=Date.now(),watch=[]}={}){
   const news=stories(data,now),cal=calendar(data,now),markets=data.markets||[];
+  const seen=new Set(news.flatMap(i=>[url(i.article.url),title(i.article.title)])),leisure=[];
+  const pool=(data.news||[]).filter(n=>n.leisure&&time(n.published_at)>now-7*86400000&&time(n.published_at)<=now+5*60000).sort((a,b)=>time(b.published_at)-time(a.published_at)),categories=[...new Set(pool.map(n=>n.category))];
+  while(pool.length&&leisure.length<12){for(const category of categories){const index=pool.findIndex(n=>n.category===category);if(index<0)continue;const n=pool.splice(index,1)[0],u=url(n.url),t=title(n.title);if(seen.has(u)||seen.has(t))continue;seen.add(u);seen.add(t);leisure.push({key:'leisure:'+n.id,type:'leisure',article:n,at:n.published_at});}}
   const technical=watch.map(id=>markets.find(m=>m.id===id)).filter(m=>m&&m.asset_class!=='rates'&&m.history?.length>=35).slice(0,2);
   const items=[{key:'market:overview',type:'market',region:'selected'}];
   const inserts=[...cal.released.map(row=>({key:'calendar:'+row.id,type:'calendar',row})),...cal.future.map(row=>({key:'calendar:'+row.id,type:'calendar',row}))];
   news.slice(0,72).forEach((item,i)=>{
    items.push(item);
+   if(i>=4&&(i-4)%6===0&&leisure.length)items.push(leisure.shift());
    if(i===1&&inserts[0])items.push(inserts[0]);
    if(i===3&&technical[0])items.push({key:'technical:'+technical[0].id,type:'technical',market:technical[0]});
    if(i===6&&inserts[1])items.push(inserts[1]);
@@ -51,6 +55,7 @@ const HomeFeed=(()=>{
    if(i===13&&technical[1])items.push({key:'technical:'+technical[1].id,type:'technical',market:technical[1]});
   });
   for(const item of [...inserts,...technical.map(m=>({key:'technical:'+m.id,type:'technical',market:m}))])if(!items.some(x=>x.key===item.key))items.push(item);
+  items.push(...leisure);
   return items;
  }
  function select(items,filter){return items.filter(i=>filter==='all'||filter==='market'&&['market','technical'].includes(i.type)||i.type===filter);}

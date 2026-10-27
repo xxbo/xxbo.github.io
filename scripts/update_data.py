@@ -17,6 +17,7 @@ import time
 import copy
 import xml.etree.ElementTree as ET
 from feed_images import feed_images
+from intraday import CODES as MINUTE_CODES, candidates as minute_candidates, validate as validate_minutes
 from event_digest import build_events, fingerprint, RETENTION_DAYS, MAX_EVENTS
 from economic_calendar import calendar_candidates, SOURCES as CALENDAR_SOURCES
 from calendar_results import collect_results
@@ -101,7 +102,7 @@ def reader_fields(raw, rss_url):
             'summary': re.sub(r'\s+', ' ', text)[:180]}
 
 
-def publisher_feed(url, source, limit=8):
+def publisher_feed(url, source, limit=8, category='科技', leisure=False):
     rows = []
     root = ET.fromstring(request(url))
     for item in root.findall('./channel/item')[:limit]:
@@ -116,7 +117,7 @@ def publisher_feed(url, source, limit=8):
             published = None
         raw = item.findtext('{http://purl.org/rss/1.0/modules/content/}encoded') or item.findtext('description') or ''
         rows.append({'id': 'rss:'+hashlib.sha256(link.encode()).hexdigest()[:20],
-                     'title': title, 'url': link, 'source': source, 'category': '科技',
+                     'title': title, 'url': link, 'source': source, 'category': category, 'leisure': leisure,
                      'published_at': published, 'fetched_at': NOW, 'kind': 'headline',
                      'selection': '科技媒体 RSS', **reader_fields(raw, url), **feed_images(item, raw, link)})
     if not rows:
@@ -266,6 +267,15 @@ def news_candidates():
         elif category=='金融':chain += [('东方财富快讯',flash_feed),('华尔街见闻 RSS',wallstreet_headlines)]
         else:chain += [('BBC World RSS（英文）',lambda c=category:bbc_world(c))]
         result['news:'+category]=chain
+    for slug,name,url,category,query in [
+        ('sspai','少数派','https://sspai.com/feed','数码','site:sspai.com 数码 OR 应用'),
+        ('gcores','机核','https://www.gcores.com/rss','游戏','site:gcores.com 游戏'),
+        ('dpreview','DPReview','https://www.dpreview.com/feeds/news.xml','摄影','site:dpreview.com camera')]:
+        def fallback(c=category,q=query):
+            rows=google_news(c,q)
+            for r in rows:r.update(leisure=True,kind='headline',selection='轻松阅读 · 检索备用')
+            return rows
+        result['leisure:'+slug]=[(name+' RSS',lambda u=url,n=name,c=category:publisher_feed(u,n,6,c,True)),('Google 新闻检索备用',fallback)]
     return result
 
 
@@ -280,6 +290,9 @@ def collect_dashboard(previous,now):
         if key not in old_states and old.get('fetched_at'):
             old_states[key]={'status':old.get('quote_status',old.get('status','ok')),'mode':'primary','selected_source':old.get('source'),'last_success':old.get('fetched_at')}
         jobs[key]=(quote_candidates(code,request,now),[old] if finite(old.get('price')) and (old['price']>0 or old.get('asset_class')=='rates') else [],lambda rows,o=old:validate_quote(rows,now,o),lambda rows:[{k:r.get(k) for k in ('id','price','change','change_pct','quote_at','quote_date')} for r in rows])
+    for code in MINUTE_CODES:
+        old=old_markets.get(code,{}).get('intraday') or {}
+        jobs['minute:'+code]=(minute_candidates(code,request),[old] if old.get('points') else [],lambda rows,o=old:validate_minutes(rows,now,o),None)
     for key,chain in news_candidates().items():
         prior=[r for r in previous.get('news',[]) if r.get('feed_id')==key]
         jobs[key]=(chain,prior,lambda rows:validate_news(rows,now),lambda rows:sorted((n['id'],fingerprint(n)) for n in rows))
@@ -291,6 +304,7 @@ def collect_dashboard(previous,now):
     def collect(key,job):
         chain,prior,validator,signature=job
         return run_chain(key,chain,prior,old_states.get(key,{}),now,validator,signature,prefer_latest=key in ('quote:sh000001','quote:sz399006','quote:sh000688'))
+    minute_rows={}
     with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
         futures={pool.submit(collect,key,job):key for key,job in jobs.items()}
         for future in concurrent.futures.as_completed(futures):
@@ -302,6 +316,9 @@ def collect_dashboard(previous,now):
                 else:
                     code=key.split(':',1)[1];name,region=NAMES[code]
                     result['markets'].append({'id':code,'name':name,'region':region,'status':'unavailable','quote_status':'unavailable','history':[]})
+            elif key.startswith('minute:'):
+                if rows:
+                    minute_rows[key.split(':',1)[1]]={**rows[0],'status':'ok' if status['status']=='ok' else 'cached','fetched_at':status.get('last_success')}
             elif key.startswith('calendar:'):
                 # Expiry is housekeeping, not a successful source check.
                 rows,_=validate_calendar(rows,now)
@@ -315,6 +332,7 @@ def collect_dashboard(previous,now):
             result['sources'].append(status)
             print(f"{key}: {status['mode']} ({status['selected_source'] or 'none'}, {len(rows)})",flush=True)
     for market in result['markets']:
+        if market['id'] in minute_rows:market['intraday']=minute_rows[market['id']]
         market.update(global_meta(market['id']) if market['id'] in INSTRUMENTS else {'asset_class':'stocks','unit':'点','currency':'USD' if market['id']=='usIXIC' else 'HKD' if market['id'].startswith('hk') else 'CNY'})
     result['markets'].sort(key=lambda m:list(NAMES).index(m['id']))
     # Each index is evaluated independently. Reuse valid history only within its collection window/session.
@@ -362,7 +380,7 @@ def collect_dashboard(previous,now):
     result['calendar']=sorted({r['id']:r for r in result['calendar']}.values(),key=lambda r:(r['date'],r['time'],r['id']))
     result['calendar_coverage']={'days':45,'past_days':30,'result_future_days':14,'timezone':'Asia/Shanghai','schedule_only':False,
         'note':'已知时刻统一北京时间；仅日期条目保留来源当地日期。备用源覆盖范围可能不同，逐项标明。'}
-    result['events']=build_events(result['news'],previous,now)
+    result['events']=build_events([n for n in result['news'] if not n.get('leisure')],previous,now)
     result['event_retention']={'days':RETENTION_DAYS,'max_events':MAX_EVENTS,'max_reports':24,'max_changes':48,
         'truncated': bool(previous.get('event_retention',{}).get('truncated')) or len(result['events']) >= MAX_EVENTS or (not previous.get('event_retention') and len(previous.get('events',[])) >= 300)}
     result['event_tracking_since']=previous.get('event_tracking_since') or previous.get('generated_at') or now
