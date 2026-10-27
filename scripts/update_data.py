@@ -16,6 +16,7 @@ import socket
 import time
 import copy
 import xml.etree.ElementTree as ET
+from leisure_sources import SOURCES as LEISURE_SOURCES, chinese_articles
 from feed_images import feed_images
 from intraday import CODES as MINUTE_CODES, candidates as minute_candidates, validate as validate_minutes
 from event_digest import build_events, fingerprint, RETENTION_DAYS, MAX_EVENTS
@@ -105,24 +106,39 @@ def reader_fields(raw, rss_url):
 def publisher_feed(url, source, limit=8, category='科技', leisure=False):
     rows = []
     root = ET.fromstring(request(url))
-    for item in root.findall('./channel/item')[:limit]:
-        title, link = clean(item.findtext('title')), (item.findtext('link') or '').strip()
-        if link.startswith('http://'):
-            link = 'https://' + link[7:]
-        if not title or not link.startswith('https://'):
-            continue
+    atom = '{http://www.w3.org/2005/Atom}'
+    items = root.findall('./channel/item') or root.findall(atom+'entry')
+    def markup(node):
+        if node is None:return ''
+        if not len(node):return node.text or ''
+        cloned = copy.deepcopy(node)
+        for child in cloned.iter():
+            if child.tag.startswith('{http://www.w3.org/1999/xhtml}'):
+                child.tag = child.tag.split('}',1)[1]
+        return (cloned.text or '')+''.join(ET.tostring(child,encoding='unicode') for child in cloned)
+    for item in items[:limit]:
+        is_atom = item.tag == atom+'entry'
+        content = item.find(atom+'content' if is_atom else '{http://purl.org/rss/1.0/modules/content/}encoded')
+        if content is None:content = item.find(atom+'summary' if is_atom else 'description')
+        raw = markup(content)
+        title = clean(item.findtext(atom+'title' if is_atom else 'title'))
+        fields = reader_fields(raw, url)
+        if not title and leisure:title = re.sub(r'\s+', ' ', fields['reader_text'])[:80]
+        link = next((x.get('href','') for x in item.findall(atom+'link') if x.get('rel','alternate')=='alternate'),'') if is_atom else (item.findtext('link') or '').strip()
+        if not link:continue
+        link = urllib.parse.urljoin(url,link)
+        if link.startswith('http://'):link = 'https://' + link[7:]
+        if not title or not link.startswith('https://'):continue
+        stamp = (item.findtext(atom+'published') or item.findtext(atom+'updated')) if is_atom else item.findtext('pubDate')
         try:
-            published = email.utils.parsedate_to_datetime(item.findtext('pubDate')).isoformat()
-        except (TypeError, ValueError):
-            published = None
-        raw = item.findtext('{http://purl.org/rss/1.0/modules/content/}encoded') or item.findtext('description') or ''
+            published = (dt.datetime.fromisoformat(stamp.replace('Z','+00:00')) if is_atom else email.utils.parsedate_to_datetime(stamp)).isoformat()
+        except (TypeError,ValueError,AttributeError):published = None
         rows.append({'id': 'rss:'+hashlib.sha256(link.encode()).hexdigest()[:20],
                      'title': title, 'url': link, 'source': source, 'category': category, 'leisure': leisure,
                      'published_at': published, 'fetched_at': NOW, 'kind': 'headline',
-                     'selection': '科技媒体 RSS', **reader_fields(raw, url), **feed_images(item, raw, link)})
-    if not rows:
-        raise ValueError(source+' RSS 未返回条目')
-    return rows
+                     'selection': '轻松阅读 · RSS' if leisure else '科技媒体 RSS', **fields, **feed_images(item, raw, link)})
+    if not rows:raise ValueError(source+' RSS 未返回条目')
+    return chinese_articles(rows) if leisure else rows
 
 def rss_rows(payload, category):
     root = ET.fromstring(payload)
@@ -267,15 +283,12 @@ def news_candidates():
         elif category=='金融':chain += [('东方财富快讯',flash_feed),('华尔街见闻 RSS',wallstreet_headlines)]
         else:chain += [('BBC World RSS（英文）',lambda c=category:bbc_world(c))]
         result['news:'+category]=chain
-    for slug,name,url,category,query in [
-        ('sspai','少数派','https://sspai.com/feed','数码','site:sspai.com 数码 OR 应用'),
-        ('gcores','机核','https://www.gcores.com/rss','游戏','site:gcores.com 游戏'),
-        ('dpreview','DPReview','https://www.dpreview.com/feeds/news.xml','摄影','site:dpreview.com camera')]:
+    for slug,name,url,category,query in LEISURE_SOURCES:
         def fallback(c=category,q=query):
             rows=google_news(c,q)
             for r in rows:r.update(leisure=True,kind='headline',selection='轻松阅读 · 检索备用')
-            return rows
-        result['leisure:'+slug]=[(name+' RSS',lambda u=url,n=name,c=category:publisher_feed(u,n,6,c,True)),('Google 新闻检索备用',fallback)]
+            return chinese_articles(rows)
+        result['leisure:'+slug]=[(name+' RSS',lambda u=url,n=name,c=category:publisher_feed(u,n,10,c,True)),('Google 新闻检索备用',fallback)]
     return result
 
 
@@ -295,7 +308,7 @@ def collect_dashboard(previous,now):
         jobs['minute:'+code]=(minute_candidates(code,request),[old] if old.get('points') else [],lambda rows,o=old:validate_minutes(rows,now,o),None)
     for key,chain in news_candidates().items():
         prior=[r for r in previous.get('news',[]) if r.get('feed_id')==key]
-        jobs[key]=(chain,prior,lambda rows:validate_news(rows,now),lambda rows:sorted((n['id'],fingerprint(n)) for n in rows))
+        jobs[key]=(chain,prior,(lambda rows:validate_news(chinese_articles(rows),now,30)) if key.startswith('leisure:') else (lambda rows:validate_news(rows,now)),lambda rows:sorted((n['id'],fingerprint(n)) for n in rows))
     for cal in CALENDAR_SOURCES:
         key='calendar:'+cal;prior=[r for r in previous.get('calendar',[]) if r.get('feed_id')==key]
         jobs[key]=(calendar_candidates(cal,request,now,prior),prior,lambda rows:validate_calendar(rows,now),lambda rows:sorted((r['id'],r['date'],r['time'],r.get('end_date')) for r in rows))

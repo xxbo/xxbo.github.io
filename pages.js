@@ -63,7 +63,7 @@ function renderRoute(scroll=true) {
   document.body.classList.toggle('detail-mode',detail);$('#detail-page').hidden=!detail;
   if(!detail) {
     if(!['overview','news','watch','saved'].includes(root)){document.body.classList.add('detail-mode');$('#detail-page').hidden=false;$('#detail-page').innerHTML='<div class="paper empty"><h2>没有找到这个页面</h2><a href="#/overview">返回今日概览 →</a></div>';return;}
-    state.category=root==='news'&&['全部','科技','金融','全球','政治','数码','游戏','摄影'].includes(parts[1])?parts[1]:'全部';
+    state.category=root==='news'&&['全部',...(state.data.news||[]).map(n=>n.category)].includes(parts[1])?parts[1]:'全部';
     setView(root);document.querySelectorAll('[data-category]').forEach(b=>{b.classList.toggle('selected',b.dataset.category===state.category);b.setAttribute('aria-pressed',String(b.dataset.category===state.category));});
     document.title=(root==='news'&&state.category!=='全部'?state.category+'新闻':'观潮')+' · XXBO 财经与新闻';return;
   }

@@ -4,6 +4,7 @@ const HomeFeed=(()=>{
  const time=v=>Number.isFinite(Date.parse(v||''))?Date.parse(v):0;
  const title=s=>String(s||'').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]/gu,'');
  function url(value){try{const u=new URL(value);u.hash='';for(const k of [...u.searchParams.keys()])if(/^(utm_|spm|from$|source$|fbclid$)/i.test(k))u.searchParams.delete(k);return u.href;}catch{return '';}}
+ const chinese=n=>{const t=String(n.title||''),han=(t.match(/[\p{Script=Han}]/gu)||[]).length,latin=(t.match(/[A-Za-z]/g)||[]).length;return han>=2&&han>=latin*.2;};
  const hasValue=v=>v!==null&&v!==undefined&&String(v).trim()!=='';
  function stories(data,now=Date.now()){
   const news=new Map((data.news||[]).filter(n=>!n.leisure).map(n=>[n.id,n])),pool=[],linked=new Set();
@@ -39,8 +40,8 @@ const HomeFeed=(()=>{
  function compose(data,{now=Date.now(),watch=[]}={}){
   const news=stories(data,now),cal=calendar(data,now),markets=data.markets||[];
   const seen=new Set(news.flatMap(i=>[url(i.article.url),title(i.article.title)])),leisure=[];
-  const pool=(data.news||[]).filter(n=>n.leisure&&time(n.published_at)>now-7*86400000&&time(n.published_at)<=now+5*60000).sort((a,b)=>time(b.published_at)-time(a.published_at)),categories=[...new Set(pool.map(n=>n.category))];
-  while(pool.length&&leisure.length<12){for(const category of categories){const index=pool.findIndex(n=>n.category===category);if(index<0)continue;const n=pool.splice(index,1)[0],u=url(n.url),t=title(n.title);if(seen.has(u)||seen.has(t))continue;seen.add(u);seen.add(t);leisure.push({key:'leisure:'+n.id,type:'leisure',article:n,at:n.published_at});}}
+  const pool=(data.news||[]).filter(n=>n.leisure&&chinese(n)&&time(n.published_at)>now-30*86400000&&time(n.published_at)<=now+5*60000).sort((a,b)=>time(b.published_at)-time(a.published_at)),sources=[...new Set(pool.map(n=>n.source))];
+  while(pool.length){for(const source of sources){const index=pool.findIndex(n=>n.source===source);if(index<0)continue;const n=pool.splice(index,1)[0],u=url(n.url),t=title(n.title);if(seen.has(u)||seen.has(t))continue;seen.add(u);seen.add(t);leisure.push({key:'leisure:'+n.id,type:'leisure',article:n,at:n.published_at});}}
   const technical=watch.map(id=>markets.find(m=>m.id===id)).filter(m=>m&&m.asset_class!=='rates'&&m.history?.length>=35).slice(0,2);
   const items=[{key:'market:overview',type:'market',region:'selected'}];
   const inserts=[...cal.released.map(row=>({key:'calendar:'+row.id,type:'calendar',row})),...cal.future.map(row=>({key:'calendar:'+row.id,type:'calendar',row}))];

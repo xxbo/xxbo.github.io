@@ -17,3 +17,6 @@ assert.equal(F.compose({news:[],events:[],markets:[],calendar:[]},{now}).length,
 console.log('Feed checks passed: event deduplication, source dates, zero releases, history bounds and single-item filters.');
 const leisure=Array.from({length:9},(_,i)=>article('l'+i,'休闲内容'+i,'2026-10-26T03:00:00Z',{leisure:true,category:['数码','游戏','摄影'][i%3]}));
 const mixed=F.compose({news:[...many,...leisure],markets:[],calendar:[]},{now});assert(!F.stories({news:leisure},now).length);assert(F.select(mixed,'leisure').length===9);assert.equal(new Set(F.select(mixed,'leisure').slice(0,3).map(i=>i.article.category)).size,3);assert(mixed.slice(0,18).filter(i=>i.type==='leisure').length<=3);assert(F.compose({news:leisure,markets:[]},{now}).some(i=>i.type==='leisure'));
+
+const wide=Array.from({length:45},(_,i)=>article('wide'+i,'有趣的中文文章'+i,'2026-10-26T03:00:00Z',{leisure:true,source:'source'+(i%9),category:'生活'}));
+const cnOnly=F.select(F.compose({news:[...wide,article('en','An English article','2026-10-26T03:00:00Z',{leisure:true,source:'DPReview'})]},{now}),'leisure');assert.equal(cnOnly.length,45,'all available Chinese leisure items are reachable beyond the old twelve-item cap');assert.equal(new Set(cnOnly.slice(0,9).map(i=>i.article.source)).size,9,'rotate sources even when they share a topic');assert(!cnOnly.some(i=>i.article.id==='en'));

@@ -164,7 +164,7 @@ def validate_history(rows, now, previous=None):
     return result,issues
 
 
-def validate_news(rows, now):
+def validate_news(rows, now, max_age_days=7):
     if not isinstance(rows,list) or not rows:raise DataInvalid('新闻源未返回有效列表')
     current=date_time(now);good={};bad=0
     for row in rows:
@@ -172,13 +172,13 @@ def validate_news(rows, now):
         url=urllib.parse.urlparse(row.get('url') or '')
         if not row.get('id') or not str(row.get('title') or '').strip() or url.scheme!='https' or not url.netloc or not stamp or stamp>current+dt.timedelta(minutes=15):
             bad+=1;continue
-        if current-stamp>dt.timedelta(days=7):
+        if current-stamp>dt.timedelta(days=max_age_days):
             bad+=1;continue
         good[row['id']]=row
-    if not good:raise DataInvalid('新闻缺少有效日期，或全部超过七天；拒绝把旧 RSS 当新资讯')
+    if not good:raise DataInvalid(f'内容缺少有效日期，或全部超过 {max_age_days} 天；拒绝更改来源日期充当新内容')
     issues=[]
     if bad:issues.append(f'已剔除 {bad} 条过旧、未来日期或字段不完整的报道')
-    if max(date_time(n['published_at']) for n in good.values())<current-dt.timedelta(hours=72):
+    if max_age_days<=7 and max(date_time(n['published_at']) for n in good.values())<current-dt.timedelta(hours=72):
         issues.append('最新报道超过 72 小时，来源可能更新较慢')
     return list(good.values()),issues
 
