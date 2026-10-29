@@ -32,7 +32,9 @@ function addSeed(s,owner,name,stops,headway){
 function company(s,id){return s.companies.find(c=>c.id===id);}
 function serviceKm(s,line){return line.trackIds.reduce((sum,id)=>sum+s.tracks.find(t=>t.id===id).km,0);}
 function trackOwners(s,line){return [...new Set(line.trackIds.map(id=>s.tracks.find(t=>t.id===id).owner))];}
-function loadTph(s,trackId,exclude){return s.services.filter(l=>l.id!==exclude&&l.trackIds.includes(trackId)).reduce((v,l)=>v+60/l.headway,0);}
+function capacity(l){return (l.cars||8)*100;}
+function effectiveHeadway(s,l){if(!l.fleet)return l.headway;const cycle=l.trackIds.reduce((v,id)=>v+s.tracks.find(t=>t.id===id).km/48*60+.6,0)+1;return Math.max(l.headway,2*cycle/l.fleet);}
+function loadTph(s,trackId,exclude){return s.services.filter(l=>l.id!==exclude&&l.trackIds.includes(trackId)).reduce((v,l)=>v+60/effectiveHeadway(s,l),0);}
 function log(s,text){s.log.unshift({q:s.quarter,text});s.log=s.log.slice(0,50);}
 function quoteBuild(s,owner,stops,mode='shared'){
  if(!company(s,owner))return {error:'请选择运营公司。'};
@@ -93,7 +95,7 @@ function network(s,penalties={}){
  for(const l of s.services){const total=serviceKm(s,l),byOwner={};for(const id of l.trackIds){const t=s.tracks.find(t=>t.id===id);const op=operatorAt(s,l,l.trackIds.indexOf(id));byOwner[op]=(byOwner[op]||0)+t.km;}
   // A cross-company through journey uses a discounted sum of company base fares.
   const ownerMask=Object.keys(byOwner).reduce((v,id)=>v|(1<<s.companies.findIndex(c=>c.id===id)),0);
-  for(let i=1;i<l.stops.length;i++){const t=s.tracks.find(t=>t.id===l.trackIds[i-1]);const e={service:l.id,owner:operatorAt(s,l,i-1),km:t.km,track:t.id,fare:company(s,t.owner).fare,through:l.through,ownerMask,minutes:t.km/48*60+.6,headway:l.headway,penalty:penalties[t.id]||0};adj[l.stops[i-1]].push({...e,to:l.stops[i]});adj[l.stops[i]].push({...e,to:l.stops[i-1]});}
+  for(let i=1;i<l.stops.length;i++){const t=s.tracks.find(t=>t.id===l.trackIds[i-1]);const e={service:l.id,owner:operatorAt(s,l,i-1),km:t.km,track:t.id,fare:company(s,t.owner).fare,through:l.through,ownerMask,minutes:t.km/48*60+.6,headway:effectiveHeadway(s,l),penalty:penalties[t.id]||0};adj[l.stops[i-1]].push({...e,to:l.stops[i]});adj[l.stops[i]].push({...e,to:l.stops[i-1]});}
  }
  return adj;
 }
@@ -118,9 +120,9 @@ function evaluate(s){
    if(railTrips>.1){transfers+=railTrips*p.transfers;const fare=p.fare,byOwner={};for(const e of p.edges){byOwner[e.owner]=(byOwner[e.owner]||0)+e.km;trackFlow[e.track]=(trackFlow[e.track]||0)+railTrips;}for(const [id,len]of Object.entries(byOwner)){accounts[id].revenue+=railTrips*fare*len/p.km*90/1e6;accounts[id].boardings+=railTrips;}for(const id of new Set(p.edges.map(e=>e.service)))serviceFlow[id]=(serviceFlow[id]||0)+railTrips;flows.push({from:o.id,to:d.id,trips:railTrips,demandTrips:railTrips,path:p,road,rail});}
   }
  }
- for(const l of s.services){const km=serviceKm(s,l),cost=km*(.7+(60/l.headway)*.225);for(let i=0;i<l.trackIds.length;i++){const t=s.tracks.find(t=>t.id===l.trackIds[i]),op=operatorAt(s,l,i);accounts[op].cost+=cost*t.km/km;if(t.owner!==op){const rent=t.km*.6;accounts[op].accessCost+=rent;accounts[op].cost+=rent;accounts[t.owner].accessIncome+=rent;}}}
+ for(const l of s.services){const km=serviceKm(s,l),cost=km*(.7+(60/effectiveHeadway(s,l))*.225);for(let i=0;i<l.trackIds.length;i++){const t=s.tracks.find(t=>t.id===l.trackIds[i]),op=operatorAt(s,l,i);accounts[op].cost+=cost*t.km/km;if(t.owner!==op){const rent=t.km*.6;accounts[op].accessCost+=rent;accounts[op].cost+=rent;accounts[t.owner].accessIncome+=rent;}}}
  for(const t of s.tracks)accounts[t.owner].cost+=t.km*.5;
- const trackLoad=Object.fromEntries(s.tracks.map(t=>[t.id,(trackFlow[t.id]||0)*PEAK/Math.max(1,loadTph(s,t.id)*800)]));
+ const trackLoad=Object.fromEntries(s.tracks.map(t=>[t.id,(trackFlow[t.id]||0)*PEAK/Math.max(1,s.services.filter(l=>l.trackIds.includes(t.id)).reduce((v,l)=>v+60/effectiveHeadway(s,l)*capacity(l),0))]));
  // Ration each proposed journey by its most constrained segment. Unserved demand stays on roads.
  const demanded=riders;let unserved=0;
  for(const a of Object.values(accounts)){a.revenue=0;a.boardings=0;}
@@ -146,15 +148,15 @@ function step(s){
 }
 function validate(s){
  try{
- if(s.version!==VERSION||!Number.isInteger(s.quarter)||s.quarter<0||s.quarter>100000||s.nodes.length!==seed.length||s.companies.length!==3||s.tracks.length>250||s.services.length>100||!Number.isSafeInteger(s.nextId))return false;
+ if(s.version!==VERSION||!Number.isInteger(s.quarter)||s.quarter<0||s.quarter>100000||(s.nodes.length<seed.length||s.nodes.length>200)||s.companies.length!==3||s.tracks.length>250||s.services.length>100||!Number.isSafeInteger(s.nextId))return false;
  const finite=n=>typeof n==='number'&&Number.isFinite(n),companies=new Set(['aoba','metro','jr']);
  const identity={aoba:['青葉電鉄','青葉','#078a73'],metro:['都心メトロ','メトロ','#d46b36'],jr:['東都 JR','JR','#446ccf']};
  if(s.companies.some(c=>!companies.has(c.id)||c.name!==identity[c.id]?.[0]||c.short!==identity[c.id]?.[1]||c.color!==identity[c.id]?.[2]||!finite(c.cash)||!finite(c.fare)||c.fare<100||c.fare>500)||new Set(s.companies.map(c=>c.id)).size!==3)return false;
- if(s.nodes.some((n,i)=>n.id!==i||n.name!==seed[i][0]||n.type!==seed[i][3]||n.x!==seed[i][1]||n.y!==seed[i][2]||![n.people,n.jobs,n.housing].every(finite)||n.people<0||n.jobs<0||n.housing<1||n.people>1e8||n.jobs>1e8||n.housing>1e8||!finite(n.growth)||n.growth<0))return false;
+ if(s.nodes.some((n,i)=>n.id!==i||typeof n.name!=='string'||n.name.length>40||!['住宅','办公','商业','工业','教育','田园'].includes(n.type)||!Number.isFinite(n.x)||!Number.isFinite(n.y)||n.x<20||n.x>1020||n.y<20||n.y>720||![n.people,n.jobs,n.housing].every(finite)||n.people<0||n.jobs<0||n.housing<1||n.people>1e8||n.jobs>1e8||n.housing>1e8||!finite(n.growth)||n.growth<0||(i<seed.length&&(n.name!==seed[i][0]||n.x!==seed[i][1]||n.y!==seed[i][2]||n.type!==seed[i][3]))))return false;
  if(new Set(s.tracks.map(t=>t.id)).size!==s.tracks.length)return false;
  if(s.tracks.some(t=>!/^t\d+$/.test(t.id)||!companies.has(t.owner)||!s.nodes[t.a]||!s.nodes[t.b]||t.a===t.b||!finite(t.km)||Math.abs(t.km-distance(s.nodes[t.a],s.nodes[t.b]))>.001))return false;
  if(new Set(s.services.map(l=>l.id)).size!==s.services.length)return false;
- if(s.services.some(l=>!/^s\d+$/.test(l.id)||typeof l.name!=='string'||l.name.length>100||!companies.has(l.owner)||!Array.isArray(l.stops)||l.stops.length<2||l.stops.length>30||l.trackIds.length!==l.stops.length-1||![4,5,6,8,10,12,15].includes(l.headway)||l.trackIds.some((id,i)=>{const t=s.tracks.find(t=>t.id===id);return !t||key(t.a,t.b)!==key(l.stops[i],l.stops[i+1]);})))return false;
+ if(s.services.some(l=>!/^s\d+$/.test(l.id)||typeof l.name!=='string'||l.name.length>100||!companies.has(l.owner)||!Array.isArray(l.stops)||l.stops.length<2||l.stops.length>30||l.trackIds.length!==l.stops.length-1||![4,5,6,8,10,12,15,20].includes(l.headway)||l.trackIds.some((id,i)=>{const t=s.tracks.find(t=>t.id===id);return !t||key(t.a,t.b)!==key(l.stops[i],l.stops[i+1]);})))return false;
  if(s.tracks.some(t=>loadTph(s,t.id)>30+.0001))return false;
  if(s.nextId<=Math.max(0,...s.tracks.map(t=>+t.id.slice(1)),...s.services.map(l=>+l.id.slice(1))))return false;
  if(s.services.some(l=>l.operators&&(!Array.isArray(l.operators)||l.operators.length!==l.trackIds.length||l.operators.some(id=>!companies.has(id)))))return false;
@@ -163,6 +165,6 @@ function validate(s){
  }catch{return false;}
 }
 function upgrade(s){const v=clone(s);if(v.version===1){v.version=VERSION;for(const l of v.services)if(l.through)l.operators=l.trackIds.map(id=>v.tracks.find(t=>t.id===id).owner);}return v;}
-const api={upgrade,operatorAt,participants,loadTph,newGame,clone,distance,key,company,serviceKm,trackOwners,quoteBuild,build,joinPlan,through,setFare,setHeadway,evaluate,step,validate,network,paths,VERSION};
+const api={capacity,effectiveHeadway,upgrade,operatorAt,participants,loadTph,newGame,clone,distance,key,company,serviceKm,trackOwners,quoteBuild,build,joinPlan,through,setFare,setHeadway,evaluate,step,validate,network,paths,VERSION};
 if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.RailSim=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

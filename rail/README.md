@@ -1,31 +1,32 @@
-# 轨道都市 · Demo 02
+# 轨道都市 · Map 03
 
-A self-contained, Tokyo-inspired rail/city sandbox served at `/rail/index.html` on the existing GitHub Pages site. It needs no server, dependencies, external map tiles, API keys, or live transport data.
+A buildless, map-first rail editor at `/rail/index.html`. This version replaces the company/finance/construction dashboard UI with one full-screen map. Vehicles render as moving coloured dots. Only line creation/deletion are primary global actions; selecting a route opens its details.
 
-## Current playable loop
+## Visible interactions
 
-- Three fictional operators own tracks and independent cash accounts.
-- Draw routes through fixed candidate stations. Compare dedicated double-track construction with cheaper sharing of existing infrastructure. Show actual costs for each option before confirmation. Dedicated construction adds a physical track pair with independent slots, including alongside existing corridors. Sharing creates an operating service on existing assets and pays quarterly rent to foreign infrastructure owners. Book investment immediately.
-- Adjust each company's flat fare and each service's headway. Transport infrastructure and scheduled services are separate entities.
-- Connect two different operators' services at a shared endpoint. Through service uses existing tracks and additional shared slots, both companies invest equally, and only trips actually crossing operators receive the 15% connection discount.
-- Passenger demand uses residential population, destination jobs, a distance deterrence function, and a rail-versus-road choice based on travel time, wait, transfers, and fare. Ticket revenue is distributed by operating-company distance travelled. Track owners separately receive rent for foreign-operated services; operating and infrastructure ownership remain distinct. These are simplifying accounting conventions, not the real Japanese clearing system.
-- Physical track slots are shared across services. Peak demand is estimated from daily travel; demand exceeding simplified capacity is returned to road travel. Demand/capacity colouring is distinct from carried passenger counts.
-- Quarterly financial settlement, limited regional population/job growth, housing constraints, station accessibility inspection, map layers, pause/speed, local autosave, validated JSON export/import.
+- Select a map route or legend entry to inspect it. Drag and zoom the map; pause or speed up operations with the compact clock control.
+- Create a route by clicking existing candidate stations or free map locations. The draft is reversible and commits only on confirmation.
+- Insert a station near a segment or extend beyond an endpoint. Remove a station from the map or selected route's list; adjacent segments reconnect. Other lines retain their stops.
+- Configure even fleet sizes (2–80 trains), 4/6/8-car formations, target headway and operating hours. Fleet availability constrains effective headway. Capacity and service windows affect live dispatch.
+- Inspect per-line synthetic weekday boardings, revenue, expense, net operating result and per-station board/alight counts. Revenue is distance-allocated across ridden services. Expense estimates comprise train-km operations, configured fleet upkeep and line maintenance. All forecast figures are estimates, not observed Tokyo data or live farebox revenue.
+- Delete a line with an inline confirmation. Unused track infrastructure is pruned; shared stations and other lines remain. The last committed edit can be undone from the transient toast.
 
-Money is in million yen (百万円). Ridership is synthetic daily trips, not unique people or real-world station statistics. Revenue uses 90 representative days per quarter. The whole model is intended to test cause-and-effect and interaction, not calibrated forecasting.
+## Persistence and model boundaries
 
-## Deliberate first-version limits
+This focused editor uses its own `guanchao-rail-map-v3` local save. Prior versions' saves are left untouched. It starts from a clean three-route layout rather than importing old multi-company through-service games into an incompatible editing workflow.
 
-Construction is instantaneous after confirmation. All trains stop at all points in their service; there is no express/overtaking, detailed timetable, vehicle compatibility, infrastructure usage charge, debt interest, property income, construction phasing, demolition, or active AI-company expansion. The planner can manage every operator. City land-use types are seeded; population, building density and jobs grow, but use types do not yet convert automatically. Regional growth budgets are tunable play parameters.
+City growth, quarterly settlement, operator management, construction budgeting, track leasing, through-service controls, individual-train inspection and extra map layers are hidden in this version. Legacy engine functions remain available internally for backwards tests; they are not part of the visible map flow.
 
-The operating day now has individual bidirectional trains, headway-based dispatch, per-stop dwell, smoothed acceleration/braking, a per-track/per-direction dispatch separation rule, live passenger queues, boarding and alighting, and bounded circulating fleets for loops. Live passenger ride-leg demand is generated from the quarterly OD forecast; transfers are not yet simulated as individual linked people. Quarterly financial results still use the aggregate forecast, not live farebox collection. Operations time and quarterly settlement are separate controls. Opening starts the representative scene at 07:00 after a deterministic 30-minute warm-up; city and finance saves persist. Backgrounding pauses time; there is no offline catch-up. Saves stay in that browser unless exported. Demo network caps avoid unbounded browser work.
+`engine.js` supplies the network and aggregate OD forecast. `operations.js` simulates individual bidirectional dot positions, station dwell, generated ride-leg queues, boarding, capacity, headways and operating windows. This is a simplified simulation rather than complete signalling, depot, rolling-stock or passenger-transfer modelling. Opening rebuilds the 07:00 representative scene after warm-up; editing replans it at the current displayed time. Backgrounding pauses operations.
 
-## Structure and verification
+`network.js` owns transactional map edits, route reconnection, extra free-positioned nodes, line forecasts and configuration validation. `ui.js`, `index.html` and `style.css` supply the minimal map interface. No external packages, API keys, map tiles or server are required.
 
-`engine.js`: deterministic state, physical network, services, path choice, fares, capacity, accounts, growth and save validation. Browser-independent CommonJS export for tests. Version-1 city saves migrate without dropping routes, cash or quarterly history.
+## Verification
 
-`ui.js`: SVG map, company panels, controls, time and local persistence. `style.css` / `index.html`: responsive buildless UI.
+Run from the repository root:
 
-`operations.js`: deterministic sub-minute train and ride-leg simulation; the SVG renders actual runtime positions rather than independent animation paths.
+- `node scripts/test_rail.cjs`
+- `node scripts/test_rail_operations.cjs`
+- `node scripts/test_rail_network.cjs`
 
-Run `node scripts/test_rail.cjs` and `node scripts/test_rail_operations.cjs` from the repository root. The existing Pages workflow stages the `rail/` directory and runs the simulation test before deployment. Existing dashboard data collection and reading behaviour remain independent of the game.
+The existing GitHub Pages workflow runs these tests and stages the complete `rail/` directory. Dashboard news and market functionality remain independent.
