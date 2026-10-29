@@ -23,7 +23,7 @@ function readerBody(n) {
   }).join('');
   const content=at(0)+(text?paragraphs.map((p,i)=>`<p>${esc(p)}</p>${at(i+1)}`).join(''):'<p>当前来源只提供标题和链接，尚未提供正文或摘要。</p>');
   const remaining=images.filter((row,i)=>!placed.has(i));
-  return `<div class="reader-content-label">${rss?'RSS 来源内容':text?'来源摘要':'仅有标题'}</div>${content}${newsImage({...n,image_url:null,images:remaining},'detail')}<p class="reader-disclosure">${rss?'内容由媒体 RSS 提供，可能是正文或节选；配图取自该来源，内容以 RSS 实际提供为准。':text?'来源提供的摘要，非 AI 生成。':'可收藏这条报道，或按需打开原始来源。'}${n.reader_truncated?' 此条沿用的旧快照含截取内容，来源恢复采集后将更新为完整内容。':''}</p>`;
+  return `<div class="reader-content-label">${n.reader_kind==='publisher'?'来源正文':rss?(n.reader_scope==='excerpt'?'RSS 来源摘要':'RSS 来源内容'):text?'来源摘要':'仅有标题'}</div>${content}${newsImage({...n,image_url:null,images:remaining},'detail')}<p class="reader-disclosure">${n.reader_kind==='publisher'?'内容来自来源网站的公开文章，保留原有段落与配图。':rss?'内容由媒体 RSS 提供，可能是正文或节选；配图取自该来源，内容以 RSS 实际提供为准。':text?'来源提供的摘要，非 AI 生成。':'可收藏这条报道，或按需打开原始来源。'}${n.reader_truncated?' 此条沿用的旧快照含截取内容，来源恢复采集后将更新为完整内容。':''}</p>`;
 }
 
 document.addEventListener('error',e=>{

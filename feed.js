@@ -59,7 +59,7 @@ const HomeFeed=(()=>{
   items.push(...leisure);
   return items;
  }
- function select(items,filter){return items.filter(i=>filter==='all'||filter==='market'&&['market','technical'].includes(i.type)||i.type===filter);}
+ function select(items,filter,category='all'){const selected=items.filter(i=>filter==='all'||filter==='market'&&['market','technical'].includes(i.type)||i.type===filter);return filter==='leisure'&&category!=='all'?selected.filter(i=>category==='other'?!['电竞','游戏','影视','音乐','动漫'].includes(i.article?.category):i.article?.category===category):selected;}
  return {stories,calendar,compose,select,title,url};
 })();
 if(typeof module!=='undefined')module.exports=HomeFeed;

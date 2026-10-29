@@ -20,3 +20,6 @@ const mixed=F.compose({news:[...many,...leisure],markets:[],calendar:[]},{now});
 
 const wide=Array.from({length:45},(_,i)=>article('wide'+i,'有趣的中文文章'+i,'2026-10-26T03:00:00Z',{leisure:true,source:'source'+(i%9),category:'生活'}));
 const cnOnly=F.select(F.compose({news:[...wide,article('en','An English article','2026-10-26T03:00:00Z',{leisure:true,source:'DPReview'})]},{now}),'leisure');assert.equal(cnOnly.length,45,'all available Chinese leisure items are reachable beyond the old twelve-item cap');assert.equal(new Set(cnOnly.slice(0,9).map(i=>i.article.source)).size,9,'rotate sources even when they share a topic');assert(!cnOnly.some(i=>i.article.id==='en'));
+const fiveTopics=['电竞','游戏','影视','音乐','动漫'];
+const themed=F.compose({news:fiveTopics.map((category,i)=>article('topic'+i,'中文兴趣主题'+i,'2026-10-26T03:00:00Z',{leisure:true,source:'主题源'+i,category}))},{now});
+for(const topic of fiveTopics){const rows=F.select(themed,'leisure',topic);assert.equal(rows.length,1);assert.equal(rows[0].article.category,topic);}assert.equal(F.select(themed,'leisure','other').length,0);assert.equal(F.select(themed,'leisure').length,5);

@@ -50,6 +50,7 @@ async function check(snapshot){
  }
 
  assert.equal(vm.runInContext('newsImage({})',context),'');
+ const publisherBody=vm.runInContext('readerBody({reader_text:"公开文章正文",reader_kind:"publisher"})',context);assert(publisherBody.includes('来源正文'));assert(!publisherBody.includes('内容由媒体 RSS 提供'));assert(vm.runInContext('readerBody({reader_text:"简介",reader_scope:"excerpt"})',context).includes('RSS 来源摘要'));
  const positioned=vm.runInContext('readerBody({reader_text:"First\\n\\nSecond",images:[{url:"https://example.com/middle.jpg",after_paragraph:1}]})',context);assert(positioned.indexOf('First')<positioned.indexOf('middle.jpg'));assert(positioned.indexOf('middle.jpg')<positioned.indexOf('Second'));
  context.mediaArticle={source:'Example',images:[{url:'https://example.com/a.jpg',alt:'<script>bad</script>',caption:'<b>Caption</b>'},{url:'javascript:bad()'},{url:'https://example.com/a.jpg'}]};
  assert.equal(vm.runInContext('newsImages(mediaArticle).length',context),1);

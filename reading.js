@@ -4,7 +4,7 @@ const Reading=(()=>{
  const time=v=>Number.isFinite(Date.parse(v))?Date.parse(v):0,chronological=(a,b)=>time(b.item.published_at)-time(a.item.published_at)||a.item.id.localeCompare(b.item.id);
  const DAY=864e5,decay=(at,now,half=14)=>Math.exp(-Math.LN2*Math.max(0,now-Date.parse(at))/DAY/half);
  const validAt=(at,now)=>Number.isFinite(Date.parse(at))&&Date.parse(at)<=now&&now-Date.parse(at)<=90*DAY;
- const categoryKeys=['科技','金融','全球','政治','数码','游戏','摄影','科学','人文','见闻','工具','生活','故事','设计','影视','阅读','社会','文化'];
+ const categoryKeys=['科技','金融','全球','政治','数码','游戏','摄影','科学','人文','见闻','工具','生活','故事','设计','影视','电竞','音乐','动漫','阅读','社会','文化'];
  function clean(input,now=Date.now()){
   const p=input&&typeof input==='object'?input:{};
   return {version:1,learning:p.learning!==false,sort:p.sort==='time'?'time':'personal',

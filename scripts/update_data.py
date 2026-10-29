@@ -16,7 +16,8 @@ import socket
 import time
 import copy
 import xml.etree.ElementTree as ET
-from leisure_sources import SOURCES as LEISURE_SOURCES, chinese_articles
+from leisure_sources import SOURCES as LEISURE_SOURCES, chinese_articles, ENTERTAINMENT, prepare_leisure
+from entertainment_sources import five_eplay
 from feed_images import feed_images
 from intraday import CODES as MINUTE_CODES, candidates as minute_candidates, validate as validate_minutes
 from event_digest import build_events, fingerprint, RETENTION_DAYS, MAX_EVENTS
@@ -103,6 +104,18 @@ def reader_fields(raw, rss_url):
             'summary': re.sub(r'\s+', ' ', text)[:180]}
 
 
+def feed_publication(stamp, is_atom=False):
+    try:
+        return (dt.datetime.fromisoformat(stamp.replace('Z','+00:00')) if is_atom else email.utils.parsedate_to_datetime(stamp)).isoformat()
+    except (TypeError,ValueError,AttributeError):
+        match=re.search(r'(\d{1,2})\s+(\d{1,2})\s*月\s+(\d{4})\s+(\d{2}:\d{2}:\d{2})\s+([+-]\d{4})$',stamp or '')
+        if match:
+            day,month,year,clock,offset=match.groups()
+            try:return dt.datetime.strptime(f'{year}-{month}-{day} {clock} {offset}','%Y-%m-%d %H:%M:%S %z').isoformat()
+            except ValueError:pass
+    return None
+
+
 def publisher_feed(url, source, limit=8, category='科技', leisure=False):
     rows = []
     root = ET.fromstring(request(url))
@@ -130,9 +143,7 @@ def publisher_feed(url, source, limit=8, category='科技', leisure=False):
         if link.startswith('http://'):link = 'https://' + link[7:]
         if not title or not link.startswith('https://'):continue
         stamp = (item.findtext(atom+'published') or item.findtext(atom+'updated')) if is_atom else item.findtext('pubDate')
-        try:
-            published = (dt.datetime.fromisoformat(stamp.replace('Z','+00:00')) if is_atom else email.utils.parsedate_to_datetime(stamp)).isoformat()
-        except (TypeError,ValueError,AttributeError):published = None
+        published = feed_publication(stamp,is_atom)
         rows.append({'id': 'rss:'+hashlib.sha256(link.encode()).hexdigest()[:20],
                      'title': title, 'url': link, 'source': source, 'category': category, 'leisure': leisure,
                      'published_at': published, 'fetched_at': NOW, 'kind': 'headline',
@@ -288,7 +299,12 @@ def news_candidates():
             rows=google_news(c,q)
             for r in rows:r.update(leisure=True,kind='headline',selection='轻松阅读 · 检索备用')
             return chinese_articles(rows)
-        result['leisure:'+slug]=[(name+' RSS',lambda u=url,n=name,c=category:publisher_feed(u,n,10,c,True)),('Google 新闻检索备用',fallback)]
+        result['leisure:'+slug]=[(name+' RSS',lambda u=url,n=name,c=category,s=slug:prepare_leisure(publisher_feed(u,n,80 if s in ENTERTAINMENT else 10,c,True),s)),('Google 新闻检索备用',fallback)]
+    def esports_index():
+        rows=google_news('电竞','site:csgo.5eplay.com 赛事 OR 选手 OR CS2')
+        for r in rows:r.update(leisure=True,kind='headline',selection='电竞检索备用',reader_kind='index',reader_scope='excerpt')
+        return chinese_articles(rows)
+    result['leisure:5eplay']=[('5EPLAY 公开资讯与正文',lambda:five_eplay(request,reader_fields,NOW)),('Google 新闻检索备用',esports_index)]
     return result
 
 

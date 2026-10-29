@@ -209,6 +209,6 @@ def classify_news(row):
     official=host.endswith('.gov.cn') or host.endswith('.gov') or host in ('www.cninfo.com.cn','www.hkexnews.hk')
     opinion=bool(re.search(r'评论|社评|观点|专栏',row.get('title') or ''))
     row['source_type']='official' if official else 'commentary' if opinion else 'wire' if row.get('kind')=='flash' else 'media'
-    row['content_type']='rss' if row.get('reader_text') else 'excerpt' if row.get('summary') else 'title'
+    row['content_type']='publisher' if row.get('reader_kind')=='publisher' else 'excerpt' if row.get('reader_scope')=='excerpt' else 'rss' if row.get('reader_text') else 'excerpt' if row.get('summary') else 'title'
     row.setdefault('distribution','publisher')
     return row
