@@ -30,3 +30,11 @@ Run from the repository root:
 - `node scripts/test_rail_network.cjs`
 
 The existing GitHub Pages workflow runs these tests and stages the complete `rail/` directory. Dashboard news and market functionality remain independent.
+
+## MAP / 04 — 东京圈与运营总览
+
+默认东京圈地图：2,900 × 2,100 世界单位、183 个真实站名、21 条主要线路服务、180 个初始运营站。参照 [JR 东日本主要路网](https://www.jreast.co.jp/e/downloads/) 与 [Tokyo Metro 路网](https://www.tokyometro.jp/lang_en/station/index.html)，手工整理近似站点经纬度后以局部等距比例投影。地图面积约为旧地图的 7.9 倍；站点、海岸、河流、公园均为简化地理示意。主要站点节选存在跳站、同站合并；未完整复刻实际线路、停站、直通或快慢车。机场走廊、JR 通勤干线、主要私铁及五条地铁作为游戏骨架。站名按优先级与屏幕碰撞检查分层，支持全域/都心、站名开关和距离标尺。
+
+运营总览在同一地图右侧展示全部线路，可按客流/结余排序，点击进入线路编辑。在线车辆实时统计，客流/财务为既有工作日模型预测。全网乘车人次为线路乘车人次之和（换乘重复计次），线路公里是服务里程之和（含共线服务），收入按每段乘坐距离分配；不是独立旅客数或物理轨道总里程。所有人口、班次、编组、客流与财务均为游戏参数，不能作为真实运营统计。模型的公司层仍使用原先三个虚构账户，地图路线名不代表实际运营公司已完成财务建模。
+
+东京圈独立存档 `guanchao-rail-map-v4`。右上角地图选择器可回到原 `guanchao-rail-map-v3` 旧版实验地图，分别保存，保留原有建设记录。东京圈最多 400 个站点、单线 60 个站点、30 条线路；旧地图维持原限制。路径搜索改用二叉最小堆，保持广义出行成本模型与容量约束。新增验证 `node scripts/test_rail_tokyo.cjs`。

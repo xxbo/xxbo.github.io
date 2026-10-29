@@ -2,21 +2,23 @@
 (function(root){
 'use strict';
 const R=typeof module!=='undefined'&&module.exports?require('./engine.js'):root.RailSim;
+const T=typeof module!=='undefined'&&module.exports?require('./tokyo.js'):root.TokyoRegion;
 const COLORS=['#4479cf','#159781','#d18150','#a26bc4','#d25d80','#789641'];
 function defaults(s){for(const [i,l]of s.services.entries()){l.color=l.color||COLORS[i%COLORS.length];l.cars=l.cars||8;l.fleet=l.fleet||Math.min(80,2*Math.ceil((runtime(s,l)+1)/l.headway));l.open=l.open??360;l.close=l.close??1440;}return s;}
+function tokyo(){return defaults(T.create(R));}
 function fresh(){return defaults(R.newGame());}
 function runtime(s,l){return l.trackIds.reduce((v,id)=>v+s.tracks.find(t=>t.id===id).km/48*60+.6,0);}
 function commit(s,copy){if(!validate(copy))return {error:'线路配置无效，操作未保存。'};for(const k of Object.keys(s))delete s[k];Object.assign(s,copy);return {};}
 function node(s,point){
  if(Number.isInteger(point)){if(!s.nodes[point])throw Error('车站不存在。');return point;}
- if(s.nodes.length>=200)throw Error('测试地图最多支持 200 个车站。');
- if(!point||!Number.isFinite(point.x)||!Number.isFinite(point.y)||point.x<25||point.x>1015||point.y<25||point.y>715)throw Error('请在地图范围内设置车站。');
+ if(s.nodes.length>=(s.region==='tokyo'?400:200))throw Error('测试地图最多支持 400 个车站。');
+ if(!point||!Number.isFinite(point.x)||!Number.isFinite(point.y)||point.x<25||point.x>(s.world?.width||1040)-25||point.y<25||point.y>(s.world?.height||740)-25)throw Error('请在地图范围内设置车站。');
  const close=s.nodes.find(n=>Math.hypot(n.x-point.x,n.y-point.y)<12);if(close)return close.id;
- const id=s.nodes.length;s.nodes.push({id,name:'新站 '+String(id-24).padStart(2,'0'),x:Math.round(point.x),y:Math.round(point.y),type:'住宅',people:2200,jobs:500,housing:8000,growth:0,initialPeople:2200,initialJobs:500});return id;
+ const id=s.nodes.length;s.nodes.push({id,name:'新站 '+String(id+1).padStart(2,'0'),x:Math.round(point.x),y:Math.round(point.y),type:'住宅',people:2200,jobs:500,housing:8000,growth:0,initialPeople:2200,initialJobs:500});return id;
 }
 function route(s,l,stops){
  const loop=stops[0]===stops.at(-1),unique=loop?stops.slice(0,-1):stops;if(new Set(unique).size!==unique.length||unique.length<(loop?3:2))throw Error('普通线路至少保留两个不同车站，环线至少三个。');
- if(stops.length>30)throw Error('每条线路最多 30 站。');
+ if(stops.length>(s.region==='tokyo'?60:30))throw Error('当前地图的单线车站数量已达上限。');
  const ids=[];for(let i=1;i<stops.length;i++){const a=stops[i-1],b=stops[i];let t=s.tracks.find(t=>R.key(t.a,t.b)===R.key(a,b)&&t.owner===l.owner);if(!t){t={id:'t'+s.nextId++,a,b,owner:l.owner,km:R.distance(s.nodes[a],s.nodes[b])};s.tracks.push(t);}ids.push(t.id);}
  l.stops=[...stops];l.trackIds=ids;l.through=false;delete l.parents;delete l.operators;
  // This editor gives each overlapping service its own corridor when the combined slots overflow.
@@ -35,9 +37,9 @@ function configure(s,id,values){const c=R.clone(s),l=c.services.find(l=>l.id===i
 function validate(s){return R.validate(s)&&s.services.every(l=>Number.isInteger(l.fleet)&&l.fleet>=2&&l.fleet<=80&&l.fleet%2===0&&[4,6,8].includes(l.cars)&&Number.isInteger(l.open)&&Number.isInteger(l.close)&&l.open>=0&&l.close<=1440&&l.close-l.open>=60&&/^#[0-9a-f]{6}$/i.test(l.color));}
 function stats(s,m,id){
  const l=s.services.find(l=>l.id===id);if(!l)return null;const factor=(l.close-l.open)/(18*60),stations=Object.fromEntries([...new Set(l.stops)].map(n=>[n,{board:0,alight:0}]));let revenue=0,riders=0;
- for(const f of m.flows){let from=f.from,length=0,aboard=false,used=false;for(let i=0;i<f.path.edges.length;i++){const e=f.path.edges[i];if(e.service===id){if(!aboard){stations[from].board+=f.trips*factor;aboard=true;}length+=e.km;used=true;if(f.path.edges[i+1]?.service!==id){stations[e.to].alight+=f.trips*factor;aboard=false;}}from=e.to;}if(used){riders+=f.trips*factor;revenue+=f.trips*f.path.fare*length/f.path.km*factor;}}
+ for(const f of m.flows){let from=f.from,length=0,aboard=false,used=false;for(let i=0;i<f.path.edges.length;i++){const e=f.path.edges[i];if(e.service===id){if(!aboard){stations[from].board+=f.trips*factor;riders+=f.trips*factor;aboard=true;}length+=e.km;used=true;if(f.path.edges[i+1]?.service!==id){stations[e.to].alight+=f.trips*factor;aboard=false;}}from=e.to;}if(used){revenue+=f.trips*f.path.fare*length/f.path.km*factor;}}
  const km=R.serviceKm(s,l),headway=R.effectiveHeadway(s,l),hours=(l.close-l.open)/60,departures=hours*60/headway*2,vehicleCost=km*departures*(180+l.cars*25),cost=vehicleCost+l.fleet*18000+km*2200;
  return {riders,revenue,cost,km,headway,stations,capacity:R.capacity(l),fleet:l.fleet,cars:l.cars,hours,departures};
 }
-const api={fresh,defaults,validate,addLine,addStation,removeStation,removeLine,configure,stats,runtime,insertion};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.RailNetwork=api;
+const api={tokyo,fresh,defaults,validate,addLine,addStation,removeStation,removeLine,configure,stats,runtime,insertion};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.RailNetwork=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

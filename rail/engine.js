@@ -99,10 +99,13 @@ function network(s,penalties={}){
  }
  return adj;
 }
+// Binary min-heap keeps metropolitan path searches responsive.
+function pushHeap(h,item){let i=h.length;h.push(item);while(i){const p=(i-1)>>1;if(h[p].p.cost<=item.p.cost)break;h[i]=h[p];i=p;}h[i]=item;}
+function popHeap(h){const top=h[0],last=h.pop();if(h.length){let i=0;while(i*2+1<h.length){let c=i*2+1;if(c+1<h.length&&h[c+1].p.cost<h[c].p.cost)c++;if(h[c].p.cost>=last.p.cost)break;h[i]=h[c];i=c;}h[i]=last;}return top;}
 function paths(s,adj,origin,value=.045){
- const start=origin+'||0|0',best=new Map([[start,{node:origin,service:'',paid:0,discounted:0,cost:0,minutes:0,fare:0,km:0,edges:[],transfers:0}]]),done=new Set(),result=[];
- while(true){let cur,k;for(const [id,p]of best)if(!done.has(id)&&(!cur||p.cost<cur.cost)){cur=p;k=id;}if(!cur)break;done.add(k);if(!result[cur.node]||cur.cost<result[cur.node].cost)result[cur.node]=cur;
-  for(const e of adj[cur.node]){const change=cur.service!==e.service,transfer=change&&!!cur.service,wait=change?e.headway/2:0,extra=wait+(transfer?4:0)+e.penalty;const bit=1<<s.companies.findIndex(c=>c.id===e.owner),paid=cur.paid|bit;let fee=(cur.paid&bit)?0:e.fare,discounted=cur.discounted;const prior=e.through?cur.edges.filter(v=>v.service===e.service).reduce((v,x)=>v|(1<<s.companies.findIndex(c=>c.id===x.owner)),0):0;if(e.through&&prior&&(prior&bit)===0){const eligible=(prior|bit)&~discounted;for(let ci=0;ci<s.companies.length;ci++)if(eligible&(1<<ci))fee-=s.companies[ci].fare*.15;discounted|=prior|bit;}const p={node:e.to,service:e.service,paid,discounted,cost:cur.cost+e.minutes+extra+fee*value,minutes:cur.minutes+e.minutes+extra,fare:cur.fare+fee,km:cur.km+e.km,edges:cur.edges.concat(e),transfers:cur.transfers+(transfer?1:0)};const nk=e.to+'|'+e.service+'|'+paid+'|'+discounted;if(!best.has(nk)||p.cost<best.get(nk).cost-.000001){best.set(nk,p);done.delete(nk);}}
+ const start=origin+'||0|0',best=new Map([[start,{node:origin,service:'',paid:0,discounted:0,cost:0,minutes:0,fare:0,km:0,edges:[],transfers:0}]]),done=new Set(),result=[],heap=[];pushHeap(heap,{id:start,p:best.get(start)});
+ while(heap.length){const item=popHeap(heap),cur=item.p,k=item.id;if(done.has(k)||best.get(k)!==cur)continue;done.add(k);if(!result[cur.node]||cur.cost<result[cur.node].cost)result[cur.node]=cur;
+  for(const e of adj[cur.node]){const change=cur.service!==e.service,transfer=change&&!!cur.service,wait=change?e.headway/2:0,extra=wait+(transfer?4:0)+e.penalty;const bit=1<<s.companies.findIndex(c=>c.id===e.owner),paid=cur.paid|bit;let fee=(cur.paid&bit)?0:e.fare,discounted=cur.discounted;const prior=e.through?cur.edges.filter(v=>v.service===e.service).reduce((v,x)=>v|(1<<s.companies.findIndex(c=>c.id===x.owner)),0):0;if(e.through&&prior&&(prior&bit)===0){const eligible=(prior|bit)&~discounted;for(let ci=0;ci<s.companies.length;ci++)if(eligible&(1<<ci))fee-=s.companies[ci].fare*.15;discounted|=prior|bit;}const p={node:e.to,service:e.service,paid,discounted,cost:cur.cost+e.minutes+extra+fee*value,minutes:cur.minutes+e.minutes+extra,fare:cur.fare+fee,km:cur.km+e.km,edges:cur.edges.concat(e),transfers:cur.transfers+(transfer?1:0)};const nk=e.to+'|'+e.service+'|'+paid+'|'+discounted;if(!best.has(nk)||p.cost<best.get(nk).cost-.000001){best.set(nk,p);done.delete(nk);pushHeap(heap,{id:nk,p});}}
  }
  return result;
 }
@@ -148,15 +151,17 @@ function step(s){
 }
 function validate(s){
  try{
- if(s.version!==VERSION||!Number.isInteger(s.quarter)||s.quarter<0||s.quarter>100000||(s.nodes.length<seed.length||s.nodes.length>200)||s.companies.length!==3||s.tracks.length>250||s.services.length>100||!Number.isSafeInteger(s.nextId))return false;
+ if(s.region!==undefined&&s.region!=='tokyo')return false;
+ if(s.region==='tokyo'&&(s.world?.width!==2900||s.world?.height!==2100))return false;
+ if(s.version!==VERSION||!Number.isInteger(s.quarter)||s.quarter<0||s.quarter>100000||(s.nodes.length<seed.length||s.nodes.length>(s.region==='tokyo'?400:200))||s.companies.length!==3||s.tracks.length>600||s.services.length>100||!Number.isSafeInteger(s.nextId))return false;
  const finite=n=>typeof n==='number'&&Number.isFinite(n),companies=new Set(['aoba','metro','jr']);
  const identity={aoba:['青葉電鉄','青葉','#078a73'],metro:['都心メトロ','メトロ','#d46b36'],jr:['東都 JR','JR','#446ccf']};
  if(s.companies.some(c=>!companies.has(c.id)||c.name!==identity[c.id]?.[0]||c.short!==identity[c.id]?.[1]||c.color!==identity[c.id]?.[2]||!finite(c.cash)||!finite(c.fare)||c.fare<100||c.fare>500)||new Set(s.companies.map(c=>c.id)).size!==3)return false;
- if(s.nodes.some((n,i)=>n.id!==i||typeof n.name!=='string'||n.name.length>40||!['住宅','办公','商业','工业','教育','田园'].includes(n.type)||!Number.isFinite(n.x)||!Number.isFinite(n.y)||n.x<20||n.x>1020||n.y<20||n.y>720||![n.people,n.jobs,n.housing].every(finite)||n.people<0||n.jobs<0||n.housing<1||n.people>1e8||n.jobs>1e8||n.housing>1e8||!finite(n.growth)||n.growth<0||(i<seed.length&&(n.name!==seed[i][0]||n.x!==seed[i][1]||n.y!==seed[i][2]||n.type!==seed[i][3]))))return false;
+ if(s.nodes.some((n,i)=>n.id!==i||typeof n.name!=='string'||n.name.length>40||!['住宅','办公','商业','工业','教育','田园'].includes(n.type)||!Number.isFinite(n.x)||!Number.isFinite(n.y)||n.x<20||n.x>(s.world?.width||1040)-20||n.y<20||n.y>(s.world?.height||740)-20||![n.people,n.jobs,n.housing].every(finite)||n.people<0||n.jobs<0||n.housing<1||n.people>1e8||n.jobs>1e8||n.housing>1e8||!finite(n.growth)||n.growth<0||(s.region!=='tokyo'&&i<seed.length&&(n.name!==seed[i][0]||n.x!==seed[i][1]||n.y!==seed[i][2]||n.type!==seed[i][3]))))return false;
  if(new Set(s.tracks.map(t=>t.id)).size!==s.tracks.length)return false;
  if(s.tracks.some(t=>!/^t\d+$/.test(t.id)||!companies.has(t.owner)||!s.nodes[t.a]||!s.nodes[t.b]||t.a===t.b||!finite(t.km)||Math.abs(t.km-distance(s.nodes[t.a],s.nodes[t.b]))>.001))return false;
  if(new Set(s.services.map(l=>l.id)).size!==s.services.length)return false;
- if(s.services.some(l=>!/^s\d+$/.test(l.id)||typeof l.name!=='string'||l.name.length>100||!companies.has(l.owner)||!Array.isArray(l.stops)||l.stops.length<2||l.stops.length>30||l.trackIds.length!==l.stops.length-1||![4,5,6,8,10,12,15,20].includes(l.headway)||l.trackIds.some((id,i)=>{const t=s.tracks.find(t=>t.id===id);return !t||key(t.a,t.b)!==key(l.stops[i],l.stops[i+1]);})))return false;
+ if(s.services.some(l=>!/^s\d+$/.test(l.id)||typeof l.name!=='string'||l.name.length>100||!companies.has(l.owner)||!Array.isArray(l.stops)||l.stops.length<2||l.stops.length>(s.region==='tokyo'?60:30)||l.trackIds.length!==l.stops.length-1||![4,5,6,8,10,12,15,20].includes(l.headway)||l.trackIds.some((id,i)=>{const t=s.tracks.find(t=>t.id===id);return !t||key(t.a,t.b)!==key(l.stops[i],l.stops[i+1]);})))return false;
  if(s.tracks.some(t=>loadTph(s,t.id)>30+.0001))return false;
  if(s.nextId<=Math.max(0,...s.tracks.map(t=>+t.id.slice(1)),...s.services.map(l=>+l.id.slice(1))))return false;
  if(s.services.some(l=>l.operators&&(!Array.isArray(l.operators)||l.operators.length!==l.trackIds.length||l.operators.some(id=>!companies.has(id)))))return false;
