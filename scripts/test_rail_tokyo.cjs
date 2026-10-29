@@ -7,3 +7,9 @@ const rt=O.create(s,m);assert(rt.trains.length>100);for(const l of s.services)as
 const line=s.services.find(l=>l.name==='京浜東北・根岸线');assert(!N.addStation(s,line.id,{x:2600,y:1800}).error);assert.equal(s.services.find(l=>l.id===line.id).stops.length,31);assert(N.validate(s));assert(!N.removeStation(s,line.id,s.nodes.length-1).error);
 const added=N.addLine(s,[{x:2750,y:1600},{x:2850,y:1800}]);assert(!added.error);assert(N.validate(s));assert(N.validate(JSON.parse(JSON.stringify(s))));const before=JSON.stringify(s);assert(N.addStation(s,added.id,{x:3000,y:2200}).error);assert.equal(before,JSON.stringify(s));assert(!N.removeLine(s,added.id).error);assert(N.validate(s));assert(N.validate(N.fresh()));
 console.log('Tokyo region passed: geography, 183 stations/21 routes, revenue conservation, fleet limits, positions, large-map editing, 31-stop route, save/reload, atomic bounds and legacy compatibility.');
+
+// A closed overview can still contain rows from the other map; switching must not stop the animation loop.
+const vm=require('node:vm'),fs=require('node:fs'),source=fs.readFileSync(require.resolve('../rail/ui.js'),'utf8');
+const update=source.slice(source.indexOf('function updateHUD()'),source.indexOf('function renderEditBar()'));
+const stale={dataset:{online:'removed-route'},textContent:''},clockNode={},live={};
+vm.runInNewContext(update+';updateHUD();',{s,traffic:rt,selected:null,clock:()=> '07:00',$:id=>id==='clock'?clockNode:id==='overview-live'?live:null,document:{querySelectorAll:()=>[stale]}});assert.equal(clockNode.textContent,'07:00');assert.equal(stale.textContent,'—');assert.equal(live.textContent,rt.trains.length);
