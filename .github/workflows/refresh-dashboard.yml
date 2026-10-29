@@ -27,6 +27,7 @@ jobs:
       - name: Verify indicator calculations
         run: |
           node scripts/test_rail.cjs
+          node scripts/test_rail_operations.cjs
           node scripts/test_technical.cjs
           node scripts/test_market_context.cjs
           node scripts/test_reading.cjs

@@ -1,7 +1,7 @@
 /* Tokyo-inspired urban rail sandbox. Money: million yen; daily demand: synthetic weekday trips. */
 (function(root){
 'use strict';
-const VERSION=1, SCALE=.045, PEAK=.18;
+const VERSION=2, SCALE=.045, PEAK=.18;
 const clone=x=>JSON.parse(JSON.stringify(x));
 const round=x=>Math.round(x*100)/100;
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y)*SCALE;
@@ -34,61 +34,66 @@ function serviceKm(s,line){return line.trackIds.reduce((sum,id)=>sum+s.tracks.fi
 function trackOwners(s,line){return [...new Set(line.trackIds.map(id=>s.tracks.find(t=>t.id===id).owner))];}
 function loadTph(s,trackId,exclude){return s.services.filter(l=>l.id!==exclude&&l.trackIds.includes(trackId)).reduce((v,l)=>v+60/l.headway,0);}
 function log(s,text){s.log.unshift({q:s.quarter,text});s.log=s.log.slice(0,50);}
-function quoteBuild(s,owner,stops){
+function quoteBuild(s,owner,stops,mode='shared'){
  if(!company(s,owner))return {error:'请选择运营公司。'};
- if(s.services.length>=60||s.tracks.length>=150)return {error:'Demo 的网络规模上限已到，请导出存档后新开一局。'};
+ if(!['shared','dedicated'].includes(mode))return {error:'请选择建设方式。'};
+ if(s.services.length>=60||s.tracks.length>=150)return {error:'Demo 网络规模上限已到。'};
  if(stops.length<2)return {error:'至少选择两个候选站。'};
  if(stops.length>10||new Set(stops).size!==stops.length)return {error:'一条新线最多选 10 个不同车站。'};
  if(stops.some(id=>!s.nodes[id]))return {error:'站点无效。'};
- let cost=0,km=0;const segments=[];
+ let cost=0,km=0,newKm=0,sharedKm=0;const segments=[],lessors=new Set();
  for(let i=1;i<stops.length;i++){
-  const a=stops[i-1],b=stops[i],existing=s.tracks.find(t=>key(t.a,t.b)===key(a,b)),d=distance(s.nodes[a],s.nodes[b]);
+  const a=stops[i-1],b=stops[i],matches=s.tracks.filter(t=>key(t.a,t.b)===key(a,b)),d=distance(s.nodes[a],s.nodes[b]);
   if(d>20)return {error:'两站距离超过 20 公里，请添加中间站。'};
-  if(existing&&existing.owner!==owner)return {error:'该区段属于其他公司；请另选走廊，跨公司利用请通过直通服务。'};
-  if(existing&&loadTph(s,existing.id)+7.5>30)return {error:'共用轨道已没有新服务的班次余量。'};
+  const existing=mode==='shared'?[...matches].sort((x,y)=>(x.owner===owner?-1:1)-(y.owner===owner?-1:1)||loadTph(s,x.id)-loadTph(s,y.id)).find(t=>loadTph(s,t.id)+7.5<=30+.0001):null;
+  if(mode==='shared'&&matches.length&&!existing)return {error:'既有轨道班次已满，请降低班次，或选择独立复线。'};
+  if(mode==='dedicated'&&matches.filter(t=>t.owner===owner).length>=3)return {error:'该公司在同一走廊最多建设三组复线。'};
   const river=(s.nodes[a].x-850)*(s.nodes[b].x-850)<0;
-  km+=d; cost+=existing?0:d*(owner==='metro'?10:5)+(river?18:0);segments.push({a,b,km:d,existing:existing?.id});
+  km+=d;if(existing){sharedKm+=d;if(existing.owner!==owner)lessors.add(existing.owner);}else{newKm+=d;cost+=d*(owner==='metro'?12:8)+(river?24:0);}
+  segments.push({a,b,km:d,existing:existing?.id});
  }
  const built=new Set(s.tracks.filter(t=>t.owner===owner).flatMap(t=>[t.a,t.b]));
- cost+=stops.filter(id=>!built.has(id)).length*(owner==='metro'?20:12);
- if(!cost)cost=5; // extra service setup on owned infrastructure
- return {cost:round(cost),km:round(km),segments};
+ if(newKm)cost+=stops.filter(id=>!built.has(id)).length*(owner==='metro'?20:12);
+ cost+=lessors.size*12+5;
+ return {cost:round(cost),km:round(km),newKm:round(newKm),sharedKm:round(sharedKm),lessors:[...lessors],mode,segments};
 }
-function build(s,owner,stops){
- const q=quoteBuild(s,owner,stops);if(q.error)return q;const c=company(s,owner);
- if(c.cash<q.cost)return {error:'公司资金不足；可先运营积累收入，或缩短线路。'};
+function build(s,owner,stops,mode='shared'){
+ const q=quoteBuild(s,owner,stops,mode);if(q.error)return q;const c=company(s,owner);
+ if(c.cash<q.cost)return {error:'公司资金不足；可先结算收入，或缩短线路。'};
  c.cash=round(c.cash-q.cost);c.pendingCapital=(c.pendingCapital||0)+q.cost;
  const ids=q.segments.map(seg=>{if(seg.existing)return seg.existing;const t={id:'t'+s.nextId++,a:seg.a,b:seg.b,km:seg.km,owner};s.tracks.push(t);return t.id;});
- const line={id:'s'+s.nextId++,name:s.nodes[stops[0]].name+'—'+s.nodes[stops.at(-1)].name,owner,stops:[...stops],trackIds:ids,headway:8,through:false};s.services.push(line);log(s,c.name+' 开通 '+line.name+'，建设支出 '+q.cost.toFixed(1)+' 百万円。');return {line,cost:q.cost};
+ const line={id:'s'+s.nextId++,name:s.nodes[stops[0]].name+'—'+s.nodes[stops.at(-1)].name,owner,stops:[...stops],trackIds:ids,headway:8,through:false};s.services.push(line);log(s,c.name+' 开通 '+line.name+'：新增复线 '+q.newKm+' km，借用既有轨道 '+q.sharedKm+' km；投入 '+q.cost.toFixed(1)+' 百万円。');return {line,cost:q.cost};
 }
+function operatorAt(s,line,i){return line.operators?.[i]||line.owner;}
+function participants(s,line){return [...new Set(line.trackIds.map((_,i)=>operatorAt(s,line,i)))];}
 function joinPlan(s,aId,bId){
  if(s.services.length>=60)return {error:'Demo 最多支持 60 条服务。'};
  const a=s.services.find(l=>l.id===aId),b=s.services.find(l=>l.id===bId);
  if(!a||!b||a===b||a.through||b.through||a.owner===b.owner)return {error:'请选择两家公司的普通服务。'};
  if(a.stops[0]===a.stops.at(-1)||b.stops[0]===b.stops.at(-1))return {error:'环状线暂不参与直通。'};
- let as=[...a.stops],bs=[...b.stops],at=[...a.trackIds],bt=[...b.trackIds];
+ let as=[...a.stops],bs=[...b.stops],at=[...a.trackIds],bt=[...b.trackIds],ao=at.map((_,i)=>operatorAt(s,a,i)),bo=bt.map((_,i)=>operatorAt(s,b,i));
  const shared=[as[0],as.at(-1)].find(id=>id===bs[0]||id===bs.at(-1));if(shared===undefined)return {error:'两条服务须在共同的端点站接续；可先修建连接线。'};
- if(as[0]===shared){as.reverse();at.reverse();}if(bs.at(-1)===shared){bs.reverse();bt.reverse();}
+ if(as[0]===shared){as.reverse();at.reverse();ao.reverse();}if(bs.at(-1)===shared){bs.reverse();bt.reverse();bo.reverse();}
  const stops=as.concat(bs.slice(1)),trackIds=at.concat(bt);
  if(new Set(stops).size!==stops.length)return {error:'直通路径不能折返或重复经过同一站。'};
  if(s.services.some(l=>l.through&&l.parents?.includes(aId)&&l.parents?.includes(bId)))return {error:'这两条线路已经开通直通。'};
  if(trackIds.some(id=>loadTph(s,id)+6>30))return {error:'共用区段超过每小时 30 班，请先降低原有服务频率。'};
  const owners=[a.owner,b.owner];if(owners.some(id=>company(s,id).cash<12))return {error:'双方公司各需 12 百万円用于联调与车辆配置。'};
- return {stops,trackIds,owners,shared,parents:[aId,bId]};
+ return {stops,trackIds,owners,shared,parents:[aId,bId],operators:ao.concat(bo)};
 }
 function through(s,aId,bId){
  const p=joinPlan(s,aId,bId);if(p.error)return p;
  p.owners.forEach(id=>{const c=company(s,id);c.cash-=12;c.pendingCapital=(c.pendingCapital||0)+12;});
- const line={id:'s'+s.nextId++,name:s.nodes[p.stops[0]].name+'↔'+s.nodes[p.stops.at(-1)].name+' 直通',owner:p.owners[0],stops:p.stops,trackIds:p.trackIds,headway:10,through:true,parents:p.parents};s.services.push(line);log(s,'直通服务开行：'+line.name+'。双方各投入 12 百万円，票款与运营成本按承运里程分配。');return {line};
+ const line={id:'s'+s.nextId++,name:s.nodes[p.stops[0]].name+'↔'+s.nodes[p.stops.at(-1)].name+' 直通',owner:p.owners[0],stops:p.stops,trackIds:p.trackIds,headway:10,through:true,parents:p.parents,operators:p.operators};s.services.push(line);log(s,'直通服务开行：'+line.name+'。双方各投入 12 百万円，票款与运营成本按承运里程分配。');return {line};
 }
 function setFare(s,id,fare){if(!Number.isFinite(fare)||fare<100||fare>500)return {error:'票价范围为 100—500 円。'};company(s,id).fare=Math.round(fare);return {};}
 function setHeadway(s,id,h){const l=s.services.find(l=>l.id===id);if(!l||![4,5,6,8,10,12,15].includes(h))return {error:'班次无效。'};if(l.trackIds.some(t=>loadTph(s,t,id)+60/h>30+.0001))return {error:'共用轨道每小时最多 30 班，请协调其他服务。'};l.headway=h;return {};}
 function network(s,penalties={}){
  const adj=s.nodes.map(()=>[]);
- for(const l of s.services){const total=serviceKm(s,l),byOwner={};for(const id of l.trackIds){const t=s.tracks.find(t=>t.id===id);byOwner[t.owner]=(byOwner[t.owner]||0)+t.km;}
+ for(const l of s.services){const total=serviceKm(s,l),byOwner={};for(const id of l.trackIds){const t=s.tracks.find(t=>t.id===id);const op=operatorAt(s,l,l.trackIds.indexOf(id));byOwner[op]=(byOwner[op]||0)+t.km;}
   // A cross-company through journey uses a discounted sum of company base fares.
   const ownerMask=Object.keys(byOwner).reduce((v,id)=>v|(1<<s.companies.findIndex(c=>c.id===id)),0);
-  for(let i=1;i<l.stops.length;i++){const t=s.tracks.find(t=>t.id===l.trackIds[i-1]);const e={service:l.id,owner:t.owner,km:t.km,track:t.id,fare:company(s,t.owner).fare,through:l.through,ownerMask,minutes:t.km/48*60+.6,headway:l.headway,penalty:penalties[t.id]||0};adj[l.stops[i-1]].push({...e,to:l.stops[i]});adj[l.stops[i]].push({...e,to:l.stops[i-1]});}
+  for(let i=1;i<l.stops.length;i++){const t=s.tracks.find(t=>t.id===l.trackIds[i-1]);const e={service:l.id,owner:operatorAt(s,l,i-1),km:t.km,track:t.id,fare:company(s,t.owner).fare,through:l.through,ownerMask,minutes:t.km/48*60+.6,headway:l.headway,penalty:penalties[t.id]||0};adj[l.stops[i-1]].push({...e,to:l.stops[i]});adj[l.stops[i]].push({...e,to:l.stops[i-1]});}
  }
  return adj;
 }
@@ -103,17 +108,17 @@ function evaluate(s){
  let result;
  for(let pass=0;pass<2;pass++){
  const penalties=result?Object.fromEntries(s.tracks.map(t=>[t.id,Math.max(0,(result.trackLoad[t.id]||0)-1)*7])):{};
- const adj=network(s,penalties),accounts=Object.fromEntries(s.companies.map(c=>[c.id,{revenue:0,cost:0,boardings:0}])),trackFlow={},serviceFlow={},flows=[],reach=s.nodes.map(()=>0);let totalTrips=0,riders=0,travel=0,baseline=0,transfers=0;
+ const adj=network(s,penalties),accounts=Object.fromEntries(s.companies.map(c=>[c.id,{revenue:0,cost:0,boardings:0,accessIncome:0,accessCost:0}])),trackFlow={},serviceFlow={},flows=[],reach=s.nodes.map(()=>0);let totalTrips=0,riders=0,travel=0,baseline=0,transfers=0;
  for(const o of s.nodes){
   const ps=paths(s,adj,o.id),targets=s.nodes.filter(d=>d.id!==o.id&&d.jobs>0),weights=targets.map(d=>d.jobs*Math.exp(-distance(o,d)/15)),sum=weights.reduce((a,b)=>a+b,0);
   for(let j=0;j<targets.length;j++){
    const d=targets[j],trips=o.people*.72*weights[j]/sum,km=distance(o,d),road=8+km/23*60*1.22,p=ps[d.id];let share=0,rail=0;
    if(p&&p.edges.length){rail=p.minutes+8;const generalized=rail+p.fare*.045;share=.93/(1+Math.exp(Math.min(40,Math.max(-40,(generalized-(road+8))/8))));if(rail<=45)reach[o.id]+=d.jobs;}
    const railTrips=trips*share;totalTrips+=trips;riders+=railTrips;baseline+=trips*road;travel+=railTrips*rail+(trips-railTrips)*road;
-   if(railTrips>.1){transfers+=railTrips*p.transfers;const fare=p.fare,byOwner={};for(const e of p.edges){byOwner[e.owner]=(byOwner[e.owner]||0)+e.km;trackFlow[e.track]=(trackFlow[e.track]||0)+railTrips;}for(const [id,len]of Object.entries(byOwner)){accounts[id].revenue+=railTrips*fare*len/p.km*90/1e6;accounts[id].boardings+=railTrips;}for(const id of new Set(p.edges.map(e=>e.service)))serviceFlow[id]=(serviceFlow[id]||0)+railTrips;flows.push({from:o.id,to:d.id,trips:railTrips,path:p,road,rail});}
+   if(railTrips>.1){transfers+=railTrips*p.transfers;const fare=p.fare,byOwner={};for(const e of p.edges){byOwner[e.owner]=(byOwner[e.owner]||0)+e.km;trackFlow[e.track]=(trackFlow[e.track]||0)+railTrips;}for(const [id,len]of Object.entries(byOwner)){accounts[id].revenue+=railTrips*fare*len/p.km*90/1e6;accounts[id].boardings+=railTrips;}for(const id of new Set(p.edges.map(e=>e.service)))serviceFlow[id]=(serviceFlow[id]||0)+railTrips;flows.push({from:o.id,to:d.id,trips:railTrips,demandTrips:railTrips,path:p,road,rail});}
   }
  }
- for(const l of s.services){const km=serviceKm(s,l),cost=km*(.7+(60/l.headway)*.225);for(const id of l.trackIds){const t=s.tracks.find(t=>t.id===id);accounts[t.owner].cost+=cost*t.km/km;}}
+ for(const l of s.services){const km=serviceKm(s,l),cost=km*(.7+(60/l.headway)*.225);for(let i=0;i<l.trackIds.length;i++){const t=s.tracks.find(t=>t.id===l.trackIds[i]),op=operatorAt(s,l,i);accounts[op].cost+=cost*t.km/km;if(t.owner!==op){const rent=t.km*.6;accounts[op].accessCost+=rent;accounts[op].cost+=rent;accounts[t.owner].accessIncome+=rent;}}}
  for(const t of s.tracks)accounts[t.owner].cost+=t.km*.5;
  const trackLoad=Object.fromEntries(s.tracks.map(t=>[t.id,(trackFlow[t.id]||0)*PEAK/Math.max(1,loadTph(s,t.id)*800)]));
  // Ration each proposed journey by its most constrained segment. Unserved demand stays on roads.
@@ -131,7 +136,7 @@ function evaluate(s){
 }
 function step(s){
  const m=evaluate(s);s.quarter++;
- for(const c of s.companies){const a=m.accounts[c.id],profit=a.revenue-a.cost;c.cash=round(c.cash+profit);c.ledger.unshift({q:s.quarter,revenue:round(a.revenue),cost:round(a.cost),profit:round(profit),capital:round(c.pendingCapital||0),cash:c.cash});c.ledger=c.ledger.slice(0,40);c.pendingCapital=0;}
+ for(const c of s.companies){const a=m.accounts[c.id],profit=a.revenue+a.accessIncome-a.cost;c.cash=round(c.cash+profit);c.ledger.unshift({q:s.quarter,revenue:round(a.revenue),accessIncome:round(a.accessIncome),accessCost:round(a.accessCost),cost:round(a.cost),profit:round(profit),capital:round(c.pendingCapital||0),cash:c.cash});c.ledger=c.ledger.slice(0,40);c.pendingCapital=0;}
  const served=new Set(s.services.flatMap(l=>l.stops)),weights=s.nodes.map(n=>served.has(n.id)?Math.max(0,m.reach[n.id]-15000)*Math.max(0,1-n.people/n.housing):0),sum=weights.reduce((a,b)=>a+b,0);let added=0;
  for(const n of s.nodes){n.growth=0;if(sum&&weights[n.id]>0){const target=Math.min(650,2400*weights[n.id]/sum,Math.max(0,n.housing-n.people)),g=Math.floor(target);n.people+=g;n.growth=g;added+=g;}}
  // Employment has a separate regional demand budget, concentrated at accessible established centres.
@@ -146,16 +151,18 @@ function validate(s){
  const identity={aoba:['青葉電鉄','青葉','#078a73'],metro:['都心メトロ','メトロ','#d46b36'],jr:['東都 JR','JR','#446ccf']};
  if(s.companies.some(c=>!companies.has(c.id)||c.name!==identity[c.id]?.[0]||c.short!==identity[c.id]?.[1]||c.color!==identity[c.id]?.[2]||!finite(c.cash)||!finite(c.fare)||c.fare<100||c.fare>500)||new Set(s.companies.map(c=>c.id)).size!==3)return false;
  if(s.nodes.some((n,i)=>n.id!==i||n.name!==seed[i][0]||n.type!==seed[i][3]||n.x!==seed[i][1]||n.y!==seed[i][2]||![n.people,n.jobs,n.housing].every(finite)||n.people<0||n.jobs<0||n.housing<1||n.people>1e8||n.jobs>1e8||n.housing>1e8||!finite(n.growth)||n.growth<0))return false;
- if(new Set(s.tracks.map(t=>t.id)).size!==s.tracks.length||new Set(s.tracks.map(t=>key(t.a,t.b))).size!==s.tracks.length)return false;
+ if(new Set(s.tracks.map(t=>t.id)).size!==s.tracks.length)return false;
  if(s.tracks.some(t=>!/^t\d+$/.test(t.id)||!companies.has(t.owner)||!s.nodes[t.a]||!s.nodes[t.b]||t.a===t.b||!finite(t.km)||Math.abs(t.km-distance(s.nodes[t.a],s.nodes[t.b]))>.001))return false;
  if(new Set(s.services.map(l=>l.id)).size!==s.services.length)return false;
  if(s.services.some(l=>!/^s\d+$/.test(l.id)||typeof l.name!=='string'||l.name.length>100||!companies.has(l.owner)||!Array.isArray(l.stops)||l.stops.length<2||l.stops.length>30||l.trackIds.length!==l.stops.length-1||![4,5,6,8,10,12,15].includes(l.headway)||l.trackIds.some((id,i)=>{const t=s.tracks.find(t=>t.id===id);return !t||key(t.a,t.b)!==key(l.stops[i],l.stops[i+1]);})))return false;
  if(s.tracks.some(t=>loadTph(s,t.id)>30+.0001))return false;
  if(s.nextId<=Math.max(0,...s.tracks.map(t=>+t.id.slice(1)),...s.services.map(l=>+l.id.slice(1))))return false;
+ if(s.services.some(l=>l.operators&&(!Array.isArray(l.operators)||l.operators.length!==l.trackIds.length||l.operators.some(id=>!companies.has(id)))))return false;
  if(s.services.some(l=>typeof l.through!=='boolean'||(l.through&&(!Array.isArray(l.parents)||l.parents.length!==2||l.parents.some(id=>!s.services.some(p=>p.id===id&&!p.through))))))return false;
  return Array.isArray(s.log)&&s.log.length<=50&&s.log.every(e=>Number.isInteger(e.q)&&e.q>=0&&e.q<=s.quarter&&typeof e.text==='string'&&e.text.length<3000)&&s.companies.every(c=>Array.isArray(c.ledger)&&c.ledger.length<=40&&(!c.pendingCapital||finite(c.pendingCapital))&&c.ledger.every(l=>['q','revenue','cost','profit','capital','cash'].every(k=>finite(l[k]))));
  }catch{return false;}
 }
-const api={newGame,clone,distance,key,company,serviceKm,trackOwners,quoteBuild,build,joinPlan,through,setFare,setHeadway,evaluate,step,validate,network,paths,VERSION};
+function upgrade(s){const v=clone(s);if(v.version===1){v.version=VERSION;for(const l of v.services)if(l.through)l.operators=l.trackIds.map(id=>v.tracks.find(t=>t.id===id).owner);}return v;}
+const api={upgrade,operatorAt,participants,loadTph,newGame,clone,distance,key,company,serviceKm,trackOwners,quoteBuild,build,joinPlan,through,setFare,setHeadway,evaluate,step,validate,network,paths,VERSION};
 if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.RailSim=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
