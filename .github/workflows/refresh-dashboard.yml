@@ -30,6 +30,7 @@ jobs:
           node scripts/test_rail_operations.cjs
           node scripts/test_rail_network.cjs
           node scripts/test_rail_tokyo.cjs
+          node scripts/test_rail_streets.cjs
           node scripts/test_technical.cjs
           node scripts/test_market_context.cjs
           node scripts/test_reading.cjs

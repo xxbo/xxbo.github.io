@@ -13,8 +13,8 @@ function node(s,point){
  if(Number.isInteger(point)){if(!s.nodes[point])throw Error('车站不存在。');return point;}
  if(s.nodes.length>=(s.region==='tokyo'?400:200))throw Error('测试地图最多支持 400 个车站。');
  if(!point||!Number.isFinite(point.x)||!Number.isFinite(point.y)||point.x<25||point.x>(s.world?.width||1040)-25||point.y<25||point.y>(s.world?.height||740)-25)throw Error('请在地图范围内设置车站。');
- const close=s.nodes.find(n=>Math.hypot(n.x-point.x,n.y-point.y)<12);if(close)return close.id;
- const id=s.nodes.length;s.nodes.push({id,name:'新站 '+String(id+1).padStart(2,'0'),x:Math.round(point.x),y:Math.round(point.y),type:'住宅',people:2200,jobs:500,housing:8000,growth:0,initialPeople:2200,initialJobs:500});return id;
+ const close=s.nodes.find(n=>Math.hypot(n.x-point.x,n.y-point.y)<.04);if(close)throw Error('这里已有车站，请点击车站接入，或稍微挪动位置。');
+ const id=s.nodes.length;s.nodes.push({id,name:'新站 '+String(id+1).padStart(2,'0'),x:Math.round(point.x*1000)/1000,y:Math.round(point.y*1000)/1000,type:'住宅',people:2200,jobs:500,housing:8000,growth:0,initialPeople:2200,initialJobs:500});return id;
 }
 function route(s,l,stops){
  const loop=stops[0]===stops.at(-1),unique=loop?stops.slice(0,-1):stops;if(new Set(unique).size!==unique.length||unique.length<(loop?3:2))throw Error('普通线路至少保留两个不同车站，环线至少三个。');

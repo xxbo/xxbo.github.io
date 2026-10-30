@@ -65,10 +65,10 @@ function tick(rt,s,dt){
 }
 function advance(rt,s,minutes){if(!Number.isFinite(minutes)||minutes<0||minutes>1440)throw Error('Invalid operation interval');let left=minutes;while(left>1e-9){const dt=Math.min(.1,left);tick(rt,s,dt);left-=dt;}return rt;}
 function ease(p){const a=.16,v=1/(1-a);if(p<a)return v*p*p/(2*a);if(p>1-a)return 1-v*(1-p)*(1-p)/(2*a);return v*(p-a/2);}
-function position(s,t){
+function position(s,t,offsetScale=1){
  if(t.status!=='moving'){const n=s.nodes[t.stops[t.index]];return {x:n.x,y:n.y,angle:t.dir===1?0:180,speed:0,track:null};}
  const a=s.nodes[t.segment.from],b=s.nodes[t.segment.to],p=ease(t.progress),dx=b.x-a.x,dy=b.y-a.y,dist=Math.hypot(dx,dy),tr=track(s,t.segment.track);
- const parallels=s.tracks.filter(x=>R.key(x.a,x.b)===R.key(tr.a,tr.b)).sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true})),pair=parallels.findIndex(x=>x.id===tr.id),base=(pair-(parallels.length-1)/2)*9,canonical=t.segment.from===tr.a?1:-1,offset=base*canonical*(tr.a<tr.b?1:-1)+2.2;
+ const parallels=s.tracks.filter(x=>R.key(x.a,x.b)===R.key(tr.a,tr.b)).sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true})),pair=parallels.findIndex(x=>x.id===tr.id),base=(pair-(parallels.length-1)/2)*9,canonical=t.segment.from===tr.a?1:-1,offset=(base*canonical*(tr.a<tr.b?1:-1)+2.2)*offsetScale;
  const ramp=t.progress<.16?t.progress/.16:t.progress>.84?(1-t.progress)/.16:1;
  return {x:a.x+dx*p-dy/dist*offset,y:a.y+dy*p+dx/dist*offset,angle:Math.atan2(dy,dx)*180/Math.PI,speed:48/(1-.16)*Math.max(0,ramp),track:tr.id};
 }
