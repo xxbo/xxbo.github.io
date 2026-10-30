@@ -2,10 +2,11 @@
 (function(root){
 'use strict';
 const R=typeof module!=='undefined'&&module.exports?require('./engine.js'):root.RailSim;
+const X=typeof module!=='undefined'&&module.exports?require('./service-plan'):root.RailServicePlan;
 const DWELL=.6,CAPACITY=800,SPACING=2;
 function service(s,id){return s.services.find(l=>l.id===id);}
 function track(s,id){return s.tracks.find(t=>t.id===id);}
-function routeTime(s,l){return l.trackIds.reduce((m,id)=>m+track(s,id).km/48*60+DWELL,0);}
+function routeTime(s,l){if(s.routeModel===9)return X.duration(s,l);return l.trackIds.reduce((m,id)=>m+track(s,id).km/48*60+DWELL,0);}
 function isOpen(l,minute){const day=((minute%1440)+1440)%1440;return day>=(l.open??0)&&day<(l.close??1440);}
 function queueKey(id,dir,node){return id+'|'+dir+'|'+node;}
 function demandGroups(s,metrics){
@@ -70,7 +71,7 @@ function position(s,t,offsetScale=1){
  const a=s.nodes[t.segment.from],b=s.nodes[t.segment.to],p=ease(t.progress),dx=b.x-a.x,dy=b.y-a.y,dist=Math.hypot(dx,dy),tr=track(s,t.segment.track);
  const parallels=s.tracks.filter(x=>R.key(x.a,x.b)===R.key(tr.a,tr.b)).sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true})),pair=parallels.findIndex(x=>x.id===tr.id),base=(pair-(parallels.length-1)/2)*9,canonical=t.segment.from===tr.a?1:-1,offset=(base*canonical*(tr.a<tr.b?1:-1)+2.2)*offsetScale;
  const ramp=t.progress<.16?t.progress/.16:t.progress>.84?(1-t.progress)/.16:1;
- return {x:a.x+dx*p-dy/dist*offset,y:a.y+dy*p+dx/dist*offset,angle:Math.atan2(dy,dx)*180/Math.PI,speed:48/(1-.16)*Math.max(0,ramp),track:tr.id};
+ const pos=X.along(X.trackPoints(s,tr,t.segment.from),p),angle=pos.angle*Math.PI/180;return {x:pos.x-Math.sin(angle)*offset,y:pos.y+Math.cos(angle)*offset,angle:pos.angle,speed:48/(1-.16)*Math.max(0,ramp),track:tr.id};
 }
 function summary(rt){const waiting=Object.values(rt.queues).reduce((v,q)=>v+Object.values(q).reduce((a,b)=>a+b,0),0),onboard=rt.trains.reduce((v,t)=>v+t.onboard,0);return {active:rt.trains.length,moving:rt.trains.filter(t=>t.status==='moving').length,waiting,onboard,boarded:rt.boarded,alighted:rt.alighted,generated:rt.generated,signal:rt.trains.filter(t=>t.status==='signal').length};}
 const api={create,advance,position,summary,demandGroups,routeTime,isOpen,CAPACITY,DWELL,SPACING};

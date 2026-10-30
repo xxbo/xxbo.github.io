@@ -1,6 +1,7 @@
 /* Tokyo-inspired urban rail sandbox. Money: million yen; daily demand: synthetic weekday trips. */
 (function(root){
 'use strict';
+const X=typeof module!=='undefined'&&module.exports?require('./service-plan'):root.RailServicePlan;
 const VERSION=2, SCALE=.045, PEAK=.18;
 const clone=x=>JSON.parse(JSON.stringify(x));
 const round=x=>Math.round(x*100)/100;
@@ -33,8 +34,8 @@ function company(s,id){return s.companies.find(c=>c.id===id);}
 function serviceKm(s,line){return line.trackIds.reduce((sum,id)=>sum+s.tracks.find(t=>t.id===id).km,0);}
 function trackOwners(s,line){return [...new Set(line.trackIds.map(id=>s.tracks.find(t=>t.id===id).owner))];}
 function capacity(l){return (l.cars||8)*100;}
-function effectiveHeadway(s,l){if(!l.fleet)return l.headway;const cycle=l.trackIds.reduce((v,id)=>v+s.tracks.find(t=>t.id===id).km/48*60+.6,0)+1;return Math.max(l.headway,2*cycle/l.fleet);}
-function loadTph(s,trackId,exclude){return s.services.filter(l=>l.id!==exclude&&l.trackIds.includes(trackId)).reduce((v,l)=>v+60/effectiveHeadway(s,l),0);}
+function effectiveHeadway(s,l){if(s.routeModel===9)return X.headway(s,l);if(!l.fleet)return l.headway;const cycle=l.trackIds.reduce((v,id)=>v+s.tracks.find(t=>t.id===id).km/48*60+.6,0)+1;return Math.max(l.headway,2*cycle/l.fleet);}
+function loadTph(s,trackId,exclude){if(s.routeModel===9){const op=X.expand(s);return op.services.filter(l=>l.parentLine!==exclude&&l.trackIds.includes(trackId)).reduce((v,l)=>v+60/X.headway(op,l),0);}return s.services.filter(l=>l.id!==exclude&&l.trackIds.includes(trackId)).reduce((v,l)=>v+60/effectiveHeadway(s,l),0);}
 function log(s,text){s.log.unshift({q:s.quarter,text});s.log=s.log.slice(0,50);}
 function quoteBuild(s,owner,stops,mode='shared'){
  if(!company(s,owner))return {error:'请选择运营公司。'};
@@ -90,7 +91,7 @@ function through(s,aId,bId){
 }
 function setFare(s,id,fare){if(!Number.isFinite(fare)||fare<100||fare>500)return {error:'票价范围为 100—500 円。'};company(s,id).fare=Math.round(fare);return {};}
 function setHeadway(s,id,h){const l=s.services.find(l=>l.id===id);if(!l||![4,5,6,8,10,12,15].includes(h))return {error:'班次无效。'};if(l.trackIds.some(t=>loadTph(s,t,id)+60/h>30+.0001))return {error:'共用轨道每小时最多 30 班，请协调其他服务。'};l.headway=h;return {};}
-function network(s,penalties={}){
+function network(s,penalties={}){if(s.routeModel===9)return X.network(s);
  const adj=s.nodes.map(()=>[]);
  for(const l of s.services){const total=serviceKm(s,l),byOwner={};for(const id of l.trackIds){const t=s.tracks.find(t=>t.id===id);const op=operatorAt(s,l,l.trackIds.indexOf(id));byOwner[op]=(byOwner[op]||0)+t.km;}
   // A cross-company through journey uses a discounted sum of company base fares.
@@ -102,7 +103,7 @@ function network(s,penalties={}){
 // Binary min-heap keeps metropolitan path searches responsive.
 function pushHeap(h,item){let i=h.length;h.push(item);while(i){const p=(i-1)>>1;if(h[p].p.cost<=item.p.cost)break;h[i]=h[p];i=p;}h[i]=item;}
 function popHeap(h){const top=h[0],last=h.pop();if(h.length){let i=0;while(i*2+1<h.length){let c=i*2+1;if(c+1<h.length&&h[c+1].p.cost<h[c].p.cost)c++;if(h[c].p.cost>=last.p.cost)break;h[i]=h[c];i=c;}h[i]=last;}return top;}
-function paths(s,adj,origin,value=.045){
+function paths(s,adj,origin,value=.045){if(s.routeModel===9)return X.paths(s,adj,origin,value);
  const start=origin+'||0|0',best=new Map([[start,{node:origin,service:'',paid:0,discounted:0,cost:0,minutes:0,fare:0,km:0,edges:[],transfers:0}]]),done=new Set(),result=[],heap=[];pushHeap(heap,{id:start,p:best.get(start)});
  while(heap.length){const item=popHeap(heap),cur=item.p,k=item.id;if(done.has(k)||best.get(k)!==cur)continue;done.add(k);if(!result[cur.node]||cur.cost<result[cur.node].cost)result[cur.node]=cur;
   for(const e of adj[cur.node]){const change=cur.service!==e.service,transfer=change&&!!cur.service,wait=change?e.headway/2:0,extra=wait+(transfer?4:0)+e.penalty;const bit=1<<s.companies.findIndex(c=>c.id===e.owner),paid=cur.paid|bit;let fee=(cur.paid&bit)?0:e.fare,discounted=cur.discounted;const prior=e.through?cur.edges.filter(v=>v.service===e.service).reduce((v,x)=>v|(1<<s.companies.findIndex(c=>c.id===x.owner)),0):0;if(e.through&&prior&&(prior&bit)===0){const eligible=(prior|bit)&~discounted;for(let ci=0;ci<s.companies.length;ci++)if(eligible&(1<<ci))fee-=s.companies[ci].fare*.15;discounted|=prior|bit;}const p={node:e.to,service:e.service,paid,discounted,cost:cur.cost+e.minutes+extra+fee*value,minutes:cur.minutes+e.minutes+extra,fare:cur.fare+fee,km:cur.km+e.km,edges:cur.edges.concat(e),transfers:cur.transfers+(transfer?1:0)};const nk=e.to+'|'+e.service+'|'+paid+'|'+discounted;if(!best.has(nk)||p.cost<best.get(nk).cost-.000001){best.set(nk,p);done.delete(nk);pushHeap(heap,{id:nk,p});}}
@@ -159,10 +160,10 @@ function validate(s){
  if(s.companies.some(c=>!companies.has(c.id)||c.name!==identity[c.id]?.[0]||c.short!==identity[c.id]?.[1]||c.color!==identity[c.id]?.[2]||!finite(c.cash)||!finite(c.fare)||c.fare<100||c.fare>500)||new Set(s.companies.map(c=>c.id)).size!==3)return false;
  if(s.nodes.some((n,i)=>n.id!==i||typeof n.name!=='string'||n.name.length>40||!['住宅','办公','商业','工业','教育','田园'].includes(n.type)||!Number.isFinite(n.x)||!Number.isFinite(n.y)||n.x<20||n.x>(s.world?.width||1040)-20||n.y<20||n.y>(s.world?.height||740)-20||![n.people,n.jobs,n.housing].every(finite)||n.people<0||n.jobs<0||n.housing<1||n.people>1e8||n.jobs>1e8||n.housing>1e8||!finite(n.growth)||n.growth<0||(s.region!=='tokyo'&&i<seed.length&&(n.name!==seed[i][0]||n.x!==seed[i][1]||n.y!==seed[i][2]||n.type!==seed[i][3]))))return false;
  if(new Set(s.tracks.map(t=>t.id)).size!==s.tracks.length)return false;
- if(s.tracks.some(t=>!/^t\d+$/.test(t.id)||!companies.has(t.owner)||!s.nodes[t.a]||!s.nodes[t.b]||t.a===t.b||!finite(t.km)||Math.abs(t.km-distance(s.nodes[t.a],s.nodes[t.b]))>.001))return false;
+ if(s.tracks.some(t=>!/^t\d+$/.test(t.id)||!companies.has(t.owner)||!s.nodes[t.a]||!s.nodes[t.b]||t.a===t.b||!finite(t.km)||Math.abs(t.km-X.sum(X.trackPoints(s,t)))>.001))return false;
  if(new Set(s.services.map(l=>l.id)).size!==s.services.length)return false;
  if(s.services.some(l=>!/^s\d+$/.test(l.id)||typeof l.name!=='string'||l.name.length>100||!companies.has(l.owner)||!Array.isArray(l.stops)||l.stops.length<2||l.stops.length>(s.region==='tokyo'?60:30)||l.trackIds.length!==l.stops.length-1||![4,5,6,8,10,12,15,20].includes(l.headway)||l.trackIds.some((id,i)=>{const t=s.tracks.find(t=>t.id===id);return !t||key(t.a,t.b)!==key(l.stops[i],l.stops[i+1]);})))return false;
- if(s.tracks.some(t=>loadTph(s,t.id)>30+.0001))return false;
+ if(s.routeModel===9?!X.validate(s):s.tracks.some(t=>loadTph(s,t.id)>30+.0001))return false;
  if(s.nextId<=Math.max(0,...s.tracks.map(t=>+t.id.slice(1)),...s.services.map(l=>+l.id.slice(1))))return false;
  if(s.services.some(l=>l.operators&&(!Array.isArray(l.operators)||l.operators.length!==l.trackIds.length||l.operators.some(id=>!companies.has(id)))))return false;
  if(s.services.some(l=>typeof l.through!=='boolean'||(l.through&&(!Array.isArray(l.parents)||l.parents.length!==2||l.parents.some(id=>!s.services.some(p=>p.id===id&&!p.through))))))return false;
