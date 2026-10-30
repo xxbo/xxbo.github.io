@@ -3,14 +3,16 @@
 (function(root){'use strict';const node=typeof module!=='undefined'&&module.exports,X=node?require('./service-plan'):root.RailServicePlan;
 const VERSION=14,DAY=1440,ORIGIN=420,SPACE=.93,START=.55,TAU=10;
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x)),lines=s=>s.baseLines||s.services,day=m=>Math.max(1,Math.floor((m-ORIGIN+1e-7)/DAY)+1);
-function emptyDay(number){return {number,attempted:0,completed:0,rejected:0,waitMinutes:0,boarded:0,lines:{}};}
+function emptyDay(number){return {number,attempted:0,completed:0,rejected:0,waitMinutes:0,boarded:0,lines:{},stations:{}};}
 function init(s,minute=s.economy?.minute||420){if(s.routeModel!==9)return null;let q=s.ridership;if(!q||q.version!==VERSION||!q.lines||!q.current||!q.records||!Array.isArray(q.history)||!Array.isArray(q.hour)){q=s.ridership={version:VERSION,lines:{},current:emptyDay(day(minute)),history:[],hour:[],records:{bestDay:0,bestDayNumber:0,bestHour:0,bestHourMinute:0,totalCompleted:0},lastMinute:minute};for(const l of lines(s))q.lines[l.id]={opened:minute,awareness:1,trust:1,serviceDays:30,migrated:true,bestDay:0,attempted:0,lost:0,wait:0,boarded:0};}sync(s,minute);return q;}
 function sync(s,minute=s.economy?.minute||420){const q=s.ridership;if(!q||q.version!==VERSION)return;for(const l of lines(s))if(!q.lines[l.id])q.lines[l.id]={opened:minute,awareness:START,trust:1,serviceDays:0,migrated:false,bestDay:0,attempted:0,lost:0,wait:0,boarded:0};}
 function factor(s,journey){const q=s.ridership;if(!q)return 1;const ids=journey.lineIds||Object.keys(journey.path?.fares||{});if(!ids.length)return 1;return Math.min(...ids.map(id=>{const l=q.lines[id];if(!l)return 1;const awareness=journey.hub?1-(1-l.awareness)*.5:l.awareness;return clamp(awareness*l.trust,0,1);}));}
 function limits(s,id){const ls=lines(s).filter(l=>l.stops.includes(id)),cars=Math.max(4,...ls.map(l=>l.cars||6)),platforms=Math.max(2,Math.min(6,ls.length*2)),length=cars*20+20,usableWidth=3,area=length*usableWidth*platforms,capacity=Math.floor(area/SPACE);return {capacity,outsideCapacity:Math.floor(capacity*.5),platforms,length,usableWidth,area,spacePerPerson:SPACE};}
 function ensureDay(s,minute){const q=s.ridership;if(!q)return null;const d=day(minute);if(q.current.number!==d){q.history.push({...q.current,maturity:Object.fromEntries(Object.entries(q.lines).map(([id,l])=>[id,l.awareness*l.trust]))});q.history=q.history.slice(-30);q.current=emptyDay(d);}return q.current;}
 function lineStats(d,id){return d.lines[id]||(d.lines[id]={attempted:0,completed:0,rejected:0,boarded:0,waitMinutes:0});}
-function event(s,rt,j,kind,count,wait=0,line=null){const q=s.ridership;if(!q||!count)return;const d=ensureDay(s,rt.minute),ids=j.lineIds||[];
+function station(s,id,minute=s.economy?.minute||420){const d=s.ridership?.current;return d?.number===day(minute)?{entered:0,boarded:0,alighted:0,...d.stations?.[id]}:{entered:0,boarded:0,alighted:0};}
+function event(s,rt,j,kind,count,wait=0,line=null,stationId=null){const q=s.ridership;if(!q||!count)return;const d=ensureDay(s,rt.minute),ids=j.lineIds||[];
+ if(stationId!==null&&['enter','board','alight'].includes(kind)){d.stations=d.stations||{};const st=d.stations[stationId]||(d.stations[stationId]={entered:0,boarded:0,alighted:0});st[kind==='enter'?'entered':kind==='board'?'boarded':'alighted']+=count;}
  if(kind==='attempt'){d.attempted+=count;for(const id of ids){lineStats(d,id).attempted+=count;if(q.lines[id])q.lines[id].attempted+=count;}}
  if(kind==='reject'){d.rejected+=count;for(const id of ids){lineStats(d,id).rejected+=count;if(q.lines[id])q.lines[id].lost+=count;}}
  if(kind==='board'){d.boarded+=count;d.waitMinutes+=wait*count;if(line){const st=lineStats(d,line);st.boarded+=count;st.waitMinutes+=wait*count;if(q.lines[line]){q.lines[line].boarded+=count;q.lines[line].wait+=wait*count;}}}
@@ -20,5 +22,5 @@ function step(s,rt,minutes){const q=s.ridership;if(!q)return;ensureDay(s,rt.minu
 function line(s,id){const q=s.ridership?.lines[id];return q?{...q,factor:q.awareness*q.trust}: {awareness:1,trust:1,serviceDays:0,factor:1,bestDay:0};}
 function awards(records){return [{id:'first100',name:'初具人气',target:100,value:records.totalCompleted||0,unit:'单局累计完成出行'},{id:'day1000',name:'城市通勤',target:1000,value:records.bestDay||0,unit:'单日完成出行'},{id:'day10000',name:'万人线路网',target:10000,value:records.bestDay||0,unit:'单日完成出行'},{id:'hour1000',name:'高峰承运',target:1000,value:records.bestHour||0,unit:'连续60分钟完成出行'}].map(a=>({...a,unlocked:a.value>=a.target}));}
 function mergeRecords(a={},b={}){return {bestDay:Math.max(a.bestDay||0,b.bestDay||0),bestHour:Math.max(a.bestHour||0,b.bestHour||0),totalCompleted:Math.max(a.totalCompleted||0,b.totalCompleted||0)};}
-const api={init,sync,factor,limits,step,event,line,day,awards,mergeRecords,VERSION,SPACE,START,TAU};if(node)module.exports=api;else root.RailRidership=api;
+const api={init,sync,factor,limits,step,event,station,line,day,awards,mergeRecords,VERSION,SPACE,START,TAU};if(node)module.exports=api;else root.RailRidership=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
