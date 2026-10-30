@@ -16,5 +16,10 @@ const list=[
 ].map(h=>Object.freeze({...h,...project(h.lat,h.lon)}));Object.freeze(list);
 function daily(h){return h.basis==='daily-depart'?h.observed*2:h.basis==='annual-both'?h.observed/365:h.observed;}
 function envelope(h){const total=daily(h)*h.landside;return {movements:daily(h),landside:total,visitorArrivals:total/2*h.visitor,visitorReturns:total/2*h.visitor,localDepartures:total/2*(1-h.visitor),localReturns:total/2*(1-h.visitor)};}
-const api={list,daily,envelope,project};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.RailHubs=api;
+const ACCESS={narita:{railReference:.56,source:'https://www.mlit.go.jp/report/press/content/001893802.pdf',note:'2024年出发旅客铁路分担率56%；参考值，不是玩家地铁保底份额',staff:40000,staffSource:'https://www.narita-airport.jp/ja/company/sustainability/examples/employee-break-room-expansion/'},haneda:{railReference:.55,note:'游戏参考值，非羽田整体观测分担率'},rail:{railReference:.65,note:'城际铁路换乘偏好为游戏假设'},bus:{railReference:.5,note:'巴士接驳偏好为游戏假设'},port:{railReference:.45,note:'港口接驳偏好为游戏假设'}};
+function access(h){return ACCESS[h.id]||ACCESS[h.type]||ACCESS.rail;}
+function share(h,{minutes,access:walk,fare,km},kind){const a=access(h),employee=kind?.startsWith('staff'),value=employee?40:60,rail=minutes+1.3*walk+fare/value,reference=12+km/30*60+(180+km*12)/value;
+ // Reference share is an odds anchor, not a floor. Slow/costly services can approach zero.
+ const anchor=employee?.35:a.railReference,logOdds=Math.log(anchor/(1-anchor))+(reference-rail)/12;return 1/(1+Math.exp(Math.max(-60,Math.min(60,-logOdds))));}
+const api={access,share,list,daily,envelope,project};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.RailHubs=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

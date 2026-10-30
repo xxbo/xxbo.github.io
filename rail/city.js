@@ -39,6 +39,7 @@ function evaluateLegacy(s){if(!s.services.length){const city=create();return {ci
 }
 // Each profile integrates to 1 over a complete day; commute directions peak at different times.
 function profile(purpose,back,minute,externalKind=null){const h=((minute%1440)+1440)%1440/60;let w;
+ if(externalKind?.startsWith('staff'))return profile('work',externalKind==='staff-homebound',minute);
  if(externalKind){const departure=externalKind==='local-departure'||externalKind==='visitor-return',peak=departure?(h>=5&&h<10):(h>=16&&h<22),hours=departure?5:6;return (peak?3:1)/(hours*3+24-hours)/60;}
  if(purpose==='work')w=back?(h>=17&&h<21?.18:h>=12&&h<14?.06:.008):(h>=6&&h<10?.19:h>=10&&h<12?.04:.008);
  else if(purpose==='shopping')w=h>=10&&h<21?.08:.008;
