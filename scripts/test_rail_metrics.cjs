@@ -1,0 +1,6 @@
+const assert=require('node:assert/strict'),K=require('../rail/metrics'),Y=require('../rail/currency');
+const s={services:[{id:'a',stops:[0,1,2],trackIds:['a','b'],fleet:4},{id:'b',stops:[1,2,3],trackIds:['b','c'],fleet:2}],tracks:[{id:'a',km:2},{id:'b',km:3},{id:'c',km:5},{id:'unused',km:99}]};
+const f={population:1000,catchment:{covered:250},flows:[{trips:100,path:{km:5,transfers:0}},{trips:50,path:{km:8,transfers:1}}]};const m=K.summary(s,f);assert.equal(m.networkKm,10);assert.equal(m.lineKm,13);assert.equal(m.stations,4);assert.equal(m.interchanges,2);assert.equal(m.journeys,150);assert.equal(m.passengerKm,900);assert.equal(m.intensity,15);assert.equal(m.averageDistance,6);assert.equal(m.transferShare,1/3);assert.equal(m.coverage,.25);assert.equal(m.fleet,6);
+const zero=K.summary({services:[],tracks:[]},{population:0,catchment:{covered:0},flows:[]});for(const v of Object.values(zero))assert.equal(v,0);
+assert.equal(Y.toCNY(5e9),2.5e8);assert.equal(Y.toCNY(180),9);assert.equal(Y.fromCNY(9.05),181);for(const n of [0,180,210,330,500000000,-2150])assert.equal(Y.fromCNY(Y.toCNY(n)),n);assert.equal(Y.format(180),'¥9.00');assert(Y.format(-5e9).includes('−¥2.50 亿'));
+console.log('Metrics passed: shared tracks, transfer-station dedup, journey intensity, passenger-km, zero networks and CNY compatibility.');

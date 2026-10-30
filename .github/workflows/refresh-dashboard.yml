@@ -33,6 +33,7 @@ jobs:
           node scripts/test_rail_streets.cjs
           node scripts/test_rail_view.cjs
           node scripts/test_rail_services.cjs
+          node scripts/test_rail_metrics.cjs
           node scripts/test_rail_management.cjs
           node scripts/test_rail_city_data.cjs
           node scripts/test_technical.cjs
