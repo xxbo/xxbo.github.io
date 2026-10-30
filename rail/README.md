@@ -1,50 +1,46 @@
-# 轨道都市 · Map 03
+# 轨道都市 — MAP / 06
 
-A buildless, map-first rail editor at `/rail/index.html`. This version replaces the company/finance/construction dashboard UI with one full-screen map. Vehicles render as moving coloured dots. Only line creation/deletion are primary global actions; selecting a route opens its details.
+GitHub Pages 上的东京圈铁路经营实验。静态网页，无自己的后端；铁路、客流、资金与贷款在本机模拟，自动存档。主网站资讯功能独立保留。
 
-## Visible interactions
+## 地图与操作
 
-- Select a map route or legend entry to inspect it. Drag and zoom the map; pause or speed up operations with the compact clock control.
-- Create a route by clicking existing candidate stations or free map locations. The draft is reversible and commits only on confirmation.
-- Insert a station near a segment or extend beyond an endpoint. Remove a station from the map or selected route's list; adjacent segments reconnect. Other lines retain their stops.
-- Configure even fleet sizes (2–80 trains), 4/6/8-car formations, target headway and operating hours. Fleet availability constrains effective headway. Capacity and service windows affect live dispatch.
-- Inspect per-line synthetic weekday boardings, revenue, expense, net operating result and per-station board/alight counts. Revenue is distance-allocated across ridden services. Expense estimates comprise train-km operations, configured fleet upkeep and line maintenance. All forecast figures are estimates, not observed Tokyo data or live farebox revenue.
-- Delete a line with an inline confirmation. Unused track infrastructure is pruned; shared stations and other lines remain. The last committed edit can be undone from the transient toast.
+默认实时加载日本国土地理院淡色街道图，可切换 OSM 或简洁示意图。支持滚轮围绕指针缩放、双击、按钮、拖动与双指缩放。只加载当前视口的地图瓦片，保留浏览器缓存与来源署名。
 
-## Persistence and model boundaries
+在地图任意位置设站、连线。新站不吸附到远处预置站，也不按 45 米格网取整；点击明确的站点标记才接入已有站。建设草图显示预计费用，余额不足不能提交。点击线路编辑；点击车站看候车与步行覆盖；点击列车或线路的在线列车列表看满载程度、车上乘客的下车目的地。空白区域可查看设站覆盖量。旧版试验地图入口、切换逻辑与旧版存档 key 已移除。
 
-This focused editor uses its own `guanchao-rail-map-v3` local save. Prior versions' saves are left untouched. It starts from a clean three-route layout rather than importing old multi-company through-service games into an incompatible editing workflow.
+预置 183 个真实站名、21 条主要服务。站点位置为手工整理的近似经纬度，预置线路是节选站点间直线，不是铁路中心线。底图真实不意味着人口/财务为真实统计。
 
-City growth, quarterly settlement, operator management, construction budgeting, track leasing, through-service controls, individual-train inspection and extra map layers are hidden in this version. Legacy engine functions remain available internally for backwards tests; they are not part of the visible map flow.
+## 城市与目的地
 
-`engine.js` supplies the network and aggregate OD forecast. `operations.js` simulates individual bidirectional dot positions, station dwell, generated ride-leg queues, boarding, capacity, headways and operating windows. This is a simplified simulation rather than complete signalling, depot, rolling-stock or passenger-transfer modelling. Opening rebuilds the 07:00 representative scene after warm-up; editing replans it at the current displayed time. Backgrounding pauses operations.
+`city.js` 生成约 8,854 个 450 m 网格，含居民、岗位、商业、工业、休闲机会。模拟总人口约 1,200 万，非真实普查数据。分布由既有城市中心和功能类型扩散，排除大部分开阔东京湾；人口、商业、工业热力图可在地图查看。
 
-`network.js` owns transactional map edits, route reconnection, extra free-positioned nodes, line forecasts and configuration validation. `ui.js`, `index.html` and `style.css` supply the minimal map interface. No external packages, API keys, map tiles or server are required.
+居民的通勤、购物、休闲目的地在车站覆盖计算之前分配。每个网格对每类目的具有固定的、可重复的加权目的地与往返旅程，约 53,124 个人口分组；不是把数百万居民创建为单独 JS 对象。选择目的地使用就业/商业/休闲机会及距离衰减，取样种子独立于线路建设；新增车站不能凭空产生居民。
 
-## Verification
+步行距离为直线距离 ×1.25 绕行系数，最大 800 m；未进行道路导航或过街/跨河路径计算。重叠服务区的居民只分配给最近运营站，避免重复计人。居民无合适步行起终点站时按未覆盖出行计入城市总需求，不凭空出现在候车队列里。铁路方式选择考虑两端步行、车上时间、间隔、换乘和票价，目的地相同的旅程按线路/时段分组。早高峰偏向工作地，晚高峰返家；购物/休闲有不同时间曲线，均归一化为每日权重。线路日客流预测按峰时容量约束折减，实际满载由实时上车过程决定。
 
-Run from the repository root:
+## 列车与客流
 
-- `node scripts/test_rail.cjs`
-- `node scripts/test_rail_operations.cjs`
-- `node scripts/test_rail_network.cjs`
+`passengers.js` 在原有运动学之上模拟带目的地和换乘顺序的客流分组。乘客只在起点生成一次；到达换乘站后才进入下一条线路队列；末段下车后完成旅程并产生票款。满载无法上车的乘客留站；等待超过 60 分钟的分组在下一次上车处理时放弃。车辆到终点退出，环线在开放时间内循环。头班/末班、停站、同向区间间隔和车辆配属仍生效。
 
-The existing GitHub Pages workflow runs these tests and stages the complete `rail/` directory. Dashboard news and market functionality remain independent.
+守恒：已生成旅客 = 正在候车 + 车上旅客 + 完成旅程 + 放弃/取消。上车与下车累计包含换乘乘车段，不等于独立旅客数。施工/车辆配置调整会停运并取消当下尚未完成的出行、重排班次；不产生这些取消旅程的票款，界面注明中断。此处仍是简化模型，没有车站换乘走行时间/站台物理容量。
 
-## MAP / 04 — 东京圈与运营总览
+## 资金与贷款（游戏价格）
 
-默认东京圈地图：2,900 × 2,100 世界单位、183 个真实站名、21 条主要线路服务、180 个初始运营站。参照 [JR 东日本主要路网](https://www.jreast.co.jp/e/downloads/) 与 [Tokyo Metro 路网](https://www.tokyometro.jp/lang_en/station/index.html)，手工整理近似站点经纬度后以局部等距比例投影。地图面积约为旧地图的 7.9 倍；站点、海岸、河流、公园均为简化地理示意。主要站点节选存在跳站、同站合并；未完整复刻实际线路、停站、直通或快慢车。机场走廊、JR 通勤干线、主要私铁及五条地铁作为游戏骨架。站名按优先级与屏幕碰撞检查分层，支持全域/都心、站名开关和距离标尺。
+- 初始余额 50 亿円，开局既有网络视作赠予资产；升级原存档不追溯收取历史建设款。
+- 新轨道每 km 2 亿円；首次投入运营的车站 0.8 亿円；每节车厢 500 万円。共用轨道/站点不重复计费。拆除轨道/车站回收 20%、减少车辆回收 50%；重新建设仍付全价，不能靠重复买卖无限获利。
+- 维护按游戏时间支付；实际运行成本按列车走行距离支付。票款只有完成旅程后计入可用余额；预算面板展示本局实际收入与支出，线路运营面板展示工作日预测，两者口径明确分开。
+- 贷款本金总上限 30 亿円，最多 3 笔未结清贷款，每笔 1–10 亿円。日利率 0.05%，30 个游戏日等额本金，每 24 个模拟小时自动扣除当期本金与已计利息。可以提前结清本金和已计利息，不收未来利息。
+- 余额不足/到期未付暂停运营，不自动借款。已经发生但未能支付的运营费用保留为应付账款，贷款/回收资金优先清偿。时间暂停期间不继续计息。贷款不能超过额度；全部财务规则为游戏设定，不是现实融资报价。
+- 所有改造使用克隆后报价与校验，资金不足时不改变线路、资产或余额。撤销仅在模拟暂停且没有后续财务操作时可用，同时恢复建设对应余额与客流快照，防止倒带取款。
 
-运营总览在同一地图右侧展示全部线路，可按客流/结余排序，点击进入线路编辑。在线车辆实时统计，客流/财务为既有工作日模型预测。全网乘车人次为线路乘车人次之和（换乘重复计次），线路公里是服务里程之和（含共线服务），收入按每段乘坐距离分配；不是独立旅客数或物理轨道总里程。所有人口、班次、编组、客流与财务均为游戏参数，不能作为真实运营统计。模型的公司层仍使用原先三个虚构账户，地图路线名不代表实际运营公司已完成财务建模。
+## 存档与重开
 
-东京圈独立存档 `guanchao-rail-map-v4`。右上角地图选择器可回到原 `guanchao-rail-map-v3` 旧版实验地图，分别保存，保留原有建设记录。东京圈最多 400 个站点、单线 60 个站点、30 条线路；旧地图维持原限制。路径搜索改用二叉最小堆，保持广义出行成本模型与容量约束。新增验证 `node scripts/test_rail_tokyo.cjs`。
+使用独立经营存档 key `guanchao-rail-game-v6`，格式 `gameVersion:6`。首次从 `guanchao-rail-map-v4` 自动迁入线路，保存成功后删除旧 key，防止尚未刷新的旧版页面覆盖余额/贷款。保存线路、经济账目、模拟分钟、列车、队列和旅程进度；可重复的城市/出行定义从模型重建，降低存档体积。每 10 秒、页面隐藏/离开时保存。刷新不重置贷款时钟或余额。原地图版线路自动迁入，旧试验地图 key `guanchao-rail-map-v3` 删除。
 
-## MAP / 05 — 真实街道底图与任意位置设站
+“开始新游戏”展示二次确认。取消不改变游戏；确认清除自建内容、贷款、财务和运营进度，恢复初始东京圈线路及 50 亿円。仅重置本游戏的存档，不触碰主站阅读偏好。
 
-东京圈默认实时加载 [国土地理院淡色地图](https://maps.gsi.go.jp/development/ichiran.html) XYZ 瓦片，原生层级 5–18，支持街道/建筑级浏览；可切换 [OpenStreetMap](https://operations.osmfoundation.org/policies/tiles/) 标准街道图（最高原生层级 19）或无网络的简洁示意背景。显示对应来源署名，仅按当前视口加载，不批量下载、不预取、不改变浏览器 HTTP 缓存语义，图像请求保留正常 Referrer。网络错误显示加载状态，可重试或手动切换来源；无街道图时不能把空白背景误认为已经加载成功。
+## 参考与验证
 
-`street-map.js` 将原存档的局部经纬度投影坐标转换为 Web Mercator 显示坐标，再逆变换设站位置；原 `guanchao-rail-map-v4` 存档可直接使用，不改动原坐标或线路。支持滚轮围绕指针缩放、双击放大、按钮缩放、单指拖动与双指缩放；最大交互倍率 512（高于原生瓦片时仅放大已有最高层级）。路线、站圈、列车点和标签保持屏幕尺寸，标尺自动切换 km/m。预置线路仍是主要站点之间的简化直线，不能据此认为轨道按真实道路/铁路中心线走行；预置站点本来为近似坐标。
+地图：[国土地理院瓦片](https://maps.gsi.go.jp/development/ichiran.html)、[OSM 瓦片使用政策](https://operations.osmfoundation.org/policies/tiles/)。线路参考：[JR 东日本](https://www.jreast.co.jp/e/downloads/)、[Tokyo Metro](https://www.tokyometro.jp/lang_en/station/index.html)。密度、出行率和资金系数为本游戏合成参数。
 
-设站不再在 12 个旧世界单位（约 540 米）内自动吸附，也不再取整到 45 米格网；新站保存三位小数坐标。点击任意位置直接新建，点击明确的车站标记才接续既有站。2 米内重复位置提示改点或点击原站，不静默合并。建线和加站时可继续拖动/缩放，手势移动不产生站点。客流、财务、运营总览及两套独立存档保留。空白处建站不会自动识别真实建筑人口，仍使用简化需求参数。
-
-验证：`node scripts/test_rail_streets.cjs` 检查投影往返、XYZ 整数索引与瓦片对齐、街道层级、标尺、小范围自由设站与保存兼容性。浏览器 QA 覆盖 GSI/OSM 实际瓦片加载、20 米标尺视图、自由建两站成线、编辑中拖动与缩放、刷新恢复。
+运行 `node scripts/test_rail_management.cjs` 验证人口独立性、步行覆盖不重复、出行目的地、分时需求归一化、换乘与旅客守恒、容量、实际收支、存档恢复、建设原子性、贷款额度、逐日计息、30 日偿还、提前结清和资金耗尽后暂停/恢复。原 `test_rail*.cjs` 保留路由、底图、地图编辑、原运动学回归验证；管理版使用独立的城市客流运行时，不再提供旧试验场景。
