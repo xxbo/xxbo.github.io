@@ -153,7 +153,7 @@ function validate(s){
  try{
  if(s.region!==undefined&&s.region!=='tokyo')return false;
  if(s.region==='tokyo'&&(s.world?.width!==2900||s.world?.height!==2100))return false;
- if(s.version!==VERSION||!Number.isInteger(s.quarter)||s.quarter<0||s.quarter>100000||(s.nodes.length<seed.length||s.nodes.length>(s.region==='tokyo'?400:200))||s.companies.length!==3||s.tracks.length>600||s.services.length>100||!Number.isSafeInteger(s.nextId))return false;
+ if(s.version!==VERSION||!Number.isInteger(s.quarter)||s.quarter<0||s.quarter>100000||(s.nodes.length<(s.region==='tokyo'?0:seed.length)||s.nodes.length>(s.region==='tokyo'?400:200))||s.companies.length!==3||s.tracks.length>600||s.services.length>100||!Number.isSafeInteger(s.nextId))return false;
  const finite=n=>typeof n==='number'&&Number.isFinite(n),companies=new Set(['aoba','metro','jr']);
  const identity={aoba:['青葉電鉄','青葉','#078a73'],metro:['都心メトロ','メトロ','#d46b36'],jr:['東都 JR','JR','#446ccf']};
  if(s.companies.some(c=>!companies.has(c.id)||c.name!==identity[c.id]?.[0]||c.short!==identity[c.id]?.[1]||c.color!==identity[c.id]?.[2]||!finite(c.cash)||!finite(c.fare)||c.fare<100||c.fare>500)||new Set(s.companies.map(c=>c.id)).size!==3)return false;

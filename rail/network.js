@@ -6,6 +6,8 @@ const T=typeof module!=='undefined'&&module.exports?require('./tokyo.js'):root.T
 const COLORS=['#4479cf','#159781','#d18150','#a26bc4','#d25d80','#789641'];
 function defaults(s){for(const [i,l]of s.services.entries()){l.color=l.color||COLORS[i%COLORS.length];l.cars=l.cars||8;l.fleet=l.fleet||Math.min(80,2*Math.ceil((runtime(s,l)+1)/l.headway));l.open=l.open??360;l.close=l.close??1440;}return s;}
 function tokyo(){return defaults(T.create(R));}
+function emptyWorld(){const s=R.newGame();s.region='tokyo';s.world={width:2900,height:2100};s.nodes=[];s.tracks=[];s.services=[];s.log=[];s.nextId=1;return defaults(s);}
+function removePreset(s){const c=R.clone(s),seed=T.create(R),ids=new Set(seed.services.map(l=>l.id));c.services=c.services.filter(l=>!ids.has(l.id));prune(c);const keep=new Set(c.services.flatMap(l=>l.stops));for(const n of c.nodes)if(n.id>=seed.nodes.length)keep.add(n.id);const mapping=new Map(),nodes=[];for(const n of c.nodes)if(keep.has(n.id)){mapping.set(n.id,nodes.length);nodes.push({...n,id:nodes.length});}c.nodes=nodes;for(const l of c.services)l.stops=l.stops.map(id=>mapping.get(id));for(const tr of c.tracks){tr.a=mapping.get(tr.a);tr.b=mapping.get(tr.b);}return c;}
 function fresh(){return defaults(R.newGame());}
 function runtime(s,l){return l.trackIds.reduce((v,id)=>v+s.tracks.find(t=>t.id===id).km/48*60+.6,0);}
 function commit(s,copy){if(!validate(copy))return {error:'线路配置无效，操作未保存。'};for(const k of Object.keys(s))delete s[k];Object.assign(s,copy);return {};}
@@ -41,5 +43,5 @@ function stats(s,m,id){
  const km=R.serviceKm(s,l),headway=R.effectiveHeadway(s,l),hours=(l.close-l.open)/60,departures=hours*60/headway*2,vehicleCost=km*departures*(180+l.cars*25),cost=vehicleCost+l.fleet*18000+km*2200;
  return {riders,revenue,cost,km,headway,stations,capacity:R.capacity(l),fleet:l.fleet,cars:l.cars,hours,departures};
 }
-const api={tokyo,fresh,defaults,validate,addLine,addStation,removeStation,removeLine,configure,stats,runtime,insertion};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.RailNetwork=api;
+const api={emptyWorld,removePreset,tokyo,fresh,defaults,validate,addLine,addStation,removeStation,removeLine,configure,stats,runtime,insertion};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.RailNetwork=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

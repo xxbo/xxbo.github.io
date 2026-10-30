@@ -1,31 +1,31 @@
-/* Synthetic urban density and purpose-specific OD demand. Geography is real; density values are game parameters. */
+/* Real 2020 population / 2021 urban land-use extract; employment and commercial opportunities remain model estimates. */
 (function(root){'use strict';
-const R=typeof module!=='undefined'&&module.exports?require('./engine'):root.RailSim;
-const T=typeof module!=='undefined'&&module.exports?require('./tokyo'):root.TokyoRegion;
-const CELL=10,AREA=(CELL*.045)**2,WALK=.8,DETOUR=1.25;
-let cached;
-function create(){if(cached)return cached;const seed=T.create(R).nodes,map=new Map();
- for(const n of seed){const radius=n.hub?85:n.type==='住宅'?50:40;for(let x=Math.floor((n.x-radius)/CELL)*CELL;x<=n.x+radius;x+=CELL)for(let y=Math.floor((n.y-radius)/CELL)*CELL;y<=n.y+radius;y+=CELL){if(x<25||y<25||x>2870||y>2070)continue;const d=Math.hypot(x-n.x,y-n.y),w=Math.exp(-d*d/(radius*radius*.38));if(w<.04)continue;const key=x+':'+y,c=map.get(key)||{id:key,x,y,people:0,jobs:0,shops:0,industry:0,leisure:0};c.people+=n.people*w/35;c.jobs+=n.jobs*w/35;c.shops+=(n.type==='商业'?n.jobs:n.jobs*.08)*w/35;c.industry+=(n.type==='工业'?n.jobs:n.jobs*.015)*w/35;c.leisure+=(n.type==='田园'||n.type==='教育'?n.people*.8:n.type==='商业'?n.jobs*.25:n.people*.07)*w/35;map.set(key,c);}}
- // Exclude the open bay; preserve airport reclaimed land and station-side coast catchments.
- const bay=[[139.80,35.60],[139.80,35.64],[139.90,35.64],[140.04,35.61],[140.08,35.50],[139.91,35.30],[139.73,35.36],[139.72,35.49],[139.79,35.55]];
- const inside=(x,y)=>{let hit=false;for(let i=0,j=bay.length-1;i<bay.length;j=i++)if((bay[i][1]>y)!==(bay[j][1]>y)&&x<(bay[j][0]-bay[i][0])*(y-bay[i][1])/(bay[j][1]-bay[i][1])+bay[i][0])hit=!hit;return hit;};
- const cells=[...map.values()].filter(c=>!inside(139.15+(c.x-80)/2000,36.04-(c.y-60)/2470)||seed.some(n=>Math.hypot(n.x-c.x,n.y-c.y)<12));
- const totals=cells.reduce((a,c)=>{for(const k of ['people','jobs','shops','industry','leisure'])a[k]=(a[k]||0)+c[k];return a;},{}),targets={people:12000000,jobs:6500000,shops:1700000,industry:1000000,leisure:1000000};for(const c of cells)for(const k of Object.keys(targets))c[k]=Math.round(c[k]/totals[k]*targets[k]);
- const at=new Map(cells.map(c=>[c.id,c])),destinations=seed.map(n=>({node:n,cell:at.get(Math.round(n.x/CELL)*CELL+':'+Math.round(n.y/CELL)*CELL)||cells.reduce((a,c)=>R.distance(c,n)<R.distance(a,n)?c:a,cells[0])})),cohorts=[];
- function random(text){let h=2166136261;for(const ch of text)h=Math.imul(h^ch.charCodeAt(0),16777619);return (h>>>0)/4294967296;}
- const profiles=[{purpose:'work',rate:.52,decay:14},{purpose:'shopping',rate:.16,decay:5},{purpose:'leisure',rate:.12,decay:10}];
- const weightCache=new Map();
- for(const c of cells)for(const p of profiles){const bucket=Math.floor(c.x/40)+':'+Math.floor(c.y/40)+':'+p.purpose;let distribution=weightCache.get(bucket);if(!distribution){const weights=destinations.map(({node:n})=>{const opportunity=p.purpose==='work'?n.jobs:p.purpose==='shopping'?(n.type==='商业'?n.jobs:n.jobs*.06):(n.type==='教育'||n.type==='田园'?n.people:n.type==='商业'?n.jobs*.3:n.people*.05);return opportunity*Math.exp(-R.distance(c,n)/p.decay);}),sum=weights.reduce((a,b)=>a+b,0);distribution={weights,sum};weightCache.set(bucket,distribution);}const {weights,sum}=distribution;let target=random(c.id+p.purpose)*sum,index=0;while(index<weights.length-1&&target>weights[index])target-=weights[index++];const d=destinations[index].cell,people=c.people*p.rate;if(people<=0)continue;cohorts.push({origin:c.id,destination:d.id,purpose:p.purpose,back:false,people});cohorts.push({origin:d.id,destination:c.id,purpose:p.purpose,back:true,people});}
- cached={cells,cohorts,totals:cells.reduce((a,c)=>{for(const k of Object.keys(targets))a[k]=(a[k]||0)+c[k];return a;},{}),cell:CELL,area:AREA};return cached;
+const node=typeof module!=='undefined'&&module.exports,R=node?require('./engine'):root.RailSim;
+const CELL=2000/120,AREA=.7,WALK=.8,DETOUR=1.25;let cached;
+function source(){return node?require('./tokyo-data'):root.RailCityData;}
+function create(){if(cached)return cached;const d=source();if(!d)throw Error('真实密度数据尚未加载');const cells=[],totals={people:0,jobs:0,shops:0,industry:0,leisure:0};
+ for(let row=0;row<d.rows;row++)for(let col=0;col<d.cols;col++){const i=(row*d.cols+col)*d.recordBytes,lon=d.lon0+col*d.stepLon,lat=d.lat0+row*d.stepLat,area=Math.abs(d.stepLat*d.stepLon)*111.32**2*Math.cos(lat*Math.PI/180),populationValid=d.raw[i+2]===1,people=d.raw[i]+256*d.raw[i+1],survey=d.raw[i+3]/255,high=d.raw[i+4]/255*area,factory=d.raw[i+5]/255*area,low=d.raw[i+6]/255*area,park=d.raw[i+7]/255*area,publicArea=d.raw[i+8]/255*area;
+ const c={id:row+':'+col,x:(lon-139.15)*2000+80,y:(36.04-lat)*2470+60,w:d.stepLon*2000,h:-d.stepLat*2470,area,populationValid,survey,factory,high,park,people,jobs:Math.round(people*.25+high*18000+factory*5000+publicArea*5000),shops:Math.round(people*.04+high*5000),industry:Math.round(factory*5000),leisure:Math.round(people*.05+park*5000+publicArea*3000)};cells.push(c);for(const k of Object.keys(totals))totals[k]+=c[k];}
+ let demand=null;cached={cells,totals,cell:CELL,area:AREA,metadata:d,get demand(){return demand||(demand=buildDemand(cells));}};return cached;
 }
-function local(point,radius=.8){const totals={people:0,jobs:0,shops:0,industry:0,leisure:0,cells:0,area:Math.PI*radius*radius};for(const c of create().cells)if(R.distance(point,c)*DETOUR<=radius){for(const k of ['people','jobs','shops','industry','leisure'])totals[k]+=c[k];totals.cells++;}return totals;}
+function buildDemand(cells){const profiles=[{purpose:'work',rate:.52,field:'jobs',decay:14},{purpose:'shopping',rate:.16,field:'shops',decay:5},{purpose:'leisure',rate:.12,field:'leisure',decay:10}],groups=new Map(),zoneFor=new Map(),weights=new Map();
+ for(const c of cells){const key=Math.floor(c.x/80)+':'+Math.floor(c.y/80);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(c);zoneFor.set(c.id,key);}
+ const zones=new Map([...groups].map(([key,cs])=>[key,{x:cs.reduce((v,c)=>v+c.x,0)/cs.length,y:cs.reduce((v,c)=>v+c.y,0)/cs.length,fields:Object.fromEntries(profiles.map(p=>[p.field,cs.reduce((v,c)=>v+c[p.field],0)]))}]));
+ // Fixed gravity distribution over the entire city, independent of served stations.
+ // Within each ~3.6 km zone, destination cells divide opportunities proportionally.
+ function trips(origin,destination,p){const key=zoneFor.get(origin.id)+':'+p.purpose;let w=weights.get(key);if(!w){const originZone=zones.get(zoneFor.get(origin.id));let total=0;const targets=new Map();for(const [id,z]of zones){const attraction=Math.exp(-R.distance(originZone,z)/p.decay);targets.set(id,attraction);total+=z.fields[p.field]*attraction;}w={targets,total};weights.set(key,w);}return w.total?origin.people*p.rate*destination[p.field]*w.targets.get(zoneFor.get(destination.id))/w.total:0;}
+ return {profiles,trips};
+}
+function* journeys(mapping){const city=create(),demand=city.demand,covered=city.cells.filter(c=>mapping.has(c.id));for(const origin of covered){if(!origin.people)continue;for(const destination of covered){if(origin.id===destination.id)continue;for(const p of demand.profiles){const people=demand.trips(origin,destination,p);if(people<=0)continue;yield {origin:origin.id,destination:destination.id,purpose:p.purpose,back:false,people};yield {origin:destination.id,destination:origin.id,purpose:p.purpose,back:true,people};}}}}
+
+function local(point,radius=.8){const out={people:0,jobs:0,shops:0,industry:0,leisure:0,cells:0,area:Math.PI*radius*radius,factory:0,surveyArea:0,populationArea:0};for(const c of create().cells)if(R.distance(point,c)*DETOUR<=radius){for(const k of ['people','jobs','shops','industry','leisure','factory'])out[k]+=c[k];out.cells++;out.surveyArea+=c.survey*c.area;if(c.populationValid)out.populationArea+=c.area;}return out;}
 function assign(s){const served=[...new Set(s.services.flatMap(l=>l.stops))].map(id=>s.nodes[id]),stations=Object.fromEntries(served.map(n=>[n.id,{people:0,jobs:0,shops:0,industry:0,leisure:0,walk:0,cells:0}]));let covered=0;const mapping=new Map();
  for(const c of create().cells){let closest=null,best=WALK;for(const n of served){const d=R.distance(c,n)*DETOUR;if(d<best){best=d;closest=n;}}if(!closest)continue;mapping.set(c.id,{id:closest.id,walk:best});const st=stations[closest.id];for(const k of ['people','jobs','shops','industry','leisure'])st[k]+=c[k];st.walk+=best*c.people;st.cells++;covered+=c.people;}
  for(const st of Object.values(stations))st.walk=st.people?st.walk/st.people:0;return {stations,mapping,covered,total:create().totals.people};
 }
-function evaluate(s){const catchment=assign(s),ids=Object.keys(catchment.stations).map(Number),adj=R.network(s),paths=Object.fromEntries(ids.map(id=>[id,R.paths(s,adj,id)])),flows=[],grouped=new Map();const purposeTotals={work:0,shopping:0,leisure:0};let totalTrips=0,uncoveredTrips=0;
- // City OD cohorts exist before stations; rail coverage only changes how those journeys can be made.
- for(const c of create().cohorts){totalTrips+=c.people;const a=catchment.mapping.get(c.origin),b=catchment.mapping.get(c.destination);if(!a||!b){uncoveredTrips+=c.people;continue;}if(a.id===b.id)continue;const key=[a.id,b.id,c.purpose,c.back].join('|'),g=grouped.get(key)||{from:a.id,to:b.id,purpose:c.purpose,back:c.back,people:0,walk:0};g.people+=c.people;g.walk+=(a.walk+b.walk)*c.people;grouped.set(key,g);}
+function evaluate(s){if(!s.services.length){const city=create();return {city:true,flows:[],trackFlow:{},trackLoad:{},serviceFlow:{},riders:0,unserved:0,totalTrips:city.totals.people*1.6,uncoveredTrips:city.totals.people*1.6,purposeTotals:{work:0,shopping:0,leisure:0},catchment:{stations:{},mapping:new Map(),covered:0,total:city.totals.people},population:city.totals.people,jobs:city.totals.jobs};}const catchment=assign(s),ids=Object.keys(catchment.stations).map(Number),adj=R.network(s),paths=Object.fromEntries(ids.map(id=>[id,R.paths(s,adj,id)])),flows=[],grouped=new Map();const purposeTotals={work:0,shopping:0,leisure:0};let totalTrips=create().totals.people*1.6,uncoveredTrips=totalTrips;
+ // Evaluate only covered pairs from the fixed city-wide distribution; no random sampling gaps on short lines.
+ for(const c of journeys(catchment.mapping)){uncoveredTrips-=c.people;const a=catchment.mapping.get(c.origin),b=catchment.mapping.get(c.destination);if(a.id===b.id)continue;const key=[a.id,b.id,c.purpose,c.back].join('|'),g=grouped.get(key)||{from:a.id,to:b.id,purpose:c.purpose,back:c.back,people:0,walk:0};g.people+=c.people;g.walk+=(a.walk+b.walk)*c.people;grouped.set(key,g);}
  for(const g of grouped.values()){const path=paths[g.from]?.[g.to];if(!path?.edges.length)continue;const km=R.distance(s.nodes[g.from],s.nodes[g.to]),walk=g.walk/g.people*1000/80,road=8+km/23*60*1.22,rail=path.minutes+walk,share=.93/(1+Math.exp(Math.max(-40,Math.min(40,(rail+path.fare*.045-road-8)/8)))),trips=g.people*share;if(trips<.1)continue;flows.push({from:g.from,to:g.to,trips,demandTrips:trips,path,road,rail,purpose:g.purpose,back:g.back,walk,population:g.people});purposeTotals[g.purpose]+=trips;}
  const trackFlow={},serviceFlow={},trackLoad={};for(const f of flows)for(const e of f.path.edges)trackFlow[e.track]=(trackFlow[e.track]||0)+f.trips;
  for(const t of s.tracks){const cap=s.services.filter(l=>l.trackIds.includes(t.id)).reduce((v,l)=>v+60/R.effectiveHeadway(s,l)*R.capacity(l),0);trackLoad[t.id]=(trackFlow[t.id]||0)*.18/Math.max(1,cap);}
@@ -39,5 +39,5 @@ function profile(purpose,back,minute){const h=((minute%1440)+1440)%1440/60;let w
  else w=h>=9&&h<22?.07:.008;
  const norm=purpose==='work'?(back?4*.18+2*.06+18*.008:4*.19+2*.04+18*.008):purpose==='shopping'?11*.08+13*.008:13*.07+11*.008;return w/norm/60;
 }
-const api={create,local,assign,evaluate,profile,CELL,AREA,WALK,DETOUR};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.RailCity=api;
+const api={create,journeys,local,assign,evaluate,profile,CELL,AREA,WALK,DETOUR};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.RailCity=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
