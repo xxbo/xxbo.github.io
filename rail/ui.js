@@ -7,7 +7,7 @@ const money=RailCurrency.format;
 let resumeAfterEdit=false,lastForecastRefresh=0;
 const RECORD_KEY='guanchao-rail-personal-records-v1';let personalRecords={};try{const raw=JSON.parse(localStorage.getItem(RECORD_KEY)||'{}');for(const k of ['bestDay','bestHour','totalCompleted'])if(Number.isFinite(raw[k])&&raw[k]>=0)personalRecords[k]=raw[k];}catch{}let unlocked=new Set(Q.awards(personalRecords).filter(a=>a.unlocked).map(a=>a.id));
 function syncRecords(){personalRecords=Q.mergeRecords(personalRecords,s.ridership?.records);for(const a of Q.awards(personalRecords))if(a.unlocked&&!unlocked.has(a.id)){unlocked.add(a.id);toast('达成成就 · '+a.name);}}
-function persistRecords(){try{localStorage.setItem(RECORD_KEY,JSON.stringify(personalRecords));}catch{}}
+function persistRecords(){try{const other=JSON.parse(localStorage.getItem(RECORD_KEY)||'{}')||{},safe={};for(const k of ['bestDay','bestHour','totalCompleted'])if(Number.isFinite(other[k])&&other[k]>=0)safe[k]=other[k];personalRecords=Q.mergeRecords(personalRecords,safe);localStorage.setItem(RECORD_KEY,JSON.stringify(personalRecords));}catch{}}
 
 let stationMenu=false,stationQuery='',stationSort='waiting',account=false,inspection=null,density='off',savedRuntime=null,lastSave=0,pauseBeforeDialog=false,utilityPanel=null,stationLine=null,hoverPoint=null,placementPulse=null;
 let region='tokyo',KEY=KEY_TOKYO,s=N.emptyWorld(),overview=false,sort='default',selected=null,mode=null,draft=[],undoState=null,deleteConfirm=false,playing=true,speed=1,zoom=window.matchMedia('(max-width:650px)').matches?12:8,camera={x:1240,y:940},drag=null,lastFrame=0,lastHUD=0,toastTimer,storageOK=true,focusTimer,cameraTween=null;
