@@ -17,3 +17,9 @@
 - https://maplibre.org/maplibre-gl-js/docs/API/classes/Map/#setlayoutproperty
 - https://docs.protomaps.com/basemaps/downloads
 - https://github.com/protomaps/PMTiles
+
+## MAP12 性能改造
+
+默认使用轻量图片底图；保留矢量分层作为可选项。矢量 MVT 解码、几何遍历、注记绘制放入独立 Web Worker，每块瓦片按当前图层组合只绘制一次，输出 512×512 ImageBitmap。主线程平移/缩放仅合成可见位图，视口不变时不重绘。缓存上限目标 40 块（当前可见瓦片优先保留），淘汰时关闭位图；切换图层后按新组合重建缓存。不支持 OffscreenCanvas 的浏览器退回异步分块绘制，每瓦片仍只处理一次。矢量组件或数据不可达时回退地理院图片底图。性能数据通过 `#vector-map[data-paint-ms]` 可检查，仅表示位图合成耗时，不代表完整帧耗时。
+
+密度关闭时不再逐帧分配、重置画布。客流重新分配在独立 Worker 中计算，建设完成后显示轻量状态提示，计算失败回滚该次建设及资金。运营需求按模拟分钟批量生成，车上乘客和列车位置继续连续更新。
