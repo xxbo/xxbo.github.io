@@ -3,6 +3,7 @@
 const node=typeof module!=='undefined'&&module.exports,R=node?require('./engine'):root.RailSim;
 const X=node?require('./service-plan'):root.RailServicePlan;
 const D=node?require('./demand-model'):root.RailDemand;
+const U=node?require('./urban-growth'):root.RailUrban;
 const CELL=2000/120,AREA=.7,WALK=.8,DETOUR=1.25;let cached;
 function source(){return node?require('./tokyo-data'):root.RailCityData;}
 function create(region='tokyo'){if(region==='gba')return (node?require('./gba-data'):root.RailGBA).create();if(cached)return cached;const d=source();if(!d)throw Error('真实密度数据尚未加载');const cells=[],totals={people:0,jobs:0,shops:0,industry:0,leisure:0};
@@ -20,14 +21,15 @@ function buildDemand(cells){const profiles=[{purpose:'work',rate:.52,field:'jobs
 }
 function* journeys(mapping){const city=create(),demand=city.demand,covered=city.cells.filter(c=>mapping.has(c.id));for(const origin of covered){if(!origin.people)continue;for(const destination of covered){if(origin.id===destination.id)continue;for(const p of demand.profiles){const people=demand.trips(origin,destination,p);if(people<=0)continue;yield {origin:origin.id,destination:destination.id,purpose:p.purpose,back:false,people};yield {origin:destination.id,destination:origin.id,purpose:p.purpose,back:true,people};}}}}
 
-function local(point,radius=.8,region='tokyo'){return D.local(create(region),point,radius);}
+function world(s){return U.city(s,create(s.region));}
+function local(point,radius=.8,region='tokyo',state=null){return D.local(state?world(state):create(region),point,radius);}
 function localLegacy(point,radius=.8){const out={people:0,jobs:0,shops:0,industry:0,leisure:0,cells:0,area:Math.PI*radius*radius,factory:0,surveyArea:0,populationArea:0};for(const c of create().cells)if(R.distance(point,c)*DETOUR<=radius){for(const k of ['people','jobs','shops','industry','leisure','factory'])out[k]+=c[k];out.cells++;out.surveyArea+=c.survey*c.area;if(c.populationValid)out.populationArea+=c.area;}return out;}
-function assign(s){if(s.routeModel===9)return D.assign(s,create(s.region));return assignLegacy(s);}
+function assign(s){if(s.routeModel===9)return D.assign(s,world(s));return assignLegacy(s);}
 function assignLegacy(s){const served=[...new Set((s.routeModel===9?X.expand(s).services:s.services).flatMap(l=>l.callStops||l.stops))].map(id=>s.nodes[id]),stations=Object.fromEntries(served.map(n=>[n.id,{people:0,jobs:0,shops:0,industry:0,leisure:0,walk:0,cells:0}]));let covered=0;const mapping=new Map();
  for(const c of create().cells){let closest=null,best=WALK;for(const n of served){const d=R.distance(c,n)*DETOUR;if(d<best){best=d;closest=n;}}if(!closest)continue;mapping.set(c.id,{id:closest.id,walk:best});const st=stations[closest.id];for(const k of ['people','jobs','shops','industry','leisure'])st[k]+=c[k];st.walk+=best*c.people;st.cells++;covered+=c.people;}
  for(const st of Object.values(stations))st.walk=st.people?st.walk/st.people:0;return {stations,mapping,covered,total:create().totals.people};
 }
-function evaluate(s){if(s.routeModel===9)return D.evaluate(s,create(s.region));return evaluateLegacy(s);}
+function evaluate(s){if(s.routeModel===9)return D.evaluate(s,world(s));return evaluateLegacy(s);}
 function evaluateLegacy(s){if(!s.services.length){const city=create();return {city:true,flows:[],trackFlow:{},trackLoad:{},serviceFlow:{},riders:0,unserved:0,totalTrips:city.totals.people*1.6,uncoveredTrips:city.totals.people*1.6,purposeTotals:{work:0,shopping:0,leisure:0},catchment:{stations:{},mapping:new Map(),covered:0,total:city.totals.people},population:city.totals.people,jobs:city.totals.jobs};}const catchment=assign(s),ids=Object.keys(catchment.stations).map(Number),adj=R.network(s),paths=s.routeModel===9?{}:Object.fromEntries(ids.map(id=>[id,R.paths(s,adj,id)])),flows=[],grouped=new Map();const purposeTotals={work:0,shopping:0,leisure:0};let totalTrips=create().totals.people*1.6,uncoveredTrips=totalTrips;
  // Evaluate only covered pairs from the fixed city-wide distribution; no random sampling gaps on short lines.
  for(const c of journeys(catchment.mapping)){uncoveredTrips-=c.people;const a=catchment.mapping.get(c.origin),b=catchment.mapping.get(c.destination);if(a.id===b.id)continue;const key=[a.id,b.id,c.purpose,c.back].join('|'),g=grouped.get(key)||{from:a.id,to:b.id,purpose:c.purpose,back:c.back,people:0,walk:0};g.people+=c.people;g.walk+=(a.walk+b.walk)*c.people;grouped.set(key,g);}
@@ -46,5 +48,5 @@ function profile(purpose,back,minute,externalKind=null){const h=((minute%1440)+1
  else w=h>=9&&h<22?.07:.008;
  const norm=purpose==='work'?(back?4*.18+2*.06+18*.008:4*.19+2*.04+18*.008):purpose==='shopping'?11*.08+13*.008:13*.07+11*.008;return w/norm/60;
 }
-const api={create,journeys,local,assign,evaluate,profile,CELL,AREA,WALK,DETOUR};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.RailCity=api;
+const api={world,create,journeys,local,assign,evaluate,profile,CELL,AREA,WALK,DETOUR};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.RailCity=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
