@@ -34,9 +34,9 @@ function addSeed(s,owner,name,stops,headway){
 function company(s,id){return s.companies.find(c=>c.id===id);}
 function serviceKm(s,line){return line.trackIds.reduce((sum,id)=>sum+s.tracks.find(t=>t.id===id).km,0);}
 function trackOwners(s,line){return [...new Set(line.trackIds.map(id=>s.tracks.find(t=>t.id===id).owner))];}
-function capacity(l){return (l.cars||8)*100;}
+function capacity(l){const F=typeof module!=='undefined'&&module.exports?require('./fleet'):root.RailFleet;return l.fleetManaged?F.SPECS[l.stockSpec].capacity:(l.cars||8)*100;}
 function effectiveHeadway(s,l){if(s.routeModel===9)return X.headway(s,l);if(!l.fleet)return l.headway;const cycle=l.trackIds.reduce((v,id)=>v+s.tracks.find(t=>t.id===id).km/48*60+.6,0)+1;return Math.max(l.headway,2*cycle/l.fleet);}
-function loadTph(s,trackId,exclude){if(s.routeModel===9){const op=X.expand(s);return op.services.filter(l=>l.parentLine!==exclude&&l.trackIds.includes(trackId)).reduce((v,l)=>v+60/X.headway(op,l),0);}return s.services.filter(l=>l.id!==exclude&&l.trackIds.includes(trackId)).reduce((v,l)=>v+60/effectiveHeadway(s,l),0);}
+function loadTph(s,trackId,exclude){if(s.routeModel===9){const op=X.expand(s,480);return op.services.filter(l=>l.parentLine!==exclude&&l.trackIds.includes(trackId)).reduce((v,l)=>v+60/X.headway(op,l),0);}return s.services.filter(l=>l.id!==exclude&&l.trackIds.includes(trackId)).reduce((v,l)=>v+60/effectiveHeadway(s,l),0);}
 function log(s,text){s.log.unshift({q:s.quarter,text});s.log=s.log.slice(0,50);}
 function quoteBuild(s,owner,stops,mode='shared'){
  if(!company(s,owner))return {error:'请选择运营公司。'};
