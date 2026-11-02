@@ -64,3 +64,5 @@
 WGS84经纬度，Web Mercator街道瓦片；模型距离在23°纬度按当地经纬度尺度映射，非GCJ-02地图。底图仅供地理参考。地图选择可切换东京/大湾区，各自有独立建设、资金、候车、培育、历史和成就存档。重开当前地图不清空另一张地图。
 
 大湾区默认使用Esri World Street Map公开街道图片服务（按服务条款与署名展示），备用OSM和本地简洁示意。地图角落保留来源署名；影像来自第三方在线服务，不是本地街道数据库。Esri已公告该旧版街道服务计划2028年退役，届时需更新底图适配。参考：[Esri服务说明](https://www.arcgis.com/home/item.html?id=3a9d3b9701b74ce1b38db86b1116b594)、[退役计划](https://www.esri.com/arcgis-blog/products/arcgis-living-atlas/announcements/sunsetting-legacy-basemaps)。
+
+MAP17起，枢纽访客采用全城/沿线目的地混合分配，部分旅客可转向已连通城区；总量预算不翻倍。这是游戏化改动，不是实测OD拟合。经济改为发展模式，票款与运营发展金分开展示；详见[demand-model.md](demand-model.md)的MAP17参数与回归场景。

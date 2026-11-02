@@ -50,3 +50,5 @@ body{background:radial-gradient(ellipse at 100% 20%,#d7edf1 0,transparent 60%),l
 @media(max-width:650px){.world-card{padding:18px}.world-card strong{font-size:20px}.city-focus-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.game-menu{max-width:calc(100vw - 24px);flex-wrap:wrap;justify-content:flex-end}.game-menu button{padding:7px 6px}}
 
 .esri-basemap #street-tiles{filter:saturate(.58) brightness(1.03)}
+
+.balance-rule{padding:12px 15px;margin-bottom:14px;border:1px solid #c4dfd5;border-radius:12px;background:#eaf6ef;color:#327460;font-size:11px;line-height:1.8}.overview-profit small{display:block;margin-top:6px;font-size:10px;color:#6d8490}
