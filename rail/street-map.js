@@ -1,15 +1,18 @@
 /* Web Mercator street tiles over the existing geographic save coordinates. No API key or backend. */
 (function(root){'use strict';
-const K=720000/256,originX=(139.15+180)/360*256-80/K;
+const B=typeof module!=='undefined'&&module.exports?require('./regions'):root.RailRegions;
+let region='tokyo',K,originX,originY;
 const mercY=lat=>(1-Math.log(Math.tan(Math.PI/4+lat*Math.PI/360))/Math.PI)/2*256;
-const originY=mercY(36.04)-60/K;
-function display(p){const lat=36.04-(p.y-60)/2470;return {x:p.x,y:(mercY(lat)-originY)*K};}
-function model(p){const g=p.y/K+originY,lat=Math.atan(Math.sinh(Math.PI*(1-2*g/256)))*180/Math.PI;return {x:p.x,y:60+(36.04-lat)*2470};}
-function latLon(p){return {lon:139.15+(p.x-80)/2000,lat:36.04-(p.y-60)/2470};}
+function setRegion(id){region=B.get(id).id;const cfg=B.get(region);K=cfg.sx*360/256;originX=(cfg.west+180)/360*256-80/K;originY=mercY(cfg.north)-60/K;}
+setRegion('tokyo');
+function display(p){const cfg=B.get(region),lat=cfg.north-(p.y-60)/cfg.sy;return {x:p.x,y:(mercY(lat)-originY)*K};}
+function model(p){const cfg=B.get(region),g=p.y/K+originY,lat=Math.atan(Math.sinh(Math.PI*(1-2*g/256)))*180/Math.PI;return {x:p.x,y:60+(cfg.north-lat)*cfg.sy};}
+function latLon(p){return B.latLon(p,region);}
+function project(lat,lon,id=region){return B.project(lat,lon,id);}
 function tileBox(z,x,y){const size=256*K/2**z;return {x:(x*256/2**z-originX)*K,y:(y*256/2**z-originY)*K,size};}
 function tiles(view,screenWidth,max=18){const pixels=screenWidth/view.w,z=Math.max(5,Math.min(max,Math.round(Math.log2(K*pixels)))),size=256*K/2**z,x0=Math.floor((view.x/K+originX)*2**z/256),y0=Math.floor((view.y/K+originY)*2**z/256),x1=Math.floor(((view.x+view.w)/K+originX)*2**z/256),y1=Math.floor(((view.y+view.h)/K+originY)*2**z/256),out=[];for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)out.push({z,tx:x,ty:y,...tileBox(z,x,y)});return out;}
-function scale(view,screenWidth){const px=screenWidth/view.w,lat=latLon(model({x:view.x+view.w/2,y:view.y+view.h/2})).lat,metersPerUnit=40075016.686*Math.cos(lat*Math.PI/180)/720000,target=100/px*metersPerUnit,base=10**Math.floor(Math.log10(target)),meters=[5,2,1].map(v=>v*base).find(v=>v<=target)||base;return {pixels:meters/metersPerUnit*px,label:meters>=1000?(meters/1000)+' km':meters+' m'};}
-const sources={gsi:{url:'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png',max:18},osm:{url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',max:19}};
+function scale(view,screenWidth){const px=screenWidth/view.w,lat=latLon(model({x:view.x+view.w/2,y:view.y+view.h/2})).lat,metersPerUnit=40075016.686*Math.cos(lat*Math.PI/180)/(K*256),target=100/px*metersPerUnit,base=10**Math.floor(Math.log10(target)),meters=[5,2,1].map(v=>v*base).find(v=>v<=target)||base;return {pixels:meters/metersPerUnit*px,label:meters>=1000?(meters/1000)+' km':meters+' m'};}
+const sources={esri:{url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',max:19},gsi:{url:'https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png',max:18},osm:{url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png',max:19}};
 class Layer{
  constructor(el,status){this.el=el;this.status=status;this.source='gsi';this.cache=new Map();this.loaded=0;this.failed=0;this.serial=0;}
  setSource(source){if(source===this.source)return;this.source=source;this.serial++;this.loaded=0;this.failed=0;for(const img of this.cache.values()){img.onload=null;img.onerror=null;img.remove();}this.cache.clear();clearTimeout(this.timer);if(this.view)this.update(this.view,this.width);}
@@ -22,5 +25,5 @@ class Layer{
  report(){const visible=[...(this.keys||[])].map(k=>this.cache.get(k)).filter(Boolean),failed=visible.filter(i=>i.dataset.state==='error').length,pending=visible.filter(i=>i.dataset.state==='loading').length;this.status.hidden=!failed&&!pending;this.status.textContent=failed?'街道底图未加载完整 · 可切换地图源':pending?'街道地图加载中…':'';}
  retry(){const source=this.source;this.source='';this.setSource(source);}
 }
-const api={display,model,latLon,tileBox,tiles,scale,Layer,sources};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.StreetMap=api;
+const api={setRegion,project,display,model,latLon,tileBox,tiles,scale,Layer,sources};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.StreetMap=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

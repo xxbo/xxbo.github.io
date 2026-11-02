@@ -2,6 +2,7 @@
 (function(root){
 'use strict';
 const X=typeof module!=='undefined'&&module.exports?require('./service-plan'):root.RailServicePlan;
+const Regions=typeof module!=='undefined'&&module.exports?require('./regions'):root.RailRegions;
 const VERSION=2, SCALE=.045, PEAK=.18;
 const clone=x=>JSON.parse(JSON.stringify(x));
 const round=x=>Math.round(x*100)/100;
@@ -152,17 +153,17 @@ function step(s){
 }
 function validate(s){
  try{
- if(s.region!==undefined&&s.region!=='tokyo')return false;
- if(s.region==='tokyo'&&(s.world?.width!==2900||s.world?.height!==2100))return false;
- if(s.version!==VERSION||!Number.isInteger(s.quarter)||s.quarter<0||s.quarter>100000||(s.nodes.length<(s.region==='tokyo'?0:seed.length)||s.nodes.length>(s.region==='tokyo'?400:200))||s.companies.length!==3||s.tracks.length>600||s.services.length>100||!Number.isSafeInteger(s.nextId))return false;
+ if(s.region!==undefined&&!['tokyo','gba'].includes(s.region))return false;
+ if(s.region&&(!s.world||s.world.width!==Regions.get(s.region).width||s.world.height!==Regions.get(s.region).height))return false;
+ if(s.version!==VERSION||!Number.isInteger(s.quarter)||s.quarter<0||s.quarter>100000||(s.nodes.length<(s.region?0:seed.length)||s.nodes.length>(s.region?400:200))||s.companies.length!==3||s.tracks.length>600||s.services.length>100||!Number.isSafeInteger(s.nextId))return false;
  const finite=n=>typeof n==='number'&&Number.isFinite(n),companies=new Set(['aoba','metro','jr']);
  const identity={aoba:['青葉電鉄','青葉','#078a73'],metro:['都心メトロ','メトロ','#d46b36'],jr:['東都 JR','JR','#446ccf']};
  if(s.companies.some(c=>!companies.has(c.id)||c.name!==identity[c.id]?.[0]||c.short!==identity[c.id]?.[1]||c.color!==identity[c.id]?.[2]||!finite(c.cash)||!finite(c.fare)||c.fare<100||c.fare>500)||new Set(s.companies.map(c=>c.id)).size!==3)return false;
- if(s.nodes.some((n,i)=>n.id!==i||typeof n.name!=='string'||n.name.length>40||!['住宅','办公','商业','工业','教育','田园'].includes(n.type)||!Number.isFinite(n.x)||!Number.isFinite(n.y)||n.x<20||n.x>(s.world?.width||1040)-20||n.y<20||n.y>(s.world?.height||740)-20||![n.people,n.jobs,n.housing].every(finite)||n.people<0||n.jobs<0||n.housing<1||n.people>1e8||n.jobs>1e8||n.housing>1e8||!finite(n.growth)||n.growth<0||(s.region!=='tokyo'&&i<seed.length&&(n.name!==seed[i][0]||n.x!==seed[i][1]||n.y!==seed[i][2]||n.type!==seed[i][3]))))return false;
+ if(s.nodes.some((n,i)=>n.id!==i||typeof n.name!=='string'||n.name.length>40||!['住宅','办公','商业','工业','教育','田园'].includes(n.type)||!Number.isFinite(n.x)||!Number.isFinite(n.y)||n.x<20||n.x>(s.world?.width||1040)-20||n.y<20||n.y>(s.world?.height||740)-20||![n.people,n.jobs,n.housing].every(finite)||n.people<0||n.jobs<0||n.housing<1||n.people>1e8||n.jobs>1e8||n.housing>1e8||!finite(n.growth)||n.growth<0||(!s.region&&i<seed.length&&(n.name!==seed[i][0]||n.x!==seed[i][1]||n.y!==seed[i][2]||n.type!==seed[i][3]))))return false;
  if(new Set(s.tracks.map(t=>t.id)).size!==s.tracks.length)return false;
  if(s.tracks.some(t=>!/^t\d+$/.test(t.id)||!companies.has(t.owner)||!s.nodes[t.a]||!s.nodes[t.b]||t.a===t.b||!finite(t.km)||Math.abs(t.km-X.sum(X.trackPoints(s,t)))>.001))return false;
  if(new Set(s.services.map(l=>l.id)).size!==s.services.length)return false;
- if(s.services.some(l=>!/^s\d+$/.test(l.id)||typeof l.name!=='string'||l.name.length>100||!companies.has(l.owner)||!Array.isArray(l.stops)||l.stops.length<2||l.stops.length>(s.region==='tokyo'?60:30)||l.trackIds.length!==l.stops.length-1||![4,5,6,8,10,12,15,20].includes(l.headway)||l.trackIds.some((id,i)=>{const t=s.tracks.find(t=>t.id===id);return !t||key(t.a,t.b)!==key(l.stops[i],l.stops[i+1]);})))return false;
+ if(s.services.some(l=>!/^s\d+$/.test(l.id)||typeof l.name!=='string'||l.name.length>100||!companies.has(l.owner)||!Array.isArray(l.stops)||l.stops.length<2||l.stops.length>(s.region?60:30)||l.trackIds.length!==l.stops.length-1||![4,5,6,8,10,12,15,20].includes(l.headway)||l.trackIds.some((id,i)=>{const t=s.tracks.find(t=>t.id===id);return !t||key(t.a,t.b)!==key(l.stops[i],l.stops[i+1]);})))return false;
  if(s.routeModel===9?!X.validate(s):s.tracks.some(t=>loadTph(s,t.id)>30+.0001))return false;
  if(s.nextId<=Math.max(0,...s.tracks.map(t=>+t.id.slice(1)),...s.services.map(l=>+l.id.slice(1))))return false;
  if(s.services.some(l=>l.operators&&(!Array.isArray(l.operators)||l.operators.length!==l.trackIds.length||l.operators.some(id=>!companies.has(id)))))return false;

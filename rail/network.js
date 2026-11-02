@@ -8,7 +8,7 @@ const Q=typeof module!=='undefined'&&module.exports?require('./ridership'):root.
 const COLORS=['#4479cf','#159781','#d18150','#a26bc4','#d25d80','#789641'];
 function defaults(s){for(const [i,l]of s.services.entries()){l.color=l.color||COLORS[i%COLORS.length];l.cars=l.cars||8;l.fleet=l.fleet||Math.min(80,2*Math.ceil((runtime(s,l)+1)/l.headway));l.open=l.open??360;l.close=l.close??1440;}return s;}
 function tokyo(){return defaults(T.create(R));}
-function emptyWorld(){const s=R.newGame();s.region='tokyo';s.routeModel=9;s.world={width:2900,height:2100};s.nodes=[];s.tracks=[];s.services=[];s.log=[];s.nextId=1;return defaults(s);}
+function emptyWorld(region='tokyo'){const B=typeof module!=='undefined'&&module.exports?require('./regions'):root.RailRegions,cfg=B.get(region);const s=R.newGame();s.region=cfg.id;s.routeModel=9;s.world={width:cfg.width,height:cfg.height};s.nodes=[];s.tracks=[];s.services=[];s.log=[];s.nextId=1;return defaults(s);}
 function removePreset(s){const c=R.clone(s),seed=T.create(R),ids=new Set(seed.services.map(l=>l.id));c.services=c.services.filter(l=>!ids.has(l.id));prune(c);const keep=new Set(c.services.flatMap(l=>l.stops));for(const n of c.nodes)if(n.id>=seed.nodes.length)keep.add(n.id);const mapping=new Map(),nodes=[];for(const n of c.nodes)if(keep.has(n.id)){mapping.set(n.id,nodes.length);nodes.push({...n,id:nodes.length});}c.nodes=nodes;for(const l of c.services)l.stops=l.stops.map(id=>mapping.get(id));for(const tr of c.tracks){tr.a=mapping.get(tr.a);tr.b=mapping.get(tr.b);}return c;}
 function fresh(){return defaults(R.newGame());}
 function runtime(s,l){return l.trackIds.reduce((v,id)=>v+s.tracks.find(t=>t.id===id).km/48*60+.6,0);}
@@ -19,13 +19,13 @@ function node(s,point){
  if(Number.isInteger(point)){if(!s.nodes[point])throw Error('车站不存在。');return s.nodes[point].mergedInto??point;}
  if(!point||!Number.isFinite(point.x)||!Number.isFinite(point.y)||point.x<25||point.x>(s.world?.width||1040)-25||point.y<25||point.y>(s.world?.height||740)-25)throw Error('请在地图范围内设置车站。');
  const close=snap(s,point);if(close!==null)return close;
- if(s.nodes.filter(n=>n.mergedInto===undefined).length>=(s.region==='tokyo'?400:200))throw Error('测试地图最多支持 400 个车站。');
+ if(s.nodes.filter(n=>n.mergedInto===undefined).length>=(s.region?400:200))throw Error('测试地图最多支持 400 个车站。');
  const id=s.nodes.length;s.nodes.push({id,name:'新站 '+String(id+1).padStart(2,'0'),x:Math.round(point.x*1000)/1000,y:Math.round(point.y*1000)/1000,type:'住宅',people:2200,jobs:500,housing:8000,growth:0,initialPeople:2200,initialJobs:500});return id;
 }
 function route(s,l,stops,shapes){
  const oldStops=[...l.stops||[]];
  const loop=stops[0]===stops.at(-1),unique=loop?stops.slice(0,-1):stops;if(new Set(unique).size!==unique.length||unique.length<(loop?3:2))throw Error('普通线路至少保留两个不同车站，环线至少三个。');
- if(stops.length>(s.region==='tokyo'?60:30))throw Error('当前地图的单线车站数量已达上限。');
+ if(stops.length>(s.region?60:30))throw Error('当前地图的单线车站数量已达上限。');
  const ids=[];for(let i=1;i<stops.length;i++){const a=stops[i-1],b=stops[i];const bends=shapes?.[i-1];let t=s.tracks.find(t=>R.key(t.a,t.b)===R.key(a,b)&&t.owner===l.owner&&(!bends||JSON.stringify(X.rawTrackPoints(s,t,a).slice(1,-1).map(p=>({x:p.x,y:p.y})))===JSON.stringify(bends.map(p=>({x:p.x,y:p.y})))));if(!t){const points=[s.nodes[a],...(bends||[]),s.nodes[b]];t={id:'t'+s.nextId++,a,b,owner:l.owner,km:X.sum(points),...(bends?.length?{bends:bends.map(p=>({x:p.x,y:p.y}))}:{})};s.tracks.push(t);}ids.push(t.id);}
  if(l.patterns)for(const p of l.patterns){const a=oldStops[p.from],b=oldStops[p.to];p.from=p.kind==='local'?0:stops.indexOf(a);p.to=p.kind==='local'?stops.length-1:stops.indexOf(b);if(p.from<0||p.to<0)throw Error('请先调整以该站为端点的交路。');if(p.calls)p.calls=p.calls.filter(id=>stops.includes(id));}for(const other of s.services)if(other.id!==l.id&&other.patterns)for(const p of other.patterns)if(p.target===l.id){p.targetEnd=stops.indexOf(oldStops[p.targetEnd]);if(p.targetEnd<0)throw Error('请先调整跨线交路终点。');}l.stops=[...stops];l.trackIds=ids;l.through=false;delete l.parents;delete l.operators;
  for(const id of l.trackIds)if(!s.services.some(x=>x.id!==l.id&&x.trackIds.includes(id)))delete s.tracks.find(t=>t.id===id).curve;
