@@ -66,12 +66,15 @@ function tick(rt,s,dt){
 }
 function advance(rt,s,minutes){if(!Number.isFinite(minutes)||minutes<0||minutes>1440)throw Error('Invalid operation interval');let left=minutes;while(left>1e-9){const dt=Math.min(.1,left);tick(rt,s,dt);left-=dt;}return rt;}
 function ease(p){const a=.16,v=1/(1-a);if(p<a)return v*p*p/(2*a);if(p>1-a)return 1-v*(1-p)*(1-p)/(2*a);return v*(p-a/2);}
+const geometryIndexes=new WeakMap();
+function geometryIndex(s){let c=geometryIndexes.get(s.tracks);if(!c||c.nodes!==s.nodes||c.count!==s.tracks.length){const parallel=new Map();for(const t of s.tracks){const k=R.key(t.a,t.b);if(!parallel.has(k))parallel.set(k,[]);parallel.get(k).push(t);}for(const group of parallel.values())group.sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));c={count:s.tracks.length,nodes:s.nodes,tracks:new Map(s.tracks.map(t=>[t.id,t])),parallel,points:new Map()};geometryIndexes.set(s.tracks,c);}return c;}
+function cachedTrackPoints(s,index,tr,from){const key=tr.id+'|'+from;let c=index.points.get(key);if(!c||c.curve!==tr.curve||c.bends!==tr.bends||c.km!==tr.km){c={curve:tr.curve,bends:tr.bends,km:tr.km,points:X.trackPoints(s,tr,from)};index.points.set(key,c);}return c.points;}
 function position(s,t,offsetScale=1){
  if(t.status!=='moving'){const n=s.nodes[t.stops[t.index]];return {x:n.x,y:n.y,angle:t.dir===1?0:180,speed:0,track:null};}
- const a=s.nodes[t.segment.from],b=s.nodes[t.segment.to],p=ease(t.progress),dx=b.x-a.x,dy=b.y-a.y,dist=Math.hypot(dx,dy),tr=track(s,t.segment.track);
- const parallels=s.tracks.filter(x=>R.key(x.a,x.b)===R.key(tr.a,tr.b)).sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true})),pair=parallels.findIndex(x=>x.id===tr.id),base=(pair-(parallels.length-1)/2)*9,canonical=t.segment.from===tr.a?1:-1,offset=(base*canonical*(tr.a<tr.b?1:-1)+2.2)*offsetScale;
+ const index=geometryIndex(s),p=ease(t.progress),tr=index.tracks.get(t.segment.track);
+ const parallels=index.parallel.get(R.key(tr.a,tr.b)),pair=parallels.findIndex(x=>x.id===tr.id),base=(pair-(parallels.length-1)/2)*9,canonical=t.segment.from===tr.a?1:-1,offset=(base*canonical*(tr.a<tr.b?1:-1)+2.2)*offsetScale;
  const ramp=t.progress<.16?t.progress/.16:t.progress>.84?(1-t.progress)/.16:1;
- const pos=X.along(X.trackPoints(s,tr,t.segment.from),p),angle=pos.angle*Math.PI/180;return {x:pos.x-Math.sin(angle)*offset,y:pos.y+Math.cos(angle)*offset,angle:pos.angle,speed:48/(1-.16)*Math.max(0,ramp),track:tr.id};
+ const pos=X.along(cachedTrackPoints(s,index,tr,t.segment.from),p),angle=pos.angle*Math.PI/180;return {x:pos.x-Math.sin(angle)*offset,y:pos.y+Math.cos(angle)*offset,angle:pos.angle,speed:48/(1-.16)*Math.max(0,ramp),track:tr.id};
 }
 function summary(rt){const waiting=Object.values(rt.queues).reduce((v,q)=>v+Object.values(q).reduce((a,b)=>a+b,0),0),onboard=rt.trains.reduce((v,t)=>v+t.onboard,0);return {active:rt.trains.length,moving:rt.trains.filter(t=>t.status==='moving').length,waiting,onboard,boarded:rt.boarded,alighted:rt.alighted,generated:rt.generated,signal:rt.trains.filter(t=>t.status==='signal').length};}
 const api={create,advance,position,summary,demandGroups,routeTime,isOpen,CAPACITY,DWELL,SPACING};
