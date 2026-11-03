@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict');const P=require('../rail/performance.js');
+assert.equal(P.settings({mode:'invalid'}).mode,'auto');assert.equal(P.resolve(P.settings({mode:'auto'}),180).fps,12);assert.equal(P.resolve(P.settings({mode:'auto'}),80).fps,24);assert.equal(P.resolve(P.settings({mode:'smooth'}),200).fps,45);
+let time=0,sim=0,c=P.createClock();for(let i=0;i<100;i++)c.run(.016,6,6,dt=>{sim+=dt;time+=.02;return true;},()=>time);assert.ok(Math.abs(sim-9.6)<1e-6);assert.ok(c.pending<1e-8);
+// A busy frame stops after its CPU budget, preserves debt, and catches up later.
+c=P.createClock();sim=0;let r=c.run(.1,24,4,dt=>{sim+=dt;time+=5;return true;},()=>time);assert.equal(r.steps,1);assert.ok(c.pending>2);for(let i=0;i<30;i++)c.run(0,24,4,dt=>{sim+=dt;time+=.01;return true;},()=>time);assert.ok(Math.abs(sim-2.4)<1e-6);assert.ok(c.pending<1e-8);
+c.run(.1,6,4,()=>false,()=>time);assert.equal(c.pending,0);c.reset();assert.equal(c.pending,0);
+// Exercise the real passenger and finance model through the budgeted clock.
+const N=require('../rail/network'),M=require('../rail/management'),F=require('../rail/fleet'),Q=require('../rail/ridership'),C=require('../rail/city'),T=require('../rail/passengers');
+const state=M.init(N.upgrade(N.emptyWorld('tokyo')));assert(!N.addLine(state,[{x:1080,y:940},{x:1110,y:940},{x:1140,y:940}],{stockSpec:'6B'}).error);F.purchase(state,'6B',4);assert(!N.configure(state,state.services[0].id,{dispatch:{mode:'manual',manual:4,offPeak:4,peak:4}}).error);Q.sync(state);
+const forecast=C.evaluate(state),runtime=T.create(state,forecast,480,false),clock=P.createClock();let ticks=0;for(let i=0;i<50;i++){clock.run(.016,6,4,dt=>{ticks++;return M.advance(state,runtime,dt);},()=>0);}const summary=T.summary(runtime);assert.ok(ticks>0);assert.ok(Math.abs(runtime.minute-484.8)<1e-6);assert.ok(Math.abs(summary.generated-summary.waiting-summary.onboard-summary.completed-summary.cancelled)<1e-6);assert.ok(runtime.trains.every(t=>t.onboard>=0&&t.onboard<=t.capacity));assert.ok(M.validate(state));assert.ok(T.restore(state,forecast,JSON.parse(JSON.stringify(T.snapshot(runtime)))));
+console.log('MAP26 passed: adaptive rendering, bounded frame work, retained computation debt, real passenger conservation, finance validity and save restore');
