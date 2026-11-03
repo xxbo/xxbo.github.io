@@ -4,6 +4,7 @@ const node=typeof module!=='undefined'&&module.exports,R=node?require('./engine'
 const X=node?require('./service-plan'):root.RailServicePlan;
 const Q=node?require('./ridership'):root.RailRidership;
 const F=node?require('./fleet'):root.RailFleet;
+const DR=node?require('./demand-rates'):root.RailDemandRates;
 const key=(id,dir,station)=>`${id}|${dir}|${station}`;
 function definitions(s,m){s=X.expand(s);return m.flows.map((f,id)=>{const legs=[];let from=f.from,current=null;for(const e of f.path.edges){const l=s.services.find(l=>l.id===e.service),i=l.trackIds.findIndex((t,j)=>t===e.track&&((l.stops[j]===from&&l.stops[j+1]===e.to)||(l.stops[j+1]===from&&l.stops[j]===e.to))),dir=e.dir||(l.stops[i]===from?1:-1);if(!current||current.service!==l.id||current.dir!==dir){current={service:l.id,dir,from,to:e.to};legs.push(current);}else current.to=e.to;from=e.to;}const byLine={};if(f.path.fares&&f.path.fare>0){for(const [id,amount]of Object.entries(f.path.fares))byLine[id]=amount/f.path.fare;}else for(const e of f.path.edges)byLine[e.service]=(byLine[e.service]||0)+e.km/f.path.km;return {id,legs,daily:f.demandTrips??f.trips,fare:f.path.fare,purpose:f.purpose||'work',back:!!f.back,hub:f.hub||null,externalKind:f.externalKind||null,from:f.from,to:f.to,lineIds:Object.keys(f.path.fares||byLine),byLine};});}
 const MAX_SAVED_DEFINITIONS=300000;
@@ -30,7 +31,7 @@ function generate(rt,s,dt){
  if(rt.arrivalMode!=='integer'){for(const j of catalog){const amount=j.daily*(j.externalKind?C.profile(j.purpose,j.back,minute,j.externalKind)*dt:rates[j.purpose+':'+j.back]);if(amount>=1e-12)arrive(j,amount);}return;}
  // Global residual + systematic sampling: a tiny OD is not rounded away independently.
  // Expected total is preserved to less than one passenger; actual queues contain whole people.
- const weights=new Float64Array(catalog.length);let total=0;for(let i=0;i<catalog.length;i++){const j=catalog[i];total+=weights[i]=j.daily*Q.factor(s,j)*(j.externalKind?C.profile(j.purpose,j.back,minute,j.externalKind)*dt:rates[j.purpose+':'+j.back]);}
+ const {weights,total}=DR.calculate(catalog,j=>Q.factor(s,j),j=>j.externalKind?C.profile(j.purpose,j.back,minute,j.externalKind)*dt:rates[j.purpose+':'+j.back]);
  rt.expectedGenerated=(rt.expectedGenerated||0)+total;const accrued=(rt.arrivalRemainder||0)+total,count=Math.floor(accrued+1e-9);rt.arrivalRemainder=Math.max(0,accrued-count);if(!count||total<=0)return;
  rt.rngState=(Math.imul(1664525,rt.rngState||2463534242)+1013904223)>>>0;
  const step=total/count;let target=rt.rngState/4294967296*step,cumulative=0,remaining=count;

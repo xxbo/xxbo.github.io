@@ -1,3 +1,3 @@
 /* Demand never blocks map input. Worker caches the fixed city-wide OD distribution. */
-importScripts('game-balance.js?v=17','fleet.js?v=18','regions.js?v=16','gba-data.js?v=16','service-plan.js?v=18','engine.js?v=18','tokyo-data.js?v=9','hubs.js?v=16','demand-model.js?v=19','urban-growth.js?v=22','city.js?v=19','ridership.js?v=30','operations.js?v=30','passengers.js?v=30');
+importScripts('game-balance.js?v=17','fleet.js?v=18','regions.js?v=16','gba-data.js?v=16','service-plan.js?v=18','engine.js?v=18','tokyo-data.js?v=9','hubs.js?v=16','demand-model.js?v=19','urban-growth.js?v=22','city.js?v=19','ridership.js?v=30','operations.js?v=30','demand-rates.js?v=31','passengers.js?v=31');
 onmessage=async({data:m})=>{try{await self.RailDataReady;const result=RailCity.evaluate(m.state);result.preparedDefinitions=RailPassengers.definitions(m.state,result);postMessage({id:m.id,result});}catch(e){postMessage({id:m.id,error:e.message});}};
