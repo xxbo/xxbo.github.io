@@ -59,6 +59,7 @@ jobs:
           node scripts/test_rail_map34.cjs
           node scripts/test_rail_map35.cjs
           node scripts/test_rail_map36.cjs
+          node scripts/test_rail_map37.cjs
           node scripts/test_rail_management.cjs
           node scripts/test_rail_city_data.cjs
           node scripts/test_technical.cjs
