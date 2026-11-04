@@ -32,3 +32,6 @@ body.console-ui>aside[hidden]{display:none!important}.console-ui>aside .panel-he
 .console-ui .finance-columns{align-items:stretch!important}.console-ui .finance-columns>.finance-card{width:100%!important;max-width:none!important;box-sizing:border-box;align-self:stretch!important}.console-ui .center-line-sub,.console-ui .center-metrics span,.console-ui .center-dispatch,.console-ui .center-advice-row small,.console-ui .panel-subtitle{color:#5e7358!important}.console-ui .center-status{color:#60704f}.console-ui .line-tabbar button{color:#65775a}.console-ui .line-tabbar button[aria-selected=true]{color:#146b45}
 body.console-ui.drawer-open #interface-shell>#game-guide:not([hidden]){display:none!important}
 @media(max-width:760px){.console-ui .center-summary{grid-template-columns:repeat(3,minmax(0,1fr))!important}.console-ui .center-summary span{overflow-wrap:anywhere;line-height:1.5;font-size:9px}.console-ui .center-tools{display:grid;grid-template-columns:minmax(0,1fr) 94px 28px;gap:5px}.console-ui .center-tools input{width:100%;box-sizing:border-box}.console-ui .center-tools select{width:94px}.console-ui #center-refresh{padding:5px}}
+
+/* Keep offscreen dispatch cards out of repeated layout/paint work. */
+.center-line{content-visibility:auto;contain-intrinsic-size:auto 430px}
