@@ -2,6 +2,8 @@
    All behavioural coefficients are game assumptions, not a calibrated Tokyo forecast. */
 (function(root) {
   'use strict';
+  const CACHE = typeof module !== 'undefined' && module.exports ? require('./bounded-cache') : root
+    .RailBoundedCache;
   const node = typeof module !== 'undefined' && module.exports,
     R = node ? require('./engine') : root.RailSim,
     X = node ? require('./service-plan') : root.RailServicePlan,
@@ -463,7 +465,11 @@
       zones,
       matrices,
       diagnostics
-    } = distribution(city), n = zones.length, adj = X.network(s), cache = new Map(), grouped = new Map(),
+    } = distribution(city), n = zones.length, adj = X.network(s), cache = CACHE.create({
+        limit: 24,
+        maxWeight: 60000,
+        weight: trees => trees.reduce((n, tree) => n + tree.memoryWeight, 0)
+      }), grouped = new Map(),
       active = [], zoneAccess = zones.map((z, i) => {
         const maps = Object.fromEntries(FIELDS.map(k => [k, new Map()]));
         for (const c of z.cells)
@@ -712,19 +718,21 @@
 
     function routes(from, purpose, value = X.VOT[purpose]) {
       const key = from + '|' + purpose + '|' + value;
-      if (cache.has(key)) return cache.get(key);
+      const cached = cache.get(key);
+      if (cached) return cached;
       const first = [...new Set(adj[from].map(e => e.service + '|' + e.dir))],
-        trees = first.map(k => X.paths(s, adj, from, 1 / value, k));
+        trees = first.map(k => X.compactPaths(s, adj, from, 1 / value, k));
       cache.set(key, trees);
       return trees;
     }
-    const strategyCache = new Map();
+    const strategyCache = CACHE.create(1024);
 
     function routeStrategy(from, to, purpose, value) {
       const key = from + '|' + to + '|' + purpose + '|' + value;
-      if (!strategyCache.has(key)) strategyCache.set(key, strategy(routes(from, purpose, value).map(tree =>
-        tree[to]), purpose, value));
-      return strategyCache.get(key);
+      const cached = strategyCache.get(key);
+      if (cached) return cached;
+      return strategyCache.set(key, strategy(routes(from, purpose, value).map(tree => X.pathAt(tree, to)),
+        purpose, value));
     }
     const merged = new Map();
     let eligible = 0;
@@ -833,7 +841,12 @@
       zones: n,
       eligiblePairs: grouped.size,
       calculationMs: Date.now() - started,
-      accessSampling: SAMPLES * SAMPLES
+      accessSampling: SAMPLES * SAMPLES,
+      memory: {
+        routeTrees: cache.stats(),
+        strategies: strategyCache.stats(),
+        routing: 'shared-edge-trails'
+      }
     };
     if (effective) base.lineConnections = K.summarize(s, base);
     return base;

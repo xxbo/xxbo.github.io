@@ -426,11 +426,52 @@
     return adj;
   }
 
+  // Search states share only a tiny edge trail. Ancestor fare/cost objects are not retained.
+  // Public paths are materialized at the boundary in the same order as MAP39.
+  function expandPath(path) {
+    if (!path) return path;
+    const edges = new Array(path.depth);
+    let trail = path.trail;
+    for (let i = edges.length - 1; i >= 0; i--) {
+      edges[i] = trail.edge;
+      trail = trail.previous;
+    }
+    return {
+      node: path.node,
+      service: path.service,
+      dir: path.dir,
+      lastLine: path.lastLine,
+      fareKm: path.fareKm,
+      board: path.board,
+      cost: path.cost,
+      minutes: path.minutes,
+      fare: path.fare,
+      km: path.km,
+      edges,
+      transfers: path.transfers,
+      fares: path.fares,
+      key: path.key
+    };
+  }
+
   function paths(s, adj, origin, value = .045, firstKey = null) {
+    return searchPaths(s, adj, origin, value, firstKey, false);
+  }
+
+  function compactPaths(s, adj, origin, value = .045, firstKey = null) {
+    return searchPaths(s, adj, origin, value, firstKey, true);
+  }
+
+  function pathAt(tree, destination) {
+    return expandPath(tree[destination]);
+  }
+
+  function searchPaths(s, adj, origin, value, firstKey, compact) {
     const lines = new Map(s.services.map(l => [l.id, l])),
       result = [],
       heap = [],
       best = new Map();
+    let accepted = 1;
 
     function push(p) {
       heap.push(p);
@@ -471,7 +512,8 @@
       minutes: 0,
       fare: 0,
       km: 0,
-      edges: [],
+      trail: null,
+      depth: 0,
       transfers: 0,
       fares: {}
     };
@@ -483,8 +525,8 @@
       if (cur.cost > best.get(cur.key) + 1e-8) continue;
       if (!result[cur.node] || cur.cost < result[cur.node].cost) result[cur.node] = cur;
       for (const e of adj[cur.node]) {
-        if (!cur.edges.length && firstKey && e.service + '|' + e.dir !== firstKey) continue;
-        if (cur.edges.length > 120) continue;
+        if (!cur.depth && firstKey && e.service + '|' + e.dir !== firstKey) continue;
+        if (cur.depth > 120) continue;
         const change = e.service !== cur.service || e.dir !== cur.dir,
           transfer = change && !!cur.service,
           extra = change ? e.headway / 2 + (transfer ? TRANSFER : 0) : 0;
@@ -517,18 +559,27 @@
           minutes: cur.minutes + e.minutes + extra,
           fare: cur.fare + fee,
           km: cur.km + e.km,
-          edges: [...cur.edges, e],
+          trail: null,
+          depth: cur.depth + 1,
           transfers: cur.transfers + (transfer ? 1 : 0),
           fares
         };
         p.key = [e.to, e.service, e.dir, lastLine, board].join('|');
         if (p.cost < (best.get(p.key) ?? Infinity) - 1e-8) {
           best.set(p.key, p.cost);
+          p.trail = {
+            previous: cur.trail,
+            edge: e
+          };
+          accepted++;
           push(p);
         }
       }
     }
-    return result;
+    if (compact) Object.defineProperty(result, 'memoryWeight', {
+      value: accepted
+    });
+    return compact ? result : result.map(expandPath);
   }
   const VOT = {
     work: 40,
@@ -582,6 +633,8 @@
     validate,
     network,
     paths,
+    compactPaths,
+    pathAt,
     modeShare
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

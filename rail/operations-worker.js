@@ -1,5 +1,5 @@
 /* Read-only diagnostics. Forecast cloned once per revision; never changes the simulation. */
-importScripts('game-balance.js?v=17', 'fleet.js?v=18', 'regions.js?v=16', 'service-plan.js?v=18',
+importScripts('game-balance.js?v=17', 'fleet.js?v=18', 'regions.js?v=16', 'service-plan.js?v=40',
   'flow-history.js?v=32', 'ridership.js?v=32', 'engine.js?v=18', 'network-stats.js?v=38', 'network.js?v=38',
   'metrics.js?v=38',
   'operations-center.js?v=38');

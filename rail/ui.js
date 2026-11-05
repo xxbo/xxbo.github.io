@@ -1,7 +1,7 @@
 (async function() {
   'use strict';
   await RailDataReady;
-  const UI_VERSION = '39';
+  const UI_VERSION = '40';
   'use strict';
   const DETAIL = RailMapDetail;
   let lodLevel = null,
@@ -29,6 +29,8 @@
     renderDots();
     updateQueueLabels();
   });
+  const saveQueue = RailSaveQueue.create(),
+    memoryAudit = RailMemoryAudit.create();
   const DB = RailSaveStore,
     LS = RailLocalSave;
   let runtimeFault = '',
@@ -287,7 +289,7 @@
     updatedAt: null
   };
   const demandClient = RailWorkerClient.create({
-    createWorker: () => typeof Worker === 'function' ? new Worker('demand-worker.js?v=39') : null,
+    createWorker: () => typeof Worker === 'function' ? new Worker('demand-worker.js?v=40') : null,
     timeout: 45000,
     timeoutMessage: '后台需求计算超过45秒，已回收计算线程；旧需求继续运行。',
     errorMessage: '客流后台计算失败',
@@ -304,7 +306,7 @@
 
   function calculate(state) {
     return demandClient.request({
-      state
+      state: RailDemandSnapshot.capture(state)
     }).then(message => message.result);
   }
   let forecast = await calculate(s).catch(() => C.evaluate(s)),
@@ -316,6 +318,7 @@
     false);
   if (migratedFacilities || savedRuntime && forecast.connectionModel === 36) O.rebase(traffic, s,
     forecast);
+  delete forecast.preparedDefinitions;
   Q.updateSatisfaction(s, traffic);
   REVIEW.init(s, traffic);
   REVIEW.ready(s, traffic.minute);
@@ -374,7 +377,11 @@
   function pixelScale() {
     return $('map').getBoundingClientRect().width / viewSpan().w;
   }
-  async function save() {
+
+  function save() {
+    return saveQueue.request(saveNow);
+  }
+  async function saveNow() {
     if (runtimeFault) {
       saveStatus = '运营异常，已暂停覆盖上次存档';
       return false;
@@ -387,6 +394,7 @@
     syncRecords();
     persistRecords();
     try {
+      memoryAudit.record('save-start', s, forecast, traffic, saveQueue);
       const payload = {
         gameVersion: 7,
         playing,
@@ -398,6 +406,7 @@
       };
       saveStatus = '正在写入本地数据库…';
       saveMeta = await DB.write(KEY, payload, legacySaveText);
+      memoryAudit.record('save-end', s, forecast, traffic, saveQueue);
       legacySaveText = null;
       storageOK = true;
       saveStatus = '已保存到本地数据库';
@@ -726,6 +735,7 @@
       forecast
     } : null;
     centerAnalysis = null;
+    centerRendered = null;
     deleteConfirm = false;
     scheduleForecast();
     save();
@@ -843,6 +853,7 @@
       utilityPanel === 'source' ? 'source-panel' : utilityPanel === 'newgame' ? 'newgame-panel' : mode ?
       'edit-bar' : selected ? 'line-panel' : overview ? 'overview-panel' : account ? 'account-panel' :
       stationMenu ? 'stations-panel' : inspection ? 'activity-panel' : null;
+    if (pane !== 'overview-panel') releaseCenterWorker();
     document.body.classList.toggle('operations-center', pane === 'overview-panel');
     document.body.classList.toggle('inspecting', !!pane);
     document.body.classList.toggle('drawer-open', !!pane);
@@ -900,6 +911,7 @@
     forecastDirty = false;
     forecastPending = true;
     urbanJob = true;
+    memoryAudit.record('demand-start', s, forecast, traffic, saveQueue);
     const identity = traffic,
       revision = networkRevision,
       urbanRevision = s.urban.revision;
@@ -913,13 +925,16 @@
         return;
       }
       O.rebase(traffic, s, next);
+      delete next.preparedDefinitions;
       REVIEW.ready(s, traffic.minute);
       demandState.status = 'ready';
       demandState.error = '';
       demandState.updatedAt = traffic.minute;
       forecast = next;
+      memoryAudit.record('demand-end', s, forecast, traffic, saveQueue);
       urbanForecastRevision = urbanRevision;
       centerAnalysis = null;
+      centerRendered = null;
       Q.updateSatisfaction(s, traffic);
       save();
       if (overview && !document.activeElement?.matches('#overview-panel input,#overview-panel select'))
@@ -1398,6 +1413,7 @@
   }
 
   function updateHUD() {
+    memoryAudit.tick(performance.now(), s, forecast, traffic, saveQueue);
     const hudSummary = O.summary(traffic);
     const day = s.ridership?.current?.number === Q.day(traffic.minute) ? {
       ...s.ridership.current,
@@ -1410,7 +1426,7 @@
     DOM.text($('today-flow-value'), num(day.completed));
     DOM.text($('today-flow-day'), '第 ' + day.day + ' 天');
     DOM.text($('today-flow-revenue'), money(day.revenue));
-    if (overview && !centerReview && !document.activeElement?.matches(
+    if (overview && !utilityPanel && !centerReview && !document.activeElement?.matches(
         '#overview-panel input,#overview-panel select')) {
       if (centerAnalysis && centerRendered !== centerAnalysis) renderOverview(true);
       centerRows();
@@ -1428,7 +1444,7 @@
       ?.matches('input,select,textarea')) {
       lastForecastRefresh = traffic.minute;
       if (current() && !dispatchDirty) renderPanel();
-      if (overview && !centerReview) centerRows();
+      if (overview && !utilityPanel && !centerReview) centerRows();
     }
     DOM.text($('hud-cash'), money(s.economy.cash));
     DOM.text($('hud-trains'), traffic.trains.length + ' 列');
@@ -2723,6 +2739,17 @@
     centerRendered = null,
     centerError = '';
 
+  function releaseCenterWorker() {
+    if (centerJob) clearTimeout(centerJob.timer);
+    centerJob = null;
+    if (centerWorker) {
+      centerWorker.onmessage = centerWorker.onerror = null;
+      centerWorker.terminate();
+      centerWorker = null;
+    }
+    centerForecastSent = null;
+  }
+
   function centerRows(force = false) {
     const now = performance.now(),
       stale = !centerAnalysis || centerAnalysis.state !== s || centerAnalysis.forecast !== forecast;
@@ -2759,7 +2786,7 @@
     }
     try {
       if (!centerWorker) {
-        centerWorker = new Worker('operations-worker.js?v=39');
+        centerWorker = new Worker('operations-worker.js?v=40');
         centerForecastSent = null;
       }
       centerWorker.onerror = e => fail(e.message || '后台诊断不可用');
@@ -2785,7 +2812,7 @@
           metrics: m.metrics,
           ms: m.ms
         };
-        if (overview && !centerReview && !document.activeElement?.matches(
+        if (overview && !utilityPanel && !centerReview && !document.activeElement?.matches(
             '#overview-panel input,#overview-panel select')) renderOverview(true);
       };
       const snapshot = RailDiagnosticSnapshot.capture(s, traffic);
@@ -2876,7 +2903,7 @@
   }, true);
 
   function renderOverview(ready = false, noRequest = false) {
-    if (!overview) return;
+    if (!overview || utilityPanel) return;
     centerRendered = centerAnalysis;
     const panel = $('overview-panel'),
       scroll = panel.querySelector('.panel-scroll')?.scrollTop || 0,
@@ -3012,6 +3039,15 @@
     return `模型站型：${r.platforms} 个站台候车面，站台长 ${r.length} m，可用宽 ${r.usableWidth} m；按 ${r.spacePerPerson} m²/人计算。站满后限流，站外等候最多15分钟；超限改用其他方式。面积为游戏估计，非本站实测。`;
   }
 
+  function memoryDiagnostics() {
+    const latest = memoryAudit.latest(),
+      queue = saveQueue.stats(),
+      cache = forecast.diagnostics?.memory;
+    const mb = value => value === null || value === undefined ? '未提供' : (value / 1024 / 1024).toFixed(1) +
+      ' MB';
+    return `<details id="memory-details" class="console-details" ${$('memory-details')?.open?'open':''}><summary>内存与后台任务</summary><p class="station-note">堆内存为当前页面JS估计，Worker、图片与浏览器总内存需结合浏览器任务管理器；采样最多保留48条。</p><div class="detail-row"><span>页面JS堆 / 采样峰值</span><b>${mb(latest?.heap)} / ${mb(latest?.peak)}</b></div><div class="detail-row"><span>预测路径 / 实际使用出行组合</span><b>${forecast.flows.length} / ${traffic.defs.length}</b></div><div class="detail-row"><span>保存编码 / 待保存</span><b>${queue.active?1:0} / ${queue.pending?1:0}</b></div><div class="detail-row"><span>已合并保存请求</span><b>${queue.coalesced}</b></div>${cache?`<div class="detail-row"><span>寻路树组缓存峰值 / 预算</span><b>${cache.routeTrees.peak} / ${cache.routeTrees.limit}</b></div><div class="detail-row"><span>路线策略缓存峰值 / 预算</span><b>${cache.strategies.peak} / ${cache.strategies.limit}</b></div>`:''}</details>`;
+  }
+
   function diagnosticContent() {
     const d = O.demandSummary(traffic),
       minute = ((traffic.minute % 1440) + 1440) % 1440,
@@ -3024,7 +3060,8 @@
       label = runtimeFault ? '运营计算异常' : demandState.status === 'error' ? '需求更新失败' : !playing ? '游戏已暂停' : !
       s.services.length ? '尚未建设线路' : !open.length ? '非运营时段' : !available.length ? '运营线路未投放列车' : !d
       .activeProfiles ? '暂无可达出行需求' : demandState.status === 'updating' ? '后台更新中' : '客流模型运行中';
-    return `<div class="record-hero"><span>浏览器本机模拟 · ${demandClient.active?'Worker 后台计算':'主线程备用计算'}</span><strong style="font-size:24px">${label}</strong><div>第 ${Q.day(traffic.minute)} 天 · ${clock(traffic.minute)}</div></div>${!open.length&&s.services.length?`<p class="metrics-notice">当前没有线路处于运营时段。最近开行：${esc(nextOpening.name)} · ${clock(nextOpening.open)}（${nextOpening.wait} 游戏分钟后）${traffic.trains.length?'；末班列车仍在完成本次运行。':'；收班后列车、候车和车上人数归零属于正常情况。'}</p>`:''}${runtimeFault||demandState.error?`<p class="save-error">${esc(runtimeFault||demandState.error)}</p>`:''}<div class="section-title">需求与运行</div>${[['预测出行组合（非人数）',num(d.profiles)],['有需求的出行组合',num(d.activeProfiles)],['基础日需求',num(d.daily)+' 人次 / 日'],['已实际使用的出行组合',num(d.storedProfiles)],['运营时段内线路',open.length+' / '+s.services.length],['已投放车辆的运营线路',available.length],['在线列车',traffic.trains.length],['本局累计尝试出行',num(traffic.generated)],['本局累计上车（含换乘）',num(traffic.boarded)],['本局累计完成出行',num(traffic.completed)],['此刻候车 / 车上',num(O.summary(traffic).waiting)+' / '+num(O.summary(traffic).onboard)],['最近预测更新（非乘客刷新）',demandState.updatedAt===null?'—':clock(demandState.updatedAt)]].map(([k,v])=>`<div class="detail-row"><span>${k}</span><b>${v}</b></div>`).join('')}<div class="section-title">分线运营时间</div>${s.services.map(l=>`<button data-line="${esc(l.id)}" class="detail-row insight-link"><span>${esc(l.name)} · ${clock(l.open)}—${l.close===1440?'24:00':clock(l.close)}</span><b>${RailOperations.isOpen(l,traffic.minute)?F.planned(l,traffic.minute)>0?'运营中':'未投放列车':'已收班 / 未开行'}</b></button>`).join('')}<button id="retry-demand" class="insight-link">重新计算客流</button><p class="station-note">客流在本机浏览器计算，没有独立客流服务器。非运营时段、停运或暂停时，候车与车上人数可能正常归零；游戏日07:00切换，今日累计会重置。需求档案采用按实际到达创建的方式保存，不因预测超过6万条清零。重算失败会保留上次需求；已受旧版错误影响的存档刷新后会重新接入当前需求，历史缺失数据不补造。运营计算若抛出异常会暂停，避免自动覆盖上次成功存档。</p>`;
+    return memoryDiagnostics() +
+      `<div class="record-hero"><span>浏览器本机模拟 · ${demandClient.active?'Worker 后台计算':'主线程备用计算'}</span><strong style="font-size:24px">${label}</strong><div>第 ${Q.day(traffic.minute)} 天 · ${clock(traffic.minute)}</div></div>${!open.length&&s.services.length?`<p class="metrics-notice">当前没有线路处于运营时段。最近开行：${esc(nextOpening.name)} · ${clock(nextOpening.open)}（${nextOpening.wait} 游戏分钟后）${traffic.trains.length?'；末班列车仍在完成本次运行。':'；收班后列车、候车和车上人数归零属于正常情况。'}</p>`:''}${runtimeFault||demandState.error?`<p class="save-error">${esc(runtimeFault||demandState.error)}</p>`:''}<div class="section-title">需求与运行</div>${[['预测出行组合（非人数）',num(d.profiles)],['有需求的出行组合',num(d.activeProfiles)],['基础日需求',num(d.daily)+' 人次 / 日'],['已实际使用的出行组合',num(d.storedProfiles)],['运营时段内线路',open.length+' / '+s.services.length],['已投放车辆的运营线路',available.length],['在线列车',traffic.trains.length],['本局累计尝试出行',num(traffic.generated)],['本局累计上车（含换乘）',num(traffic.boarded)],['本局累计完成出行',num(traffic.completed)],['此刻候车 / 车上',num(O.summary(traffic).waiting)+' / '+num(O.summary(traffic).onboard)],['最近预测更新（非乘客刷新）',demandState.updatedAt===null?'—':clock(demandState.updatedAt)]].map(([k,v])=>`<div class="detail-row"><span>${k}</span><b>${v}</b></div>`).join('')}<div class="section-title">分线运营时间</div>${s.services.map(l=>`<button data-line="${esc(l.id)}" class="detail-row insight-link"><span>${esc(l.name)} · ${clock(l.open)}—${l.close===1440?'24:00':clock(l.close)}</span><b>${RailOperations.isOpen(l,traffic.minute)?F.planned(l,traffic.minute)>0?'运营中':'未投放列车':'已收班 / 未开行'}</b></button>`).join('')}<button id="retry-demand" class="insight-link">重新计算客流</button><p class="station-note">客流在本机浏览器计算，没有独立客流服务器。非运营时段、停运或暂停时，候车与车上人数可能正常归零；游戏日07:00切换，今日累计会重置。需求档案采用按实际到达创建的方式保存，不因预测超过6万条清零。重算失败会保留上次需求；已受旧版错误影响的存档刷新后会重新接入当前需求，历史缺失数据不补造。运营计算若抛出异常会暂停，避免自动覆盖上次成功存档。</p>`;
   }
 
   function dailyContent() {
@@ -3254,6 +3291,7 @@
         personalRecords: restoredRecords
       };
       try {
+        await saveQueue.flush();
         await DB.write(target.saveKey, payload);
       } catch {
         throw Error('本地数据库写入失败，原进度未替换；请检查浏览器站点存储权限或磁盘空间。');
