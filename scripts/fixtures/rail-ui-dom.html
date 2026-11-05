@@ -1,0 +1,24 @@
+<!doctype html><html lang="zh-CN"><meta charset="utf-8"><title>UI DOM contracts</title>
+<script src="../../rail/ui-dom.js"></script><button id="run">运行界面节点验收</button><output id="result">待运行</output><div id="fixture"></div>
+<script>
+document.getElementById('run').onclick=async()=>{const out=document.getElementById('result'),host=document.getElementById('fixture'),D=RailUIDom;let checks=0;
+const ok=(v,label)=>{if(!v)throw Error(label);checks++;};
+try{
+ host.innerHTML='<div id="list"></div><div id="legacy"></div><div id="form"></div>';
+ const list=document.getElementById('list'),legacy=document.getElementById('legacy'),form=document.getElementById('form');
+ const markup=(reverse=false,rename=false)=>Array.from({length:400},(_,i)=>reverse?399-i:i).map(i=>`<article data-key="${i}"><button id="row-${i}">${rename?'站名':'车站'} ${i}</button><span>${i+1}</span></article>`).join('');
+ const first=D.reconcileHTML(list,markup(),'data-key');ok(first.created===400,'first render');const nodes=[...list.children],button=document.getElementById('row-100');button.focus();
+ const second=D.reconcileHTML(list,markup(true,true),'data-key');ok(second.created===0&&second.removed===0&&second.reused===400,'400 nodes reused');ok(nodes.every(n=>list.contains(n)),'all old identities retained');ok(document.activeElement===button,'focus retained through reordering');ok(button.textContent==='站名 100','rename updates in place');
+ legacy.innerHTML=markup();const old=[...legacy.children];legacy.innerHTML=markup(true,true);ok(old.every(n=>!legacy.contains(n)),'MAP38 replacement baseline recreates 400 rows');
+ form.innerHTML='<input id="name" value="default"><select id="amount"><option value="1">1</option><option value="2">2</option></select><details id="detail"><summary>说明</summary><p>原内容</p></details><div id="dynamic"><b>保留</b></div>';
+ const input=document.getElementById('name'),select=document.getElementById('amount'),detail=document.getElementById('detail'),dynamic=document.getElementById('dynamic').firstChild;
+ input.value='未提交名称';input.focus();input.setSelectionRange(2,4);select.value='2';detail.open=true;
+ D.patchMarkup(form,'<input id="name" value="new"><select id="amount"><option value="1" selected>1</option><option value="2">2</option></select><details id="detail"><summary>说明</summary><p>更新</p></details><div id="dynamic"></div>',{preserveForms:true,preserveDetails:true,skipChildren:['dynamic']});
+ ok(document.activeElement===input&&input.value==='未提交名称'&&input.selectionStart===2&&input.selectionEnd===4,'input/caret retained');ok(select.value==='2','selected amount retained');ok(detail.open&&detail.querySelector('p').textContent==='更新','details state and text');ok(document.getElementById('dynamic').firstChild===dynamic,'controller-owned live subtree retained');
+ D.patchMarkup(form,'<section><input id="name" value="server"><select id="amount"><option value="1">1</option><option value="2">2</option></select><details id="detail"><summary>说明</summary><p>包装变化</p></details><div id="dynamic"></div></section>',{preserveForms:true,preserveDetails:true,skipChildren:['dynamic']});
+ const restoredInput=document.getElementById('name');ok(restoredInput.value==='未提交名称'&&restoredInput.selectionStart===2&&document.activeElement===restoredInput,'decorator wrapper preserves form/caret/focus');ok(document.getElementById('amount').value==='2'&&document.getElementById('detail').open,'decorator wrapper preserves selected amount/details');ok(document.getElementById('dynamic').firstChild===dynamic,'decorator wrapper preserves live subtree');
+ D.reconcileHTML(list,'<p>空列表</p>','data-key');ok(list.children.length===1,'cards to empty');D.reconcileHTML(list,markup(),'data-key');ok(list.children.length===400&&!list.querySelector('p'),'empty to cards');
+ let mutations=0;const observer=new MutationObserver(records=>mutations+=records.length);observer.observe(restoredInput.parentElement,{childList:true,subtree:true,characterData:true});D.text(document.getElementById('detail').querySelector('p'),'包装变化');await Promise.resolve();observer.disconnect();ok(mutations===0,'unchanged text causes zero mutation');
+ out.textContent=JSON.stringify({passed:true,checks,rows:400,recreatedBefore:400,recreatedAfter:second.created,reused:second.reused,focus:true,caret:true,details:true,selectedAmount:true});
+}catch(error){out.textContent=JSON.stringify({passed:false,checks,error:error.message});}};
+</script></html>

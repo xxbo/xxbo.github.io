@@ -1,6 +1,7 @@
 (async function() {
   'use strict';
   await RailDataReady;
+  const UI_VERSION = '39';
   'use strict';
   const DETAIL = RailMapDetail;
   let lodLevel = null,
@@ -94,6 +95,42 @@
     clock = m => String(Math.floor(m / 60) % 24).padStart(2, '0') + ':' + String(Math.floor(m) % 60)
     .padStart(2, '0');
   const money = RailCurrency.format;
+  const DOM = RailUIDom;
+  const viewFormat = {
+    num,
+    money,
+    clock,
+    esc
+  };
+  const lineView = RailLineView.create({
+    ...viewFormat,
+    F,
+    X,
+    Q,
+    V,
+    currency: RailCurrency
+  });
+  const centerView = RailCenterView.create({
+    ...viewFormat,
+    Q,
+    X,
+    F,
+    OC,
+    fmtHeadway
+  });
+  const financeView = RailFinanceView.create({
+    ...viewFormat,
+    M
+  });
+  const stationsView = RailStationsView.create({
+    ...viewFormat,
+    Q
+  });
+  const saveView = RailSaveView.create({
+    ...viewFormat,
+    B
+  });
+
   const reviewView = RailReviewView.create({
     REVIEW,
     Q,
@@ -250,7 +287,7 @@
     updatedAt: null
   };
   const demandClient = RailWorkerClient.create({
-    createWorker: () => typeof Worker === 'function' ? new Worker('demand-worker.js?v=38') : null,
+    createWorker: () => typeof Worker === 'function' ? new Worker('demand-worker.js?v=39') : null,
     timeout: 45000,
     timeoutMessage: '后台需求计算超过45秒，已回收计算线程；旧需求继续运行。',
     errorMessage: '客流后台计算失败',
@@ -990,29 +1027,16 @@
     if (el && hoverPoint) htmlIfChanged(el, urbanArea(hoverPoint));
   }
 
-  function fmtHeadway(h) {
-    return Number.isFinite(h) ? h.toFixed(1) + ' 分钟 / 班' : '未投放';
+  function fmtHeadway(value) {
+    return lineView.fmtHeadway(value);
   }
 
   function specOptions(value) {
-    return Object.values(F.SPECS).map(v =>
-      `<option value="${v.id}" ${v.id===value?'selected':''}>${v.id} · 游戏定员 ${num(v.capacity)} 人</option>`
-    ).join('');
+    return lineView.specOptions(value);
   }
 
   function trainOptions(value) {
-    return Array.from({
-        length: 41
-      }, (_, i) => i * 2).map(n => `<option value="${n}" ${n===value?'selected':''}>${n} 列</option>`)
-      .join('');
-  }
-
-  function frequency(l, p, i) {
-    try {
-      return fmtHeadway(X.headway(s, X.compile(s, l, p, i)));
-    } catch {
-      return '应用后计算';
-    }
+    return lineView.trainOptions(value);
   }
 
   function markDispatchDirty() {
@@ -1037,13 +1061,6 @@
       'auto');
     toast('推荐平峰 ' + r.offPeak + ' 列 / 高峰 ' + r.peak + ' 列' + (r.peak < r.peakNeed ? '，库存不足，理想高峰需 ' + r
       .peakNeed + ' 列' : '') + ' · 点击应用投放生效');
-  }
-
-  function vehicleControls(l, st) {
-    const spec = F.SPECS[l.stockSpec],
-      d = l.dispatch,
-      n = F.planned(l, traffic.minute);
-    return `<div class="section-title">车辆与投放<small>规格已锁定</small></div><div class="stock-identity"><b>${l.stockSpec}</b><span>${spec.cars} 辆 · ${spec.type} 型 · 游戏定员 ${num(spec.capacity)} 人 / 列</span></div><div class="stat-grid"><div><span>本线预留 / 兼容库存</span><strong>${l.fleet}<small> / ${s.depot.stock[l.stockSpec]} 列</small></strong></div><div><span>当前计划投放</span><strong id="dispatch-live">${n}<small>列 · ${d.mode==='auto'?(F.peak(traffic.minute)?'高峰':'平峰'):'手动'}</small></strong></div></div><div class="config-row"><label for="dispatch-mode">投放方式</label><select id="dispatch-mode"><option value="manual" ${d.mode==='manual'?'selected':''}>手动投放</option><option value="auto" ${d.mode==='auto'?'selected':''}>自动 · 平峰 / 高峰</option></select></div><div class="config-row" data-dispatch-row="manual" ${d.mode==='manual'?'':'hidden'}><label for="dispatch-manual">手动投放</label><select id="dispatch-manual">${trainOptions(d.manual)}</select></div><div class="config-row" data-dispatch-row="auto" ${d.mode==='auto'?'':'hidden'}><label for="dispatch-offpeak">平峰投放</label><select id="dispatch-offpeak">${trainOptions(d.offPeak)}</select></div><div class="config-row" data-dispatch-row="auto" ${d.mode==='auto'?'':'hidden'}><label for="dispatch-peak">高峰投放</label><select id="dispatch-peak">${trainOptions(d.peak)}</select></div><div class="plan-actions"><button id="recommend-dispatch">按客流推荐</button><button id="save-dispatch" class="primary">应用投放</button><button id="open-depot">列车库 / 购车</button></div><p id="dispatch-pending" class="dispatch-pending" hidden>投放调整尚未应用，当前间隔仍按已生效计划显示。</p><div class="auto-headway"><span>计划行车间隔 · 自动计算</span><b id="computed-headway">${fmtHeadway(st.headway)}</b></div><p class="station-note">高峰 07:00—09:00、17:00—19:00，其余为平峰。推荐按预测客流、周转时间、80%目标满载和兼容库存估算，可手动微调。预留量为当前模式最大投放量，同规格库存不重复分配；0 列停运。双向各半，最短间隔 2 分钟。收车完成本次运行后入库，可能暂时多于计划数量。</p><div class="config-row"><label>运营时间</label><div class="hours"><input type="time" id="open" aria-label="首班时间" value="${clock(l.open)}"><span>—</span><input type="time" id="close" aria-label="末班时间" value="${clock(l.close)}"></div></div>`;
   }
 
   function depotContent() {
@@ -1094,16 +1111,6 @@
     $('line-panel').querySelector('.panel-scroll').scrollTop = 0;
   }
 
-  function lineTabs() {
-    return [
-      ['overview', '概况'],
-      ['dispatch', '车辆'],
-      ['stations', '车站'],
-      ['rules', '交路'],
-      ['settings', '设置']
-    ];
-  }
-
   function renderPanel() {
     const l = current();
     if (!l) return;
@@ -1119,28 +1126,21 @@
         '#line-connections')?.open,
       choicesOpen = panel.dataset.renderedLine === l.id && !!panel.querySelector('#line-choices')?.open;
     panel.dataset.renderedLine = l.id;
-    const st = N.stats(s, forecast, l.id),
-      loop = l.stops[0] === l.stops.at(-1),
-      stops = loop ? l.stops.slice(0, -1) : l.stops,
-      controls = operationControls(l),
-      cut = controls.indexOf('<div class="section-title">交路与停站规则'),
-      fare = controls.slice(0, cut),
-      rules = controls.slice(cut);
-    panel.innerHTML =
-      `<div class="panel-header" style="--color:${l.color}"><div class="panel-heading"><span class="line-mark">${s.services.indexOf(l)+1}</span><h2>${esc(l.name)}</h2><button class="panel-close" id="close-panel" aria-label="关闭线路详情">×</button></div><div class="panel-subtitle"><span>${stops.length} 站 · ${st.km.toFixed(1)} km${loop?' · 环线':''}</span><b><span id="line-running">0</span> 列在线</b></div></div><div class="line-tabbar" role="tablist" aria-label="线路详情分类">${lineTabs().map(([id,label])=>`<button role="tab" id="line-tab-${id}" aria-controls="line-view-${id}" data-line-tab="${id}" aria-selected="${lineTab===id}">${label}</button>`).join('')}</div><div class="panel-scroll"><div id="line-alarm"></div><section role="tabpanel" id="line-view-overview" aria-labelledby="line-tab-overview" data-line-view="overview" ${lineTab==='overview'?'':'hidden'}>${cultivationCard(l)}<div class="section-title">日运营预测<small>工作日模型</small></div><div class="stat-grid"><div><span>线路客流量</span><strong>${num(st.riders)}<small>人次 / 日</small></strong></div><div><span>交路合计运力</span><strong>${num(60/st.headway*st.capacity)}<small>人 / h</small></strong></div><div><span>预计票款</span><strong>${money(st.revenue)}</strong></div><div><span>预计经营结余</span><strong>${money(st.totalIncome-st.cost)}</strong></div></div>${connectionCard(l)}<div class="line-next-actions"><button data-line-tab="dispatch">调整车辆 →</button><button data-line-tab="stations">查看车站 →</button><button data-review-line="${l.id}">调整效果 →</button></div><p class="station-note">以上为工作日预测，经营结余包含发展金。实际收支见财务，实时完成客流见线网客流。</p></section><section role="tabpanel" id="line-view-dispatch" aria-labelledby="line-tab-dispatch" data-line-view="dispatch" ${lineTab==='dispatch'?'':'hidden'}>${vehicleControls(l,st)}<details class="console-details"><summary>在线列车与满载率</summary><div id="live-trains" class="live-trains"></div></details></section><section role="tabpanel" id="line-view-stations" aria-labelledby="line-tab-stations" data-line-view="stations" ${lineTab==='stations'?'':'hidden'}><div class="station-actions"><button id="add-station">＋ 增加车站</button><button id="remove-station" class="danger" ${stops.length<=(loop?3:2)?'disabled':''}>− 减少车站</button></div><div class="section-title">车站客流<small>上 / 下车人次 · 每日预测</small></div><div class="station-table-head"><span>车站</span><span>上车</span><span>下车</span><span></span></div><div class="stops" style="--color:${l.color}">${stops.map((id,i)=>{const n=s.nodes[id],x=st.stations[id];return `${i?`<div class="stop-spacing">↕ ${V.formatDistance(s.tracks.find(t=>t.id===l.trackIds[i-1]).km)}</div>`:''}<div class="stop-row"><button class="stop-name" data-station="${id}"><i></i>${esc(n.name)}</button><span>${num(x.board)}</span><span>${num(x.alight)}</span><span></span></div>`;}).join('')}</div></section><section role="tabpanel" id="line-view-rules" aria-labelledby="line-tab-rules" data-line-view="rules" ${lineTab==='rules'?'':'hidden'}>${rules}</section><section role="tabpanel" id="line-view-settings" aria-labelledby="line-tab-settings" data-line-view="settings" ${lineTab==='settings'?'':'hidden'}>${identityControls(l)}${fare}<details class="console-details line-danger" ${deleteConfirm?'open':''}><summary>删除线路</summary><p>删除前将显示影响及预计资产回收。</p><button class="danger-button" data-ui-trigger="delete-line">删除这条线路</button>${deleteConfirm?`<div class="confirm-delete"><p>删除「${esc(l.name)}」及其服务？其他线路和共用车站会保留。预计资产回收 ${money(Math.max(0,-(M.preview(s,c=>N.removeLine(c,l.id)).net||0)))}。</p><div><button id="cancel-delete">取消</button><button class="danger-button" id="confirm-delete">确认删除线路</button></div></div>`:''}</details></section></div>`;
+    const st = N.stats(s, forecast, l.id);
+    const salvage = deleteConfirm ? Math.max(0, -(M.preview(s, c => N.removeLine(c, l.id)).net || 0)) : 0;
+    panel.innerHTML = lineView.content({
+      state: s,
+      forecast,
+      minute: traffic.minute,
+      line: l,
+      stats: st,
+      tab: lineTab,
+      deleteConfirm,
+      salvage
+    });
     if (connectionOpen && $('line-connections')) $('line-connections').open = true;
     if (choicesOpen && $('line-choices')) $('line-choices').open = true;
     panel.querySelector('.panel-scroll').scrollTop = scroll;
-  }
-
-  function identityControls(l) {
-    return `<div class="section-title">线路设置</div><div class="identity-form"><label for="line-name">线路名称</label><input id="line-name" maxlength="40" value="${esc(l.name)}"><label for="line-color">线路颜色</label><input type="color" id="line-color" value="${l.color}"><button id="save-line-identity">保存名称与颜色</button></div>`;
-  }
-
-  function stopOptions(l, index) {
-    return l.stops.map((id, i) =>
-      `<option value="${i}" ${i===index?'selected':''}>${i+1}. ${esc(s.nodes[id].name)}</option>`).join(
-      '');
   }
 
   function renderLayers() {
@@ -1156,25 +1156,12 @@
     ).join('');
   }
 
-  function ringControls(l) {
-    if (l.stops[0] !== l.stops.at(-1)) return '';
-    return `<div class="section-title">环线运行</div><div class="config-row"><label for="loop-direction">运行方向</label><select id="loop-direction">${[['both','内外环双向'],['forward',X.directionName(s,l,1)+'单向'],['reverse',X.directionName(s,l,-1)+'单向']].map(([id,name])=>`<option value="${id}" ${(l.loopDirection||'both')===id?'selected':''}>${name}</option>`).join('')}</select></div><p class="station-note">列车连续绕行，不在起点折返。双向运营时各分配一半车辆；乘客按行车方向、票价与候车时间选择路径，经过编号起点不需要换车。为维持计划间隔，时刻表余量分摊到沿途停站。</p>`;
-  }
-
-  function operationControls(l) {
-    const fares = X.bands ? X.bands(l) : l.fareBands || X.PRICES,
-      patterns = X.patterns(l);
-    return `${ringControls(l)}<div class="section-title">里程票价<small>人民币 · 元</small></div><div class="fare-grid">${X.LIMITS.map((limit,i)=>`<label>${i?X.LIMITS[i-1]+1:1}—${i===5?'更远':limit} km<input type="number" min="1" max="150" step="0.05" data-fare-band="${i}" aria-label="第 ${i+1} 档票价" value="${RailCurrency.toCNY(fares[i])}"></label>`).join('')}</div><button id="save-fares">应用票价</button><p class="station-note">按实际轨道里程向上取整分档计价；跨线分段合计。客流通过广义成本 Logit 模型比较票价、候车、行车、换乘与步行时间。参数为游戏设定，非真实客流预测。</p><div class="section-title">交路与停站规则</div><p class="station-note">全程普通车是大交路；区间车是小交路。快速可勾选停站，直达仅停起终点，跨线需共用车站。各交路共享本线预留车辆，配额合计不得超过 ${l.fleet} 列；平峰按配额比例分配，间隔由车辆数自动计算。</p><div id="pattern-list">${patterns.map((p,i)=>patternCard(l,p,i)).join('')}</div><div class="plan-actions"><select id="new-pattern-kind" aria-label="新增交路类型">${Object.entries(X.KINDS).map(([id,name])=>`<option value="${id}">${name}</option>`).join('')}</select><button id="add-pattern">增加交路</button></div><div class="plan-actions"><button id="save-patterns">应用运营规则</button><button id="reset-patterns">恢复普通交路</button></div>`;
-  }
-
   function patternCard(l, p, i) {
-    let actual = '应用后计算';
-    try {
-      actual = '当前 ' + fmtHeadway(X.headway(s, X.compile(s, l, p, i)));
-    } catch {}
-    const other = s.services.find(x => x.id === p.target),
-      validTargets = s.services.filter(x => x.id !== l.id && x.stops.some(n => l.stops.includes(n)));
-    return `<fieldset class="pattern-card" data-pattern-index="${i}" data-kind="${p.kind}"><legend>${i+1}. ${X.KINDS[p.kind]}</legend><div class="plan-actions"><label>起点<select data-field="from">${stopOptions(l,p.from)}</select></label><label>${p.kind==='cross'?'接轨站':'终点'}<select data-field="to">${stopOptions(l,p.to)}</select></label></div><div class="plan-actions"><label>高峰配额<input type="number" min="2" max="80" step="2" data-field="fleet" value="${p.fleet}"></label><label>自动间隔<output>${frequency(l,p,i)}</output></label></div>${p.kind==='cross'?`<label>接续线路<select data-field="target">${validTargets.map(x=>`<option value="${x.id}" ${p.target===x.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select></label><label>跨线终点<select data-field="targetEnd">${other?stopOptions(other,p.targetEnd):''}</select></label>`:''}${p.kind==='express'?`<div class="call-options">${l.stops.map((id,j)=>`<label><input type="checkbox" data-call="${id}" ${p.calls?.includes(id)?'checked':''}>${esc(s.nodes[id].name)}</label>`).join('')}</div>`:''}<p class="pattern-frequency">${actual}</p><button data-drop-pattern="${i}">删除此交路</button></fieldset>`;
+    return lineView.patternCard(s, l, p, i);
+  }
+
+  function stopOptions(l, index) {
+    return lineView.stopOptions(s, l, index);
   }
 
   function readPatterns() {
@@ -1420,9 +1407,9 @@
       completed: 0,
       revenue: 0
     };
-    $('today-flow-value').textContent = num(day.completed);
-    $('today-flow-day').textContent = '第 ' + day.day + ' 天';
-    $('today-flow-revenue').textContent = money(day.revenue);
+    DOM.text($('today-flow-value'), num(day.completed));
+    DOM.text($('today-flow-day'), '第 ' + day.day + ' 天');
+    DOM.text($('today-flow-revenue'), money(day.revenue));
     if (overview && !centerReview && !document.activeElement?.matches(
         '#overview-panel input,#overview-panel select')) {
       if (centerAnalysis && centerRendered !== centerAnalysis) renderOverview(true);
@@ -1443,12 +1430,12 @@
       if (current() && !dispatchDirty) renderPanel();
       if (overview && !centerReview) centerRows();
     }
-    $('hud-cash').textContent = money(s.economy.cash);
-    $('hud-trains').textContent = traffic.trains.length + ' 列';
-    $('hud-waiting').textContent = num(hudSummary.waiting) + ' 人';
+    DOM.text($('hud-cash'), money(s.economy.cash));
+    DOM.text($('hud-trains'), traffic.trains.length + ' 列');
+    DOM.text($('hud-waiting'), num(hudSummary.waiting) + ' 人');
     $('hud-cash').classList.toggle('negative', s.economy.blocked);
-    $('clock').textContent = clock(traffic.minute);
-    $('game-day').textContent = '第 ' + (Math.floor((traffic.minute - 420) / 1440) + 1) + ' 天';
+    DOM.text($('clock'), clock(traffic.minute));
+    DOM.text($('game-day'), '第 ' + (Math.floor((traffic.minute - 420) / 1440) + 1) + ' 天');
     $('account-toggle').classList.toggle('funds-low', s.economy.blocked);
     const count = $('line-running');
     if (count) count.textContent = traffic.trains.filter(t => (t.parentLine || t.service) === selected)
@@ -1477,7 +1464,7 @@
     }
     const status = $('audit-status');
     if (status) status.textContent = playing ? '正在运营' : '已暂停 · 点击右上角开始运营';
-    $('network-wait-count').textContent = num(hudSummary.waiting);
+    DOM.text($('network-wait-count'), num(hudSummary.waiting));
     updateQueueLabels();
   }
 
@@ -1839,7 +1826,7 @@
       }
       const url = new URL(location.href);
       url.searchParams.set('map', b.dataset.world);
-      url.searchParams.set('v', '37');
+      url.searchParams.set('v', UI_VERSION);
       location.assign(url.href);
       return;
     }
@@ -2772,7 +2759,7 @@
     }
     try {
       if (!centerWorker) {
-        centerWorker = new Worker('operations-worker.js?v=38');
+        centerWorker = new Worker('operations-worker.js?v=39');
         centerForecastSent = null;
       }
       centerWorker.onerror = e => fail(e.message || '后台诊断不可用');
@@ -2837,18 +2824,8 @@
       panel.innerHTML = markup;
       return;
     }
-    const oldCards = new Map([...oldList.children].map(el => [el.dataset.centerRow, el]));
+    DOM.reconcile(oldList, [...newList.children], 'data-center-row');
     let index = 0;
-    for (const card of [...newList.children]) {
-      let el = oldCards.get(card.dataset.centerRow);
-      if (el) {
-        patchInsightNode(el, card);
-        oldCards.delete(card.dataset.centerRow);
-      } else el = card;
-      const at = oldList.children[index++];
-      if (at !== el) oldList.insertBefore(el, at || null);
-    }
-    for (const el of oldCards.values()) el.remove();
     patchInsightNode(panel.querySelector('.panel-header'), fresh.querySelector('.panel-header'));
     const scroll = panel.querySelector('.panel-scroll'),
       next = fresh.querySelector('.panel-scroll'),
@@ -2871,18 +2848,8 @@
       if (!keep.has(el)) el.remove();
   }
 
-  function percent(v) {
-    return Number.isFinite(v) ? Math.round(v * 100) + '%' : '超出供给';
-  }
-
   function centerMatch(row) {
-    const types = row.suggestions.map(x => x.type),
-      filter = centerFilter === 'all' || centerFilter === 'add' && types.some(t => ['add', 'stock',
-        'crowd'
-      ].includes(t)) || centerFilter === 'reduce' && types.includes('reduce') || centerFilter ===
-      'pattern' && row.suggestions.some(x => x.action === 'pattern' || ['short', 'express'].includes(x
-        .type)) || centerFilter === 'attention' && row.priority >= 60;
-    return filter && row.l.name.toLocaleLowerCase().includes(centerQuery.toLocaleLowerCase());
+    return centerView.match(row, centerFilter, centerQuery);
   }
 
   function filterCenter() {
@@ -2897,28 +2864,8 @@
       ' 条';
   }
 
-  function centerSatisfaction(rows) {
-    const scored = rows.filter(r => r.satisfaction !== null),
-      total = scored.reduce((v, r) => v + Math.max(0, r.stats.riders), 0),
-      weight = r => total ? Math.max(0, r.stats.riders) / total : 1 / Math.max(1, scored.length),
-      average = scored.reduce((v, r) => v + r.satisfaction * weight(r), 0),
-      scores = Object.fromEntries(Object.keys(Q.WEIGHTS).map(k => [k, scored.reduce((v, r) => v + (Q.line(
-        s, r.id).scores?.[k] ?? r.satisfaction) * weight(r), 0)]));
-    return `<section class="center-satisfaction"><div class="section-title">乘客满意度总览<small>${total?'按预测客流加权':'按线路平均'}</small></div><div class="satisfaction-network"><strong>${scored.length?(average*100).toFixed(1):'—'}<small> / 100</small></strong><span>${scored.filter(r=>r.satisfaction<.6).length} 条低于60分 · ${scored.filter(r=>r.satisfaction>=.85).length} 条达到85分</span></div><details class="console-details"><summary>全网评分构成</summary><div class="satisfaction-overview-factors">${Object.entries(Q.LABELS).map(([k,label])=>`<span>${label}<b>${scored.length?Math.round(scores[k]*100):'—'}</b></span>`).join('')}</div></details></section>`;
-  }
-
-  function centerReviewContent() {
-    if (!centerReview) return '';
-    const row = centerRows().find(x => x.id === centerReview.id);
-    if (!row) return '';
-    const p = centerReview.preview;
-    return `<section class="center-review"><div class="section-title">审核投放方案 · ${esc(row.l.name)}<button id="center-cancel">取消</button></div>${p.error?`<p>${esc(p.error)}</p>`:`<div class="center-plan-table"><span>时段</span><span>当前</span><span>调整后</span><b>平峰</b><b>${row.beforeOff} 列</b><b>${p.offPeak} 列</b><b>高峰</b><b>${row.beforePeak} 列</b><b>${p.peak} 列</b></div><p>改为自动投放 · ${row.l.stockSpec} · 当前兼容可配属 ${row.available} 列。${row.shortage?'理想高峰尚缺 '+row.shortage+' 列，本方案仅使用现有库存。':''}</p><p>调整后高峰断面预测负荷 ${percent(p.peakRatio)}，目标80%。${p.peakRatio>1?'现有车辆或交路分配仍不足，需继续购车或调整交路。':''}</p><p class="station-note">保留原交路和停站，仅按比例调整交路配车。现有车上乘客、候车和累计收入保留；减车在完成本次运行后退出。方案将重算需求与间隔。</p><button id="center-confirm" class="primary">应用此投放方案</button>`}</section>`;
-  }
-
   function centerEvidence(row) {
-    const l = row.l,
-      st = row.stats;
-    return `<div class="section-title">预测断面高峰需求<small>人 / 小时 · 较忙方向</small></div><div class="center-segments">${row.segments.map(x=>`<div><span>${esc(s.nodes[x.from].name)}—${esc(s.nodes[x.to].name)}</span><i><b style="width:${row.maxDemand?Math.max(1,x.demand/row.maxDemand*100):0}%"></b></i><strong>${num(x.demand*OC.PEAK)}</strong></div>`).join('')}</div><div class="section-title">交路使用占比<small>当前OD路径选择</small></div>${row.runUsage.map((x,i)=>`<div class="detail-row"><span>${i+1}. ${X.KINDS[x.kind]||'普通车'}</span><b>${percent(x.share)}</b></div>`).join('')}<p class="station-note">平峰预测最忙断面负荷 ${row.demand?percent(row.offLoad):'暂无OD'}；当前合计间隔 ${fmtHeadway(st.headway)}。${row.open?'':'当前已正常收车，零候车不作为减车依据。'}站外人数可能由多线共享，需到车站候车页判断。</p><button data-line="${l.id}">打开线路详情与交路编辑</button>`;
+    return centerView.evidence(s, row);
   }
   document.addEventListener('toggle', e => {
     const el = e.target;
@@ -2928,13 +2875,6 @@
     if (row && body && !body.hasChildNodes()) body.innerHTML = centerEvidence(row);
   }, true);
 
-  function centerCard(row, expanded = false) {
-    const l = row.l,
-      st = row.stats,
-      suggestions = row.suggestions;
-    return `<article class="center-line" data-center-row="${l.id}" style="--color:${l.color}" ${centerMatch(row)?'':'hidden'}><header><i></i><button data-line="${l.id}">${esc(l.name)}</button><span class="line-score-pill" title="乘客满意度">${row.satisfaction===null?'—':Math.round(row.satisfaction*100)}<small> 分</small></span><span class="center-status ${row.priority>=90?'urgent':row.priority>=60?'attention':''}">${row.priority>=90?'优先处理':row.priority>=60?'需要关注':suggestions.length?'优化机会':'运行平稳'}</span></header><div class="center-line-sub">${l.stockSpec} · ${new Set(l.stops).size}站 · ${st.km.toFixed(1)}km · ${row.open?(F.peak(traffic.minute)?'高峰运营':'平峰运营'):'非运营时段'}</div><div class="center-metrics"><span>预测日客流<b>${num(st.riders)}</b></span><span>高峰断面负荷<b class="${row.peakLoad>.9?'negative':''}">${row.demand?percent(row.peakLoad):'暂无OD'}</b></span><span>实时最高满载<b>${row.online?percent(row.maxLoad):'无在线列车'}</b></span><span>本线站台候车<b>${num(row.waiting)} 人</b></span></div><div class="center-dispatch"><span>平峰 <b>${row.beforeOff}</b> / 建议 ${row.demand?row.idealOff:'—'} 列</span><span>高峰 <b>${row.beforePeak}</b> / 建议 ${row.demand?row.idealPeak:'—'} 列</span><span>在线 ${row.online} · 预留 ${l.fleet}</span></div><div class="center-advice">${suggestions.map(a=>`<div class="center-advice-row"><span><b>${esc(a.title)}</b><small>${esc(a.reason)}</small></span>${a.action==='dispatch'?`<button data-center-dispatch="${l.id}">审核方案</button>`:a.action==='buy'?`<button data-center-buy="${l.id}">查看车库</button>`:a.action==='pattern'?`<button data-center-pattern="${l.id}" data-center-key="${a.key}">准备草案</button>`:`<button data-line="${l.id}">检查线路</button>`}</div>`).join('')||'<p class="station-note">当前没有明显的运力或交路调整信号。</p>'}</div><details data-center-detail="${l.id}"><summary>查看断面与交路依据</summary><div data-center-evidence="${l.id}">${expanded?centerEvidence(row):''}</div></details></article>`;
-  }
-
   function renderOverview(ready = false, noRequest = false) {
     if (!overview) return;
     centerRendered = centerAnalysis;
@@ -2942,7 +2882,7 @@
       scroll = panel.querySelector('.panel-scroll')?.scrollTop || 0,
       open = new Set([...panel.querySelectorAll('details[open]')].map(x => x.dataset.centerDetail || x
         .id)),
-      rows = (ready || noRequest ? centerAnalysis?.rows || [] : centerRows()),
+      rows = [...(ready || noRequest ? centerAnalysis?.rows || [] : centerRows())],
       m = centerAnalysis?.metrics || {
         lines: s.services.length,
         stations: new Set(s.services.flatMap(l => l.stops)).size,
@@ -2965,9 +2905,21 @@
       };
     if (sort === 'riders') rows.sort((a, b) => b.stats.riders - a.stats.riders);
     if (sort === 'capacity') rows.sort((a, b) => b.priority - a.priority);
-    patchCenterPanel(panel,
-      `<div class="panel-header"><div class="panel-heading"><div><small class="center-eyebrow">NETWORK CONTROL</small><h2>运营中心</h2></div><button id="close-overview" class="panel-close" aria-label="关闭运营中心">×</button></div><div class="panel-subtitle">${clock(traffic.minute)} · ${m.lines} 条线路 · ${m.stations} 站 · ${m.networkKm.toFixed(1)} km线网</div></div><div class="panel-scroll"><div class="center-summary"><div><span>加车 / 库存关注</span><strong>${counts.add}</strong></div><div><span>减车机会</span><strong>${counts.reduce}</strong></div><div><span>交路优化机会</span><strong>${counts.pattern}</strong></div></div><div class="center-tools"><input id="center-search" aria-label="搜索运营线路" placeholder="搜索线路名称" value="${esc(centerQuery)}"><select id="overview-sort" aria-label="线路排序"><option value="default" ${sort==='default'?'selected':''}>优先处理在前</option><option value="riders" ${sort==='riders'?'selected':''}>日客流从高到低</option></select><button id="center-refresh">刷新诊断</button></div><div class="center-filters">${[['all','全部',rows.length],['attention','关注',counts.attention],['add','加车',counts.add],['reduce','减车',counts.reduce],['pattern','交路',counts.pattern]].map(([id,name,n])=>`<button data-center-filter="${id}" class="${centerFilter===id?'active':''}">${name} <b>${n}</b></button>`).join('')}</div>${reviewPulse()}${centerSatisfaction(rows)}${centerReviewContent()}<div class="section-title">线路行动清单<small id="center-result-count">${rows.filter(centerMatch).length} / ${rows.length} 条</small></div><div class="center-lines">${rows.map(row=>centerCard(row,open.has(row.id))).join('')}</div><div id="center-empty" ${rows.some(centerMatch)?'hidden':''}><p>${centerError?'后台诊断暂不可用：'+esc(centerError):s.services.length?rows.length?'没有符合当前筛选的线路。':'正在后台分析线网，列车继续运行…':'先建成第一条线路，运营中心就会开始诊断。'}</p></div><details id="center-network"><summary>线网专业指标</summary><div class="stat-grid network-grid"><div><span>日客运量</span><strong>${num(m.journeys)}</strong></div><div><span>客流强度 · 人次/(km·日)</span><strong>${num(m.intensity)}</strong></div><div><span>客运周转量 · 人公里/日</span><strong>${num(m.passengerKm)}</strong></div><div><span>平均运距</span><strong>${m.averageDistance.toFixed(1)} km</strong></div><div><span>换乘站</span><strong>${m.interchanges}</strong></div><div><span>换乘出行占比</span><strong>${percent(m.transferShare)}</strong></div><div><span>步行人口覆盖率</span><strong>${percent(m.coverage)}</strong></div><div><span>线路累计长度</span><strong>${m.lineKm.toFixed(1)} km</strong></div></div></details><details id="center-method"><summary>诊断口径与限制</summary><p class="station-note">预测按当前OD路径中容量约束前需求计算，高峰18%、平峰6%折算最忙小时，以80%满载为目标；基础服务目标为高峰8分钟、平峰12分钟，参数属于游戏设定。需求未形成时不自动建议减车。实时最高满载与排队为当前时刻，收车后不用于推断全天空载。交路建议是规则诊断，准备草案不会生效，需要在编辑器审阅并应用。共享轨道容量、环线方向、最低交路配车与兼容库存仍由原规则校验。诊断在后台每10秒更新，修改前再次校验；单线建议可能争用同一份库存，应用顺序会影响后续方案。</p></details></div>`
-    );
+    patchCenterPanel(panel, centerView.content({
+      state: s,
+      minute: traffic.minute,
+      rows,
+      metrics: m,
+      counts,
+      sort,
+      query: centerQuery,
+      filter: centerFilter,
+      error: centerError,
+      expanded: open,
+      review: centerReview,
+      pulse: reviewPulse()
+    }));
+
     for (const d of panel.querySelectorAll('details'))
       if (open.has(d.dataset.centerDetail || d.id)) d.open = true;
     panel.querySelector('.panel-scroll').scrollTop = scroll;
@@ -3023,25 +2975,6 @@
     return reviewView.pulse(s);
   }
 
-  function connectionCard(l) {
-    const r = forecast.lineConnections?.[l.id];
-    if (!r) return '';
-    const names = {
-        work: '通勤',
-        shopping: '购物',
-        leisure: '休闲 / 到访'
-      },
-      total = r.demand,
-      dominant = Object.entries(r.purposes).sort((a, b) => b[1] - a[1])[0]?.[0];
-    return `<details id="line-connections" class="connection-card"><summary>需求构成与连接<small>${total?(names[dominant]||'多用途')+'为主':'待形成需求'}</small></summary><p class="connection-caption">基础需求 · 运能约束前</p><div class="connection-purposes">${Object.entries(names).map(([key,name])=>`<div><span>${name}</span><i><b style="width:${total?r.purposes[key]/total*100:0}%"></b></i><strong>${total?Math.round(r.purposes[key]/total*100):0}%</strong></div>`).join('')}</div><div class="connection-facts"><span>沿线接驳居民 <b>${num(r.people)}</b></span><span>沿线接驳岗位 <b>${num(r.jobs)}</b></span><span>市内通勤覆盖岗位 <b>${num(r.reachableJobs)}</b></span><span>平均全程耗时 <b>${total?Math.round(r.minutes)+' 分钟':'暂无需求'}</b></span></div><details id="line-choices" class="console-details"><summary>线路选择与分流</summary><div class="detail-row"><span>有其他可接受路线的客流占比</span><b>${Math.round(r.sharedShare*100)}%</b></div><div class="detail-row"><span>需要换乘的客流占比</span><b>${Math.round(r.transferShare*100)}%</b></div><div class="detail-row"><span>其中枢纽接驳需求</span><b>${num(r.hub)} 人次/日</b></div><p class="station-note">每份出行需求先受居民和目的地活动供给约束，再选择交通方式与路线。平行服务共享同一份需求，增加有效班次可以缩短候车；票价高、绕行或换乘多会降低竞争力。沿线接驳按步行800米分摊；市内通勤覆盖岗位为本线所参与市内通勤路径的就业端接驳岗位，含经其他线路到达，不是新增工作岗位或保证客流。枢纽接驳包含在上方用途内，不能再次相加。</p></details></details>`;
-  }
-
-  function cultivationCard(l) {
-    const r = Q.line(s, l.id),
-      scores = r.scores || {},
-      observed = r.observations || {};
-    return `<section class="cultivation-card satisfaction-card"><div><b>乘客满意度</b><strong>${((r.satisfaction??.7)*100).toFixed(1)}<small> / 100</small></strong></div><div class="cultivation-track"><i style="width:${(r.satisfaction??.7)*100}%"></i></div><p>客流系数 ×${r.factor.toFixed(2)} · 本线单日最高 ${num(r.bestDay||0)} 人次</p><details class="console-details satisfaction-breakdown"><summary>查看评分构成</summary><div class="satisfaction-factors">${Object.entries(Q.WEIGHTS).map(([k,w])=>`<div><span>${Q.LABELS[k]}<small> ${Math.round(w*100)}%</small></span><i><b style="width:${(scores[k]??.7)*100}%"></b></i><strong>${Math.round((scores[k]??.7)*100)}</strong></div>`).join('')}</div></details><small>按当前计划与实际运营估算，非真实问卷。候车约 ${(observed.wait||0).toFixed(1)} 分钟 · 平均车载 ${Math.round((observed.load||0)*100)}% · 拒入 ${Math.round((observed.loss||0)*100)}%。满意度在运营中平滑变化，影响到站客流；不再按开通天数自动增长。</small></section>`;
-  }
   let stationForecastCache = null;
 
   function stationForecast(id) {
@@ -3234,17 +3167,19 @@
   }
 
   function htmlIfChanged(el, html) {
-    if (el && el._lastHtml !== html) {
-      el.innerHTML = html;
-      el._lastHtml = html;
-    }
+    DOM.html(el, html);
   }
 
   function localSaveContent() {
-    const c = pendingImport,
-      st = c?.state,
-      target = c ? B.get(c.region) : null;
-    return `<div class="urban-hero"><span>本地存档 · 已暂停 · ${cfg.name}</span><strong>${s.services.length}<small>条线路</small></strong><p>第 ${Math.floor((s.economy.minute-420)/1440)+1} 天 · ${money(s.economy.cash)} · ${[...new Set(s.services.flatMap(l=>l.stops))].length} 站</p></div><div class="save-status" role="status"><b>IndexedDB · 本机数据库</b><span>${esc(saveStatus)}</span>${saveMeta?.bytes?'<small>当前存档 '+(saveMeta.bytes/1024/1024).toFixed(2)+' MB</small>':''}</div><div class="plan-actions"><button id="save-local-now">立即保存到浏览器</button><button id="export-local-save" class="primary">导出当前存档 · JSON</button></div><p class="station-note">保存已建成的线网、车辆、城市、财务、满意度、客流运行进度和本地图纪录；未应用的草图与编辑不包含在内。</p><div class="section-title">从文件恢复</div><input id="local-save-file" type="file" accept=".json,application/json" hidden><button id="choose-local-save">选择本地存档文件</button><p class="station-note">文件只在此浏览器解析，不上传服务器。支持64MB以内JSON，先校验并预览，确认后存入本机数据库并替换对应地图；其他地图保留。导入后保持暂停。</p>${importError?`<p class="save-error" role="alert">${esc(importError)}</p>`:''}${c?`<section class="save-preview"><h3>待导入 · ${target.name}</h3><div class="detail-row"><span>线路 / 运营站</span><b>${st.services.length} / ${new Set(st.services.flatMap(l=>l.stops)).size}</b></div><div class="detail-row"><span>游戏时间</span><b>第 ${Math.floor((st.economy.minute-420)/1440)+1} 天 ${clock(st.economy.minute)}</b></div><div class="detail-row"><span>可用资金</span><b>${money(st.economy.cash)}</b></div><div class="detail-row"><span>城市设施</span><b>${st.urban?.facilities?.length||0}</b></div><p>${c.runtime?'包含列车、候车与在途乘客进度。':'此文件仅包含建设进度，导入后重新安排运行班次。'}</p><p>将替换本机「${target.name}」存档。可先导出当前进度保留备份。</p><div class="plan-actions"><button id="cancel-local-import">取消导入</button><button id="confirm-local-import" class="primary">确认导入${c.region!==region?'并切换地图':''}</button></div></section>`:''}`;
+    return saveView.content({
+      state: s,
+      cfg,
+      pendingImport,
+      saveStatus,
+      saveMeta,
+      importError,
+      region
+    });
   }
 
   function downloadLocalSave() {
@@ -3331,7 +3266,7 @@
       importing = true;
       const url = new URL(location.href);
       url.searchParams.set('map', c.region);
-      url.searchParams.set('v', '37');
+      url.searchParams.set('v', UI_VERSION);
       location.assign(url.href);
     } catch (error) {
       importError = error.message;
@@ -3342,25 +3277,7 @@
   }
 
   function patchInsightNode(old, next) {
-    if (old.nodeType !== next.nodeType || old.nodeName !== next.nodeName) {
-      old.replaceWith(next.cloneNode(true));
-      return;
-    }
-    if (old.nodeType === 3) {
-      if (old.data !== next.data) old.data = next.data;
-      return;
-    }
-    if (old.nodeType !== 1) return;
-    for (const a of [...old.attributes])
-      if (!next.hasAttribute(a.name)) old.removeAttribute(a.name);
-    for (const a of next.attributes)
-      if (old.getAttribute(a.name) !== a.value) old.setAttribute(a.name, a.value);
-    const children = [...next.childNodes];
-    for (let i = 0; i < children.length; i++) {
-      if (!old.childNodes[i]) old.append(children[i].cloneNode(true));
-      else patchInsightNode(old.childNodes[i], children[i]);
-    }
-    while (old.childNodes.length > children.length) old.lastChild.remove();
+    DOM.patchNode(old, next);
   }
 
   function refreshInsight(body, type) {
@@ -3404,26 +3321,7 @@
       old = pane.querySelector(list),
       fresh = next.querySelector(list);
     if (!old || !fresh) return false;
-    const ids = new Set();
-    for (const card of fresh.children) {
-      const id = card.getAttribute(attr);
-      if (!id) {
-        if (!old.querySelector('.insight-empty')) old.replaceChildren(card.cloneNode(true));
-        continue;
-      }
-      ids.add(id);
-      let current = [...old.children].find(c => c.getAttribute(attr) === id);
-      if (current) patchInsightNode(current, card);
-      else {
-        current = card.cloneNode(true);
-        old.append(current);
-      }
-      const index = [...fresh.children].indexOf(card);
-      if (old.children[index] !== current) old.insertBefore(current, old.children[index] || null);
-    }
-    for (const card of [...old.children])
-      if (card.getAttribute(attr) && !ids.has(card.getAttribute(attr))) card.remove();
-    if (ids.size) old.querySelector('.insight-empty')?.remove();
+    DOM.reconcile(old, [...fresh.children], attr);
     const notice = pane.querySelector('.metrics-notice'),
       newNotice = next.querySelector('.metrics-notice');
     if (notice && newNotice) notice.textContent = newNotice.textContent;
@@ -3445,27 +3343,9 @@
         b = fresh.querySelector(selector);
       if (a && b) patchInsightNode(a, b);
     }
-    const wantsCards = !!newList.querySelector('[data-review-id]');
-    const oldCards = new Map([...old.querySelectorAll('[data-review-id]')].map(el => [el.dataset.reviewId,
-      el
-    ]));
-    let index = 0;
-    for (const next of [...newList.children]) {
-      let el = oldCards.get(next.dataset.reviewId);
-      if (el) {
-        const open = el.querySelector('details')?.open;
-        patchInsightNode(el, next);
-        if (open && el.querySelector('details')) el.querySelector('details').open = true;
-        oldCards.delete(next.dataset.reviewId);
-      } else el = next;
-      const current = old.children[index++];
-      if (el !== current) old.insertBefore(el, current || null);
-    }
-    for (const el of oldCards.values()) el.remove();
-    if (wantsCards) old.querySelector('.review-empty')?.remove();
-    else if (old.querySelector('.review-empty'))
-      for (const el of [...old.children])
-        if (el !== old.querySelector('.review-empty')) el.remove();
+    DOM.reconcile(old, [...newList.children], 'data-review-id', {
+      preserveDetails: true
+    });
     return true;
   }
   let choosingLocalFile = false;
@@ -3577,35 +3457,20 @@
 
   function renderAccount() {
     if (!account) return;
-    const e = s.economy;
-    const lineStats = N.allStats(s, forecast);
-    $('account-panel').innerHTML =
-      `<header class="screen-header"><div><span>RAIL MANAGEMENT</span><h1>财务</h1></div><button id="goto-stations">候车 →</button><button id="close-account" class="panel-close" aria-label="关闭财务">×</button></header><div class="finance-content"><div class="balance-rule">发展模式 · 票款另奖11倍发展金 · 运营成本65%</div><div class="finance-summary"><div><span>可用余额</span><strong id="account-cash">${money(e.cash)}</strong><small id="account-blocked"></small></div><div><span>本局票款收入</span><strong id="actual-revenue">${money(e.revenue)}</strong></div><div><span>运营发展金 · 游戏奖励</span><strong id="actual-grant">${money(e.operatingGrant)}</strong></div><div><span>运营与维护支出</span><strong id="actual-operating">${money(e.operating)}</strong></div><div><span>未偿贷款本金</span><strong id="finance-principal"></strong></div></div><div class="finance-columns"><section class="finance-card"><h2>资金收支</h2><div class="detail-row"><span>建设成本调整返还 · 一次性</span><b>${money(e.infrastructureRebate)}</b></div><div class="detail-row"><span>建设与购车投入</span><b>${money(e.construction)}</b></div><div class="detail-row"><span>资产回收</span><b>${money(e.salvage)}</b></div><div class="detail-row"><span>已偿本金</span><b id="finance-repaid"></b></div><div class="detail-row"><span>已付利息</span><b id="actual-interest"></b></div><div class="detail-row"><span>待付运营账款</span><b id="actual-arrears"></b></div><h2>资金流水</h2><div id="money-ledger"></div></section><section class="finance-card"><h2>贷款</h2><p class="finance-note">本金合计上限 1.5 亿元，最多 3 笔。每笔 500 万—5000 万元；日息 0.05%，30 个游戏日等额本金，每 24 个模拟小时自动还本付息，可提前结清。无自动借款。</p><div class="loan-actions"><select id="loan-amount" aria-label="贷款金额"><option value="100000000">500 万元</option><option value="500000000">2500 万元</option><option value="1000000000">5000 万元</option></select><button id="borrow-money" ${M.available(s)<1e8?'disabled':''}>申请贷款</button></div><p class="finance-note">当前单笔可申请 ${money(M.available(s))}</p><div id="loan-list"></div><details class="finance-rules"><summary>游戏计费规则</summary><p>金额均为人民币。初始余额 2.5 亿元，不预置线路、车站或车辆。轨道每 km 400 万元，车站 200 万元，车厢每节 15 万元。拆除回收轨道/车站的 20%、车辆的 50%。票款只在完成旅程后入账；每收到1元实际票款另发11元运营发展金，单独记账。车辆运行及固定运营成本按原版65%结算；借款利息与还本不打折。余额不足或到期未还会暂停运营。以上均为游戏规则。</p></details></section></div><section class="finance-card finance-lines"><h2>线路财务预测</h2><p class="finance-note">工作日预测：票款＋运营发展金−运营支出。实际结算受运能、候车与完成量影响。</p><div class="table-wrap"><table><thead><tr><th>线路</th><th>日票款</th><th>日发展金</th><th>日支出</th><th>日净收入</th></tr></thead><tbody>${s.services.map(l=>{const st=lineStats.get(l.id);return `<tr><td>${esc(l.name)}</td><td>${money(st.revenue)}</td><td>${money(st.operatingGrant)}</td><td>${money(st.cost)}</td><td>${money(st.totalIncome-st.cost)}</td></tr>`;}).join('')||'<tr><td colspan="5">建成线路后显示每日预测</td></tr>'}</tbody></table></div></section></div>`;
+    const panel = $('account-panel');
+    DOM.patchMarkup(panel, financeView.content(s, N.allStats(s, forecast), M.available(s)), {
+      preserveDetails: true,
+      preserveForms: true,
+      skipChildren: ['loan-list', 'money-ledger']
+    });
     updateAccountLive();
   }
 
   function updateAccountLive() {
-    const e = s.economy;
-    for (const [id, val] of Object.entries({
-        'account-cash': money(e.cash),
-        'account-blocked': e.blocked ? '资金不足或贷款到期未还，运营暂停' : '',
-        'actual-revenue': money(e.revenue),
-        'actual-grant': money(e.operatingGrant),
-        'actual-operating': money(e.operating),
-        'actual-interest': money(e.interestPaid),
-        'actual-arrears': money(e.arrears),
-        'finance-principal': money(e.loans.reduce((v, l) => v + l.principal, 0)),
-        'finance-repaid': money(e.principalPaid)
-      }))
-      if ($(id)) $(id).textContent = val;
-    const list = $('loan-list');
-    if (list) htmlIfChanged(list, e.loans.map(l =>
-      `<div class="loan-card"><b>贷款 ${l.id} · 剩余 ${money(l.principal)}</b><span>已计利息 ${money(l.interest)} · 下次应还约 ${money(Math.min(l.principal,l.installment)+l.interest+l.principal*M.RATE*Math.max(0,l.nextDue-e.minute)/1440)}</span><span>${Math.max(0,(l.nextDue-e.minute)/1440).toFixed(2)} 天后扣款</span><button data-repay="${l.id}">提前结清 ${money(l.principal+l.interest)}</button></div>`
-    ).join('') || '<p class="station-note">暂无贷款</p>');
-    const ledger = $('money-ledger');
-    if (ledger) htmlIfChanged(ledger, e.ledger.slice(0, 12).map(x =>
-      `<div class="detail-row"><span>第 ${Math.floor((x.minute-420)/1440)+1} 天 ${clock(x.minute)}<br>${esc(x.type)}</span><b>${x.amount>=0?'+':'−'}${money(Math.abs(x.amount))}</b></div>`
-    ).join(''));
+    const model = financeView.live(s);
+    for (const [id, value] of Object.entries(model.fields)) DOM.text($(id), value);
+    htmlIfChanged($('loan-list'), model.loans);
+    htmlIfChanged($('money-ledger'), model.ledger);
   }
 
   function hubMarkers() {
@@ -3717,50 +3582,27 @@
 
   function renderStations() {
     if (!stationMenu) return;
-    $('stations-panel').innerHTML =
-      `<header class="screen-header"><div><span>PASSENGER NETWORK</span><h1>车站候车</h1></div><button id="open-account-overview">财务 →</button><button id="close-stations" class="panel-close" aria-label="关闭车站候车">×</button></header><div class="stations-content"><div class="station-summary"><div><span>运营车站</span><strong id="station-count">0</strong></div><div><span>全网正在候车</span><strong id="station-waiting-total">0</strong></div><div><span>候车最多</span><strong id="busiest-station">—</strong></div></div><div class="station-filters"><input id="station-search" aria-label="搜索车站或线路" placeholder="搜索车站或线路" value="${esc(stationQuery)}"><select id="station-sort" aria-label="车站排序"><option value="waiting" ${stationSort==='waiting'?'selected':''}>候车人数最多</option><option value="name" ${stationSort==='name'?'selected':''}>车站名称</option></select><span id="station-results"></span></div><div class="station-list-scroll"><table class="station-menu-table"><thead><tr><th>车站</th><th>所属线路</th><th>站内 / 容量</th><th></th></tr></thead><tbody id="station-rows"></tbody></table></div><div id="stations-empty" hidden><h2>还没有运营车站</h2><p>在地图上自由设站并建成第一条线路后，这里会显示每个站的候车人数。</p><button id="station-build-first">返回地图建线</button></div></div>`;
+    DOM.patchMarkup($('stations-panel'), stationsView.shell(stationQuery, stationSort), {
+      preserveForms: true,
+      skipChildren: ['station-rows']
+    });
     updateStationRows();
   }
 
   function updateStationRows() {
     if (!stationMenu) return;
-    const counts = queueTotals(),
-      ids = [...new Set(s.services.flatMap(l => l.stops))],
-      all = ids.map(id => ({
-        id,
-        name: s.nodes[id].name,
-        waiting: counts[id] || 0,
-        capacity: Q.limits(s, id).capacity,
-        outside: Object.values(traffic.outside?.[id] || {}).reduce((v, n) => v + n, 0),
-        lines: s.services.filter(l => l.stops.includes(id)).map(l => l.name).join('、')
-      })),
-      query = stationQuery.toLocaleLowerCase(),
-      rows = all.filter(r => !query || (r.name + r.lines).toLocaleLowerCase().includes(query));
-    rows.sort(stationSort === 'name' ? (a, b) => a.name.localeCompare(b.name, 'zh-CN') : (a, b) => b
-      .waiting - a.waiting || a.id - b.id);
-    $('station-count').textContent = ids.length;
-    $('station-waiting-total').textContent = num(all.reduce((v, r) => v + r.waiting, 0));
-    const busiest = [...all].sort((a, b) => b.waiting - a.waiting)[0];
-    $('busiest-station').textContent = busiest ? busiest.name + ' · ' + num(busiest.waiting) : '—';
-    $('station-results').textContent = rows.length + ' 座车站';
-    $('stations-empty').hidden = ids.length > 0;
-    const tbody = $('station-rows'),
-      order = rows.map(r => r.id).join(',');
-    if (tbody.dataset.order !== order) {
-      tbody.innerHTML = rows.map(r =>
-        `<tr data-station-row="${r.id}"><td><button data-station="${r.id}">${esc(r.name)}</button></td><td>${esc(r.lines)}</td><td data-wait-cell="${r.id}"></td><td><button data-station="${r.id}">查看 / 定位</button></td></tr>`
-      ).join('');
-      tbody.dataset.order = order;
-    }
-    for (const r of rows) {
-      const cell = tbody.querySelector(`[data-wait-cell="${r.id}"]`);
-      if (cell) {
-        cell.classList.toggle('crowded', r.waiting / r.capacity > .85 || r.outside > 0);
-        htmlIfChanged(cell,
-          `<b>${num(r.waiting)} / ${num(r.capacity)}</b><small class="queue-outside">站外 ${num(r.outside)} 人</small><small class="queue-outside">今日进站 ${num(Q.station(s,r.id,traffic.minute).entered)} · 上车 ${num(Q.station(s,r.id,traffic.minute).boarded)}</small><small class="queue-outside">预测进站 ${num(stationForecast(r.id).entry)} / 日</small>`
-        );
-      }
-    }
+    const model = stationsView.model(s, traffic, stationQuery, stationSort, queueTotals());
+    DOM.text($('station-count'), model.count);
+    DOM.text($('station-waiting-total'), num(model.waiting));
+    DOM.text($('busiest-station'), model.busiest ? model.busiest.name + ' · ' + num(model.busiest
+      .waiting) : '—');
+    DOM.text($('station-results'), model.rows.length + ' 座车站');
+    $('stations-empty').hidden = model.count > 0;
+    const markup = model.rows.map(row => stationsView.row(row, Q.station(s, row.id, traffic.minute),
+      stationForecast(row.id).entry)).join('');
+    DOM.reconcileHTML($('station-rows'), markup, 'data-station-row', {
+      preserveClasses: ['station-alarm']
+    });
   }
   document.addEventListener('input', e => {
     if (e.target.id === 'center-search') {
