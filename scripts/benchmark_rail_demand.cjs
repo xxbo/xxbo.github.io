@@ -1,10 +1,10 @@
-/* MAP41 versus MAP42 demand kernels; separate processes, deterministic inputs and exact checksums. */
+/* MAP42 versus MAP43 whole forecasts; separate processes, deterministic inputs and exact checksums. */
 const {
   spawnSync
 } = require('node:child_process');
 if (!process.argv[2]) {
   const results = [];
-  for (const mode of ['map41-js', 'rust-wasm']) {
+  for (const mode of ['map42-mixed', 'rust-wasm']) {
     const r = spawnSync(process.execPath, ['--expose-gc', '--max-old-space-size=512', __filename, mode], {
       encoding: 'utf8',
       timeout: 180000
@@ -18,7 +18,7 @@ if (!process.argv[2]) {
     results
   }, null, 2));
 } else {
-  const D = process.argv[2] === 'map41-js' ? require('./fixtures/rail-map41-demand.cjs') : require('../rail/demand-model');
+  const D = process.argv[2] === 'map42-mixed' ? require('./fixtures/rail-map42-demand.cjs') : require('../rail/demand-model');
   const {
     create
   } = require('./fixtures/rail-memory-grid.cjs'), crypto = require('node:crypto');
@@ -72,6 +72,7 @@ if (!process.argv[2]) {
     }]
   }));
 
+  const Core=require('../rail/routing-wasm');
   function run() {
     const timings = {},
       result = {},
@@ -98,7 +99,10 @@ if (!process.argv[2]) {
       return sum;
     });
     time('forecastMs', () => {
+      const before=Core.status();
       const f = D.evaluate(state, small);
+      const after=Core.status();
+      forecastCalls=after.demandCalls-before.demandCalls;
       return {
         riders: f.riders,
         unserved: f.unserved,
@@ -118,6 +122,7 @@ if (!process.argv[2]) {
       checksum: hash.digest('hex')
     };
   }
+  let forecastCalls=0;
   run();
   global.gc();
   const samples = [],
@@ -132,6 +137,7 @@ if (!process.argv[2]) {
     end = process.memoryUsage();
   console.log(JSON.stringify({
     backend: process.argv[2],
+    forecastBoundaryCalls:forecastCalls,
     median: {
       odMs: median('odMs'),
       modesMs: median('modesMs'),

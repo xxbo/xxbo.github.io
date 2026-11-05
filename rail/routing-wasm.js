@@ -13,9 +13,10 @@
     ready = null,
     calls = 0,
     demandCalls = 0,
+    forecastCalls = 0,
     recycles = 0;
   let recycleBytes = 64 * 1024 * 1024;
-  const asset = node ? null : new URL('wasm/rail-core-v2.wasm?v=42',
+  const asset = node ? null : new URL('wasm/rail-core-v3.wasm?v=43',
     root.document?.currentScript?.src || root.location.href).href;
 
   function install(module) {
@@ -26,7 +27,7 @@
         hypot: Math.hypot
       }
     });
-    if (next.exports.routing_abi() !== ABI || next.exports.demand_abi?.() !== 1) throw Error('寻路WASM接口版本不匹配');
+    if (next.exports.routing_abi() !== ABI || next.exports.demand_abi?.() !== 1 || next.exports.world_abi?.() !== 1) throw Error('寻路WASM接口版本不匹配');
     compiled = module;
     instance = next;
     active = null;
@@ -232,7 +233,7 @@
   }
 
   function kernel(name, values, read = null, context = null) {
-    if (!['demand_ipf', 'demand_distribution', 'demand_mode', 'demand_strategy', 'demand_capacity'].includes(name)) throw Error('未知需求核心操作');
+    if (!['demand_ipf', 'demand_distribution', 'demand_mode', 'demand_strategy', 'demand_capacity', 'world_run', 'world_policy'].includes(name)) throw Error('未知需求核心操作');
     try {
       const wasm = exports();
       write(values);
@@ -252,6 +253,38 @@
       throw Error('Rust/WASM需求计算失败：' + error.message, {
         cause: error
       });
+    }
+  }
+
+  function forecastKernel(state, adjacency, values, read, context) {
+    const graph = GRAPH.get(adjacency) || prepare(state, adjacency);
+    try {
+      const wasm = exports();
+      if (active !== graph) {
+        write(graph.data);
+        wasm.graph_load();
+        active = graph;
+      }
+      const fees = prices(state, graph), input = new Float64Array(1 + fees.length + values.length);
+      input[0] = fees.length;
+      input.set(fees, 1);
+      input.set(values, 1 + fees.length);
+      write(input);
+      const pointer = wasm.forecast_run();
+      const view = new Float64Array(wasm.memory.buffer, pointer, wasm.output_len());
+      calls += view[2];
+      demandCalls++;
+      forecastCalls++;
+      const result = read(view, {...context, graph});
+      wasm.output_clear();
+      if (wasm.memory.buffer.byteLength > recycleBytes) {
+        install(compiled);
+        recycles++;
+      }
+      return result;
+    } catch(error) {
+      if (compiled) install(compiled);
+      throw Error('Rust/WASM批量预测失败：' + error.message, {cause: error});
     }
   }
 
@@ -277,6 +310,7 @@
     init,
     kernel,
     modeKernel,
+    forecastKernel,
     prepare,
     compactPaths,
     pathAt,
@@ -285,6 +319,8 @@
       backend: 'Rust/WASM',
       demandAbi: 1,
       demandCalls,
+      forecastCalls,
+      worldAbi: 1,
       abi: ABI,
       ready: !!instance,
       searches: calls,
@@ -300,7 +336,7 @@
   if (node) {
     const fs = require('node:fs'),
       path = require('node:path');
-    install(new WebAssembly.Module(fs.readFileSync(path.join(__dirname, 'wasm/rail-core-v2.wasm'))));
+    install(new WebAssembly.Module(fs.readFileSync(path.join(__dirname, 'wasm/rail-core-v3.wasm'))));
     module.exports = api;
   } else {
     root.RailRouting = api;

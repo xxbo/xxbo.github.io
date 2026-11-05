@@ -18,60 +18,11 @@
       leisure: .12
     };
 
-  function budgets(city) {
-    const out = {};
-    for (const purpose of Object.keys(FIELDS)) {
-      const nominal = Math.max(0, city.totals.people * RATES[purpose]),
-        capacity = Math.max(0, (city.totals[FIELDS[purpose]] || 0) * CAPACITY[purpose]);
-      out[purpose] = {
-        nominal,
-        capacity,
-        outbound: Math.min(nominal, capacity)
-      };
-    }
-    return out;
-  }
-  // IPF's final column scaling can slightly exceed a row target at finite iterations.
-  // Downscale only, so neither origin production nor destination attraction is exceeded.
-  function capRows(matrix, rows, n) {
-    for (let i = 0; i < n; i++) {
-      let sum = 0;
-      for (let j = 0; j < n; j++) sum += matrix[i * n + j];
-      if (sum > rows[i] && sum > 0) {
-        const ratio = rows[i] / sum;
-        for (let j = 0; j < n; j++) matrix[i * n + j] *= ratio;
-      }
-    }
-    return matrix;
-  }
-
-  function visitorBudget(city, total) {
-    const capacity = Math.max(0, (city.totals.shops || 0) * .8 + (city.totals.leisure || 0) * .65 + (city
-      .totals.jobs || 0) * .12);
-    return {
-      capacity,
-      scale: total > 0 ? Math.min(1, capacity / total) : 1
-    };
-  }
-  // Reserve only reachable external trips; leave room for local city life.
-  function reserveExternal(allocations, zones, reachable) {
-    const staff = new Float64Array(zones.length),
-      local = new Float64Array(zones.length);
-    for (const a of allocations)
-      for (let i = 0; i < zones.length; i++) {
-        if (!reachable(a, i)) {
-          a.staffTrips[i] = 0;
-          a.local[i] = 0;
-        }
-        staff[i] += a.staffTrips[i];
-        local[i] += a.local[i];
-      }
-    for (const a of allocations)
-      for (let i = 0; i < zones.length; i++) {
-        a.staffTrips[i] *= staff[i] ? Math.min(1, zones[i].people * .52 * .25 / staff[i]) : 0;
-        a.local[i] *= local[i] ? Math.min(1, zones[i].people * .12 * .25 / local[i]) : 0;
-      }
-  }
+  const kernels = () => typeof module !== 'undefined' && module.exports ? require('./demand-kernels') : root.RailDemandKernels;
+  const budgets = city => kernels().budgets(city);
+  const visitorBudget = (city,total) => kernels().visitorBudget(city,total);
+  const capRows = (matrix,rows,n) => kernels().capRows(matrix,rows,n);
+  const reserveExternal = (allocations,zones,reachable) => kernels().reserveExternal(allocations,zones,reachable);
 
   function summarize(s, model) {
     const stations = model.catchment.stations,

@@ -220,21 +220,9 @@
     return ACCESS[h.id] || ACCESS[h.type] || ACCESS.rail;
   }
 
-  function share(h, {
-    minutes,
-    access: walk,
-    fare,
-    km
-  }, kind) {
-    const a = access(h),
-      employee = kind?.startsWith('staff'),
-      value = employee ? 40 : 60,
-      rail = minutes + 1.3 * walk + fare / value,
-      reference = 12 + km / 30 * 60 + (180 + km * 12) / value;
-    // Reference share is an odds anchor, not a floor. Slow/costly services can approach zero.
-    const anchor = employee ? .35 : a.railReference,
-      logOdds = Math.log(anchor / (1 - anchor)) + (reference - rail) / 12;
-    return 1 / (1 + Math.exp(Math.max(-60, Math.min(60, -logOdds))));
+  function share(h,args,kind) {
+    const kernels = typeof module !== 'undefined' && module.exports ? require('./demand-kernels') : root.RailDemandKernels;
+    return kernels.hubShare(access(h).railReference,args,kind);
   }
   const api = {
     forRegion,

@@ -14,12 +14,15 @@ extern "C" {
     #[link_name = "hypot"]
     fn host_hypot(x: f64, y: f64) -> f64;
 }
-fn exp(value: f64) -> f64 {
+pub(super) fn exp(value: f64) -> f64 {
     let value = if value.is_nan() {
         value
     } else {
         value.clamp(-700.0, 700.0)
     };
+    raw_exp(value)
+}
+pub(super) fn raw_exp(value: f64) -> f64 {
     #[cfg(target_arch = "wasm32")]
     {
         unsafe { host_exp(value) }
@@ -29,7 +32,7 @@ fn exp(value: f64) -> f64 {
         value.exp()
     }
 }
-fn log(value: f64) -> f64 {
+pub(super) fn log(value: f64) -> f64 {
     #[cfg(target_arch = "wasm32")]
     {
         unsafe { host_log(value) }
@@ -39,7 +42,7 @@ fn log(value: f64) -> f64 {
         value.ln()
     }
 }
-fn hypot(x: f64, y: f64) -> f64 {
+pub(super) fn hypot(x: f64, y: f64) -> f64 {
     #[cfg(target_arch = "wasm32")]
     {
         unsafe { host_hypot(x, y) }
@@ -49,14 +52,14 @@ fn hypot(x: f64, y: f64) -> f64 {
         x.hypot(y)
     }
 }
-fn max(a: f64, b: f64) -> f64 {
+pub(super) fn max(a: f64, b: f64) -> f64 {
     if a.is_nan() || b.is_nan() {
         f64::NAN
     } else {
         a.max(b)
     }
 }
-fn min(a: f64, b: f64) -> f64 {
+pub(super) fn min(a: f64, b: f64) -> f64 {
     if a.is_nan() || b.is_nan() {
         f64::NAN
     } else {
@@ -121,7 +124,7 @@ fn ipf(input: &[f64]) -> Vec<f64> {
     out.extend(matrix);
     out
 }
-fn distribution(input: &[f64]) -> Vec<f64> {
+pub(super) fn distribution(input: &[f64]) -> Vec<f64> {
     assert!(input.len() >= 6);
     let n = int(input[0]);
     let effective = input[1] != 0.0;
@@ -218,7 +221,7 @@ fn logsum(values: &[f64]) -> f64 {
         f64::NEG_INFINITY
     }
 }
-fn mode_value(input: &[f64]) -> f64 {
+pub(super) fn mode_value(input: &[f64]) -> f64 {
     assert_eq!(input.len(), 10);
     let (value, minutes, access_cost, price, km) =
         (input[0], input[1], input[2], input[3], input[4]);
@@ -290,7 +293,7 @@ struct OptionRow {
     cost: f64,
     freq: f64,
 }
-fn strategy(input: &[f64]) -> Vec<f64> {
+pub(super) fn strategy(input: &[f64]) -> Vec<f64> {
     assert!(input.len() >= 2);
     let n = int(input[0]);
     let value = input[1];
@@ -344,7 +347,7 @@ fn strategy(input: &[f64]) -> Vec<f64> {
     }
     out
 }
-fn capacity(input: &[f64]) -> Vec<f64> {
+pub(super) fn capacity(input: &[f64]) -> Vec<f64> {
     assert!(input.len() >= 4);
     let (nt, nf, nl, nr) = (int(input[0]), int(input[1]), int(input[2]), int(input[3]));
     let mut at = 4;

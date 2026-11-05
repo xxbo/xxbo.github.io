@@ -123,7 +123,7 @@ for (const effective of [false, true]) {
   assert.deepEqual(clean(actual), clean(expected));
   assert.equal(JSON.stringify(city), source);
   forecasts++;
-  assert.equal(actual.diagnostics.memory.demand, 'rust-wasm-demand-abi1');
+  assert.equal(actual.diagnostics.memory.demand, 'rust-wasm-forecast-abi1');
 }
 // Zero population/zero attraction and disconnected network preserve empty demand semantics.
 for (const kind of ['empty', 'no-people', 'no-jobs', 'disconnected', 'crowded']) {
@@ -226,7 +226,7 @@ for (let step = 0; step < 6; step++) {
   const save = LS.parse(JSON.stringify(LS.pack(state, P.snapshot(rt))));
   assert(P.restore(save.state, next, save.runtime));
 }
-const bytes = fs.readFileSync(path.join(__dirname, '../rail/wasm/rail-core-v2.wasm'));
+const bytes = fs.readFileSync(path.join(__dirname, '../rail/wasm/rail-core-v3.wasm'));
 Router.create(bytes, {
   recycleBytes: 0
 });

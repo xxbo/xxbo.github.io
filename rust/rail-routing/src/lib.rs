@@ -1,8 +1,10 @@
 //! Deterministic metro routing and demand kernels with versioned f64-array ABIs.
 //! Heap tie order, tolerances and arithmetic order intentionally match the frozen JS oracle.
 mod demand;
+mod world;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
+use std::rc::Rc;
 
 const ABI: f64 = 1.0;
 const NONE: usize = usize::MAX;
@@ -78,6 +80,7 @@ struct Core {
     output: Vec<f64>,
     graph: Option<Graph>,
     searches: u32,
+    world_cache: Option<Rc<world::Prepared>>,
 }
 thread_local! { static CORE: RefCell<Core> = RefCell::new(Core::default()); }
 
@@ -429,6 +432,7 @@ pub extern "C" fn route_search(origin: usize, value: f64, first_group: u32) -> *
             output,
             graph,
             searches,
+            ..
         } = &mut *c;
         let graph = graph.as_mut().expect("routing graph not loaded");
         assert_eq!(input.len(), graph.prices.len() * 6 + graph.companies.len());

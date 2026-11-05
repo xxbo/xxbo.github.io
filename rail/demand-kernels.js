@@ -160,7 +160,30 @@
       if (out[at + i * 2]) base.serviceFlow[id] = out[at + i * 2 + 1];
     });
   }
+  function budgets(city) {
+    const out=Core.kernel('world_policy',[0,...['people','jobs','shops','industry','leisure'].map(k=>city.totals[k]||0)]);
+    return Object.fromEntries(PURPOSES.map((p,i)=>[p,{nominal:out[i*3],capacity:out[i*3+1],outbound:out[i*3+2]}]));
+  }
+  function visitorBudget(city,total) {
+    const out=Core.kernel('world_policy',[1,city.totals.shops||0,city.totals.leisure||0,city.totals.jobs||0,total]);
+    return {capacity:out[0],scale:out[1]};
+  }
+  function capRows(matrix,rows,n) {
+    const out=Core.kernel('world_policy',[2,n,...rows,...matrix]);
+    for(let i=0;i<out.length;i++)matrix[i]=out[i];
+    return matrix;
+  }
+  function reserveExternal(allocations,zones,reachable) {
+    const values=[3,allocations.length,zones.length,...zones.map(z=>z.people)];
+    for(const a of allocations)for(let i=0;i<zones.length;i++)values.push(a.staffTrips[i],a.local[i],reachable(a,i)?1:0);
+    const out=Core.kernel('world_policy',values);let at=0;
+    for(const a of allocations)for(let i=0;i<zones.length;i++){a.staffTrips[i]=out[at++];a.local[i]=out[at++];}
+  }
+  function hubShare(reference,args,kind) {
+    return Core.kernel('world_policy',[4,reference,args.minutes,args.access,args.fare,args.km,kind?.startsWith('staff')?1:0])[0];
+  }
   const api = {
+    budgets, visitorBudget, capRows, reserveExternal, hubShare,
     ipf,
     distribution,
     modeShare,
