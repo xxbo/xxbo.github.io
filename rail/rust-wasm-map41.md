@@ -1,5 +1,7 @@
 # MAP41：Rust / WebAssembly 寻路核心
 
+本页记录MAP41迁移边界；当前核心构建与后续需求迁移见 [MAP42](rust-wasm-map42.md)。
+
 ## 迁移边界
 
 生产 `service-plan.js` 和 `engine.js` 中的 JavaScript 堆、状态搜索与路径选择实现已删除，两个入口统一调用 `routing-wasm.js`。普通/区间/快速/直达/跨线/环线寻路、换乘等待、方向限制、路径累计票价、旧版公司票价及直通折扣均在 `rust/rail-routing/src/lib.rs` 中计算。JavaScript 负责把现有交路图编码为二进制数组、映射字符串ID、还原现有路径对象及协调加载。

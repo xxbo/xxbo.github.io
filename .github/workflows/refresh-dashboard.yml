@@ -24,7 +24,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Verify Rust routing source and WASM artifact
+      - name: Verify Rust core source and WASM artifact
         run: |
           rustup toolchain install 1.99.1 --profile minimal --target wasm32-unknown-unknown
           node scripts/build_rail_wasm.cjs --check

@@ -9,6 +9,7 @@
     X = node ? require('./service-plan') : root.RailServicePlan,
     H = node ? require('./hubs') : root.RailHubs,
     K = node ? require('./connection-model') : root.RailConnections;
+  const KD = node ? require('./demand-kernels') : root.RailDemandKernels;
   const BAL = node ? require('./game-balance') : root.RailBalance;
   const FIELDS = ['people', 'jobs', 'shops', 'industry', 'leisure'],
     WALK = .8,
@@ -209,37 +210,9 @@
     return out;
   }
 
-  function ipf(seed, rows, cols, n, maxIterations = 160, tolerance = 1e-6) {
-    const matrix = new Float64Array(seed);
-    let error = Infinity,
-      iterations = 0;
-    for (; iterations < maxIterations; iterations++) {
-      for (let i = 0; i < n; i++) {
-        let sum = 0;
-        for (let j = 0; j < n; j++) sum += matrix[i * n + j];
-        const f = sum ? rows[i] / sum : 0;
-        for (let j = 0; j < n; j++) matrix[i * n + j] *= f;
-      }
-      for (let j = 0; j < n; j++) {
-        let sum = 0;
-        for (let i = 0; i < n; i++) sum += matrix[i * n + j];
-        const f = sum ? cols[j] / sum : 0;
-        for (let i = 0; i < n; i++) matrix[i * n + j] *= f;
-      }
-      error = 0;
-      for (let i = 0; i < n; i++) {
-        let sum = 0;
-        for (let j = 0; j < n; j++) sum += matrix[i * n + j];
-        error = Math.max(error, Math.abs(sum - rows[i]) / Math.max(1, rows[i]));
-      }
-      if (error < tolerance) break;
-    }
-    return {
-      matrix,
-      error,
-      iterations: iterations + 1
-    };
-  }
+  const ipf = KD.ipf,
+    modeShare = KD.modeShare,
+    strategy = KD.strategy;
 
   function distribution(city) {
     const ZONE = city.metadata?.demandZoneUnits || 80;
@@ -274,36 +247,12 @@
       z.y /= z.count;
     });
     const n = zones.length,
-      matrices = {},
-      diagnostics = {},
       effective = !!city.metadata?.effectiveConnections,
       budgets = effective ? K.budgets(city) : null;
-    for (const p of profiles) {
-      const attraction = zones.reduce((v, z) => v + z[p.field], 0),
-        total = effective ? budgets[p.purpose].outbound : city.totals.people * p.rate,
-        seed = new Float64Array(n * n),
-        rows = zones.map(z => city.totals.people ? z.people / city.totals.people * total : 0),
-        cols = zones.map(z => attraction ? total * z[p.field] / attraction : 0);
-      for (let i = 0; i < n; i++) {
-        let sum = 0;
-        for (let j = 0; j < n; j++) {
-          const km = i === j ? Math.sqrt(zones[i].area) * .45 : R.distance(zones[i], zones[j]);
-          sum += seed[i * n + j] = zones[j][p.field] * exp(-km / p.decay);
-        }
-        for (let j = 0; j < n; j++) seed[i * n + j] *= sum ? rows[i] / sum : 0;
-      }
-      if (p.purpose === 'work' || effective) {
-        const fit = ipf(seed, rows, cols, n, effective ? (p.purpose === 'work' ? 64 : 24) : 160, effective ?
-          1e-5 : 1e-6);
-        matrices[p.purpose] = effective ? K.capRows(fit.matrix, rows, n) : fit.matrix;
-        if (p.purpose === 'work') {
-          diagnostics.ipfError = fit.error;
-          diagnostics.ipfIterations = fit.iterations;
-        }
-        if (effective) budgets[p.purpose].matched = matrices[p.purpose].reduce((a, b) => a + b, 0);
-      } else matrices[p.purpose] = seed;
-    }
-    if (effective) diagnostics.activityBudgets = budgets;
+    const {
+      matrices,
+      diagnostics
+    } = KD.distribution(zones, city, budgets);
     fixed = {
       city,
       zones,
@@ -326,88 +275,6 @@
     timeSensitivity: .055,
     nestScale: .7
   });
-
-  function modeShare({
-    purpose,
-    minutes,
-    access,
-    accessCost = 1.7 * access,
-    fare,
-    km,
-    availability = {}
-  }) {
-    const value = X.VOT[purpose] || 25,
-      A = MODE_ASSUMPTIONS,
-      lambda = A.nestScale,
-      theta = A.timeSensitivity,
-      active = [{
-        cost: km * 1.25 / 4.8 * 60,
-        p: availability.walk ?? (km <= 5 ? 1 : 0)
-      }, {
-        cost: 3 + km * 1.25 / 13 * 60,
-        p: availability.bike ?? (km <= 12 ? A.bikeAvailability : 0)
-      }],
-      motor = [{
-        cost: A.carParkingMinutes + km / 23 * 60 * 1.22 + (120 + km * 18) / value,
-        p: availability.car ?? A.carAvailability
-      }, {
-        cost: A.busAccessMinutes + A.busWaitMinutes + km / 16 * 60 * A.busDetour + (km > 6 ? 8 : 0) + 70 /
-          value,
-        p: availability.bus ?? 1
-      }, {
-        cost: minutes + accessCost + fare / value,
-        p: availability.rail ?? 1
-      }],
-      utility = xs => xs.map(a => a.p > 0 ? -theta * a.cost / lambda + Math.log(a.p) : -Infinity),
-      a = utility(active),
-      m = utility(motor),
-      logsum = xs => {
-        const max = Math.max(...xs);
-        return Number.isFinite(max) ? max + Math.log(xs.reduce((v, x) => v + exp(x - max), 0)) : -Infinity;
-      },
-      la = logsum(a),
-      lm = logsum(m),
-      top = logsum([lambda * la, lambda * lm]);
-    return Number.isFinite(m[2]) ? exp(lambda * lm - top + m[2] - lm) : 0;
-  }
-  // Attractive route set: add faster downstream options while their cost is below expected cost.
-  // Static hyperpath approximation: fractions follow frequency; runtime retains each chosen itinerary.
-  function strategy(candidates, purpose, valueOverride = null) {
-    const value = valueOverride || X.VOT[purpose] || 25,
-      unique = new Map();
-    for (const path of candidates) {
-      if (!path?.edges.length) continue;
-      const first = path.edges[0],
-        key = first.service + '|' + first.dir,
-        cost = path.minutes - first.headway / 2 + path.fare / value,
-        item = {
-          path,
-          cost,
-          freq: 1 / first.headway
-        };
-      if (!unique.has(key) || cost < unique.get(key).cost) unique.set(key, item);
-    }
-    const sorted = [...unique.values()].sort((a, b) => a.cost - b.cost),
-      accepted = [];
-    let frequency = 0,
-      weighted = .5,
-      expected = Infinity;
-    for (const a of sorted) {
-      if (a.cost >= expected) continue;
-      accepted.push(a);
-      frequency += a.freq;
-      weighted += a.freq * a.cost;
-      expected = weighted / frequency;
-    }
-    return {
-      expected,
-      wait: frequency ? .5 / frequency : 0,
-      routes: accepted.map(a => ({
-        ...a,
-        share: a.freq / frequency
-      }))
-    };
-  }
 
   function evaluate(s, city) {
     const hubList = H.forRegion(s.region);
@@ -438,8 +305,7 @@
         hubStats: {},
         connectionModel: effective ? 36 : null,
         diagnostics: {
-          model: effective ? 'effective-connections-v36' : s.urban ? 'transit-urban-growth-v19' :
-            'hub-corridor-progression-v17',
+          model: effective ? 'effective-connections-v36' : s.urban ? 'transit-urban-growth-v19' : 'hub-corridor-progression-v17',
           ...(effective ? {
             activityBudgets
           } : {})
@@ -814,24 +680,7 @@
       }
     }
     base.flows = [...merged.values()];
-    const plan = X.expand(s);
-    for (const f of base.flows)
-      for (const e of f.path.edges)
-        for (const id of e.tracks || [e.track]) base.trackFlow[id] = (base.trackFlow[id] || 0) + f.trips;
-    for (const t of s.tracks) {
-      const capacity = plan.services.filter(l => l.trackIds.includes(t.id)).reduce((v, l) => v + 60 / X
-        .headway(plan, l) * R.capacity(l), 0);
-      base.trackLoad[t.id] = (base.trackFlow[t.id] || 0) * .18 / Math.max(1, capacity);
-    }
-    for (const f of base.flows) {
-      const ratio = Math.min(1, ...f.path.edges.flatMap(e => e.tracks || [e.track]).map(id => 1 / Math.max(
-        1, base.trackLoad[id] || 0)));
-      f.trips *= ratio;
-      base.riders += f.trips;
-      base.unserved += f.demandTrips - f.trips;
-      for (const id of new Set(f.path.edges.flatMap(e => e.parts.map(p => p.line)))) base.serviceFlow[id] =
-        (base.serviceFlow[id] || 0) + f.trips;
-    }
+    KD.capacity(s, base, X.expand(s), X, R);
     base.uncoveredTrips = Math.max(0, totalTrips - eligible);
     base.diagnostics = {
       ...base.diagnostics,
@@ -846,6 +695,7 @@
         routeTrees: cache.stats(),
         strategies: strategyCache.stats(),
         routing: 'rust-wasm-abi1',
+        demand: 'rust-wasm-demand-abi1',
         wasm: X.routingStatus()
       }
     };

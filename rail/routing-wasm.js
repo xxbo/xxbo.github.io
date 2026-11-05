@@ -12,14 +12,21 @@
     active = null,
     ready = null,
     calls = 0,
+    demandCalls = 0,
     recycles = 0;
   let recycleBytes = 64 * 1024 * 1024;
-  const asset = node ? null : new URL('wasm/rail-routing-v1.wasm?v=41',
+  const asset = node ? null : new URL('wasm/rail-core-v2.wasm?v=42',
     root.document?.currentScript?.src || root.location.href).href;
 
   function install(module) {
-    const next = new WebAssembly.Instance(module, {});
-    if (next.exports.routing_abi() !== ABI) throw Error('寻路WASM接口版本不匹配');
+    const next = new WebAssembly.Instance(module, {
+      rail_math: {
+        exp: Math.exp,
+        log: Math.log,
+        hypot: Math.hypot
+      }
+    });
+    if (next.exports.routing_abi() !== ABI || next.exports.demand_abi?.() !== 1) throw Error('寻路WASM接口版本不匹配');
     compiled = module;
     instance = next;
     active = null;
@@ -223,14 +230,61 @@
     const tree = compactPaths(state, adjacency, origin, value, firstKey, legacy);
     return tree.map((_, id) => pathAt(tree, id));
   }
+
+  function kernel(name, values, read = null, context = null) {
+    if (!['demand_ipf', 'demand_distribution', 'demand_mode', 'demand_strategy', 'demand_capacity'].includes(name)) throw Error('未知需求核心操作');
+    try {
+      const wasm = exports();
+      write(values);
+      const pointer = wasm[name]();
+      const view = new Float64Array(wasm.memory.buffer, pointer, wasm.output_len());
+      // Short object projections consume synchronously; persistent matrices own a copy.
+      const data = read ? read(view, context) : view.slice();
+      wasm.output_clear();
+      demandCalls++;
+      if (wasm.memory.buffer.byteLength > recycleBytes) {
+        install(compiled);
+        recycles++;
+      }
+      return data;
+    } catch (error) {
+      if (compiled) install(compiled);
+      throw Error('Rust/WASM需求计算失败：' + error.message, {
+        cause: error
+      });
+    }
+  }
+
+  function modeKernel(values) {
+    try {
+      if (values.length !== 10) throw Error('方式选择输入尺寸无效');
+      const wasm = exports();
+      const result = wasm.demand_mode_scalar(...values);
+      demandCalls++;
+      if (wasm.memory.buffer.byteLength > recycleBytes) {
+        install(compiled);
+        recycles++;
+      }
+      return result;
+    } catch (error) {
+      if (compiled) install(compiled);
+      throw Error('Rust/WASM方式选择失败：' + error.message, {
+        cause: error
+      });
+    }
+  }
   const api = {
     init,
+    kernel,
+    modeKernel,
     prepare,
     compactPaths,
     pathAt,
     paths,
     status: () => ({
       backend: 'Rust/WASM',
+      demandAbi: 1,
+      demandCalls,
       abi: ABI,
       ready: !!instance,
       searches: calls,
@@ -246,7 +300,7 @@
   if (node) {
     const fs = require('node:fs'),
       path = require('node:path');
-    install(new WebAssembly.Module(fs.readFileSync(path.join(__dirname, 'wasm/rail-routing-v1.wasm'))));
+    install(new WebAssembly.Module(fs.readFileSync(path.join(__dirname, 'wasm/rail-core-v2.wasm'))));
     module.exports = api;
   } else {
     root.RailRouting = api;

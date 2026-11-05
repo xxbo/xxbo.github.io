@@ -1,5 +1,6 @@
-//! Deterministic metro routing. ABI 1 uses f64 arrays and no JS callbacks or JSON.
+//! Deterministic metro routing and demand kernels with versioned f64-array ABIs.
 //! Heap tie order, tolerances and arithmetic order intentionally match the frozen JS oracle.
+mod demand;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 
