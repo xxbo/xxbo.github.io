@@ -72,3 +72,7 @@ ui仍包含地图编辑、导航、表单和多个长模板；本轮没有一次
 ## MAP40：内存与后台任务
 
 专项方法、内存口径、测量数据和复现命令见 [memory-performance-map40.md](memory-performance-map40.md)。`bounded-cache` 管理单轮计算缓存，`save-queue` 在快照编码前施加背压，`demand-snapshot` 投影后台输入，`memory-audit` 保存有界轻量诊断。寻路内部使用边链，公开完整路径保持兼容。压测脚本与冻结MAP39寻路对照均归入scripts；基准与长期运行脚本按需执行，CI自动发现MAP40回归测试。
+
+## MAP41：Rust/WASM第一阶段
+
+寻路核心与旧存档公司票价寻路已迁入 `rust/rail-routing`。`routing-wasm.js`只维护二进制ABI和旧API返回对象，生产JS搜索实现已删除。页面与两个计算Worker必须先加载适配器并等待 `RailRoutingReady`；测试Node入口同步实例化同一提交产物。详细边界、构建/产物核对、基准与后续迁移顺序见 [rust-wasm-map41.md](rust-wasm-map41.md)。修改Rust时同步重建WASM，CI的逐字节核对通过后才发布；旧JS只在scripts测试目录作为冻结对照。

@@ -1,7 +1,7 @@
 /* Demand never blocks map input. Worker caches the fixed city-wide OD distribution. */
 importScripts('game-balance.js?v=17', 'fleet.js?v=18', 'regions.js?v=16', 'gba-data.js?v=16',
-  'service-plan.js?v=40', 'engine.js?v=18', 'tokyo-data.js?v=9', 'hubs.js?v=16', 'connection-model.js?v=36',
-  'bounded-cache.js?v=40', 'demand-model.js?v=40', 'city-development.js?v=35', 'urban-growth.js?v=36',
+  'routing-wasm.js?v=41', 'service-plan.js?v=41', 'engine.js?v=41', 'tokyo-data.js?v=9', 'hubs.js?v=16', 'connection-model.js?v=36',
+  'bounded-cache.js?v=40', 'demand-model.js?v=41', 'city-development.js?v=35', 'urban-growth.js?v=36',
   'city.js?v=19',
   'flow-history.js?v=32', 'ridership.js?v=32', 'operations.js?v=30', 'demand-rates.js?v=31',
   'passengers.js?v=31');
@@ -9,7 +9,7 @@ onmessage = async ({
   data: m
 }) => {
   try {
-    await self.RailDataReady;
+    await Promise.all([self.RailDataReady, self.RailRoutingReady]);
     const result = RailCity.evaluate(m.state);
     result.preparedDefinitions = RailPassengers.definitions(m.state, result);
     postMessage({

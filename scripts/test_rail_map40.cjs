@@ -27,7 +27,8 @@ for (const from of s.nodes.map(n => n.id))
         compact = X.compactPaths(s, graph, from, value, first);
       assert.deepEqual(actual, expected);
       assert.deepEqual(compact.map((_, id) => X.pathAt(compact, id)), expected);
-      assert(compact.every(path => !('edges' in path)));
+      assert(compact.every(index => Number.isInteger(index)));
+      assert(compact.routingData.data instanceof Float64Array);
       assert(compact.memoryWeight >= compact.filter(Boolean).length);
     }
 assert.equal(JSON.stringify(s), before);

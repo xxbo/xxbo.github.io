@@ -845,7 +845,8 @@
       memory: {
         routeTrees: cache.stats(),
         strategies: strategyCache.stats(),
-        routing: 'shared-edge-trails'
+        routing: 'rust-wasm-abi1',
+        wasm: X.routingStatus()
       }
     };
     if (effective) base.lineConnections = K.summarize(s, base);

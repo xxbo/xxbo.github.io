@@ -6,7 +6,7 @@ on:
     - cron: '5,15 7 * * 1-5'
   push:
     branches: [main]
-    paths: ['rail/**', 'index.html', 'style.css', 'feed.css', 'feed.js', 'home-feed.js', 'intraday.js', 'news-media.js', 'app.js', 'live-quotes.js', 'home.js', 'brief.js', 'topics.js', 'topic-pages.js', 'calendar.js', 'calendar-pages.js', 'health-pages.js', 'events.js', 'event-pages.js', 'market-context.js', 'context-pages.js', 'reading.js', 'reading-pages.js', 'ui.js', 'desk.js', 'desk-pages.js', 'global.js', 'global-pages.js', 'pages.js', 'reader.js', 'split-reader.js', 'technical.js', 'analysis-pages.js', 'scripts/**', '.github/workflows/refresh-dashboard.yml']
+    paths: ['rail/**', 'rust/**', 'index.html', 'style.css', 'feed.css', 'feed.js', 'home-feed.js', 'intraday.js', 'news-media.js', 'app.js', 'live-quotes.js', 'home.js', 'brief.js', 'topics.js', 'topic-pages.js', 'calendar.js', 'calendar-pages.js', 'health-pages.js', 'events.js', 'event-pages.js', 'market-context.js', 'context-pages.js', 'reading.js', 'reading-pages.js', 'ui.js', 'desk.js', 'desk-pages.js', 'global.js', 'global-pages.js', 'pages.js', 'reader.js', 'split-reader.js', 'technical.js', 'analysis-pages.js', 'scripts/**', '.github/workflows/refresh-dashboard.yml']
 permissions:
   contents: write
 concurrency:
@@ -15,7 +15,7 @@ concurrency:
 jobs:
   refresh:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -24,6 +24,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+      - name: Verify Rust routing source and WASM artifact
+        run: |
+          rustup toolchain install 1.99.1 --profile minimal --target wasm32-unknown-unknown
+          node scripts/build_rail_wasm.cjs --check
       - name: Verify indicator calculations
         run: |
           node scripts/run_rail_tests.cjs
