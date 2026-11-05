@@ -26,42 +26,7 @@ jobs:
           node-version: '20'
       - name: Verify indicator calculations
         run: |
-          node scripts/test_rail.cjs
-          node scripts/test_rail_operations.cjs
-          node scripts/test_rail_network.cjs
-          node scripts/test_rail_tokyo.cjs
-          node scripts/test_rail_streets.cjs
-          node scripts/test_rail_view.cjs
-          node scripts/test_rail_services.cjs
-          node scripts/test_rail_metrics.cjs
-          node scripts/test_rail_map11.cjs
-          node scripts/test_rail_map12.cjs
-          node scripts/test_rail_map13.cjs
-          node scripts/test_rail_map14.cjs
-          node scripts/test_rail_map15.cjs
-          node scripts/test_rail_gba.cjs
-          node scripts/test_rail_map17.cjs
-          node scripts/test_rail_map18.cjs
-          node scripts/test_rail_map19.cjs
-          node scripts/test_rail_map20.cjs
-          node scripts/test_rail_map21.cjs
-          node scripts/test_rail_map22.cjs
-          node scripts/test_rail_map23.cjs
-          node scripts/test_rail_map24.cjs
-          node scripts/test_rail_map25.cjs
-          node scripts/test_rail_map26.cjs
-          node scripts/test_rail_map27.cjs
-          node scripts/test_rail_map28.cjs
-          node scripts/test_rail_map29.cjs
-          node scripts/test_rail_map30.cjs
-          node scripts/test_rail_map31.cjs
-          node scripts/test_rail_map32.cjs
-          node scripts/test_rail_map34.cjs
-          node scripts/test_rail_map35.cjs
-          node scripts/test_rail_map36.cjs
-          node scripts/test_rail_map37.cjs
-          node scripts/test_rail_management.cjs
-          node scripts/test_rail_city_data.cjs
+          node scripts/run_rail_tests.cjs
           node scripts/test_technical.cjs
           node scripts/test_market_context.cjs
           node scripts/test_reading.cjs

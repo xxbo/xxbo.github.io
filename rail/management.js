@@ -1,22 +1,296 @@
 /* Save values use legacy accounting units; UI uses fixed CNY denomination; rates and costs are deliberately simplified game rules. */
-(function(root){'use strict';const node=typeof module!=='undefined'&&module.exports,R=node?require('./engine'):root.RailSim,N=node?require('./network'):root.RailNetwork,P=node?require('./passengers'):root.RailPassengers;
-const Q=node?require('./ridership'):root.RailRidership,BAL=node?require('./game-balance'):root.RailBalance;
-const F=node?require('./fleet'):root.RailFleet,U=node?require('./urban-growth'):root.RailUrban,C=node?require('./city'):root.RailCity,RV=node?require('./operations-review'):root.RailOperationsReview;
-const INITIAL=5e9,CREDIT=3e9,MAX_LOAN=1e9,RATE=.0005,TERM=30,TRACK=BAL.TRACK,STATION=BAL.STATION,CAR=BAL.CAR;
-function init(s){Q.init(s);if(!s.economy)s.economy={balanceVersion:BAL.VERSION,operatingGrant:0,infrastructureRebate:0,cash:INITIAL,loans:[],nextLoan:1,construction:0,salvage:0,revenue:0,operating:0,interestPaid:0,principalPaid:0,arrears:0,blocked:false,minute:420,ledger:[{minute:420,type:'初始资金',amount:INITIAL}]};const e=s.economy;if(e.balanceVersion!==BAL.VERSION){const rebate=s.tracks.reduce((v,t)=>v+t.km*(200e6-TRACK),0)+served(s).size*(80e6-STATION)+cars(s)*(5e6-CAR);e.operatingGrant=Number.isFinite(e.operatingGrant)?e.operatingGrant:0;e.infrastructureRebate=(Number.isFinite(e.infrastructureRebate)?e.infrastructureRebate:0)+rebate;e.cash+=rebate;e.balanceVersion=BAL.VERSION;if(rebate>0)record(e,'建设成本调整返还',rebate);}return s;}
-function record(e,type,amount,minute=e.minute){e.ledger.unshift({minute,type,amount});e.ledger=e.ledger.slice(0,80);}
-function validate(s){const e=s.economy,finite=n=>Number.isFinite(n)&&n>=0;if(!e||!['cash','construction','salvage','revenue','operating','operatingGrant','infrastructureRebate','interestPaid','principalPaid','arrears','minute'].every(k=>finite(e[k]))||e.minute<420||e.minute>1e8||!Array.isArray(e.loans)||e.loans.length>3||!Number.isInteger(e.nextLoan)||typeof e.blocked!=='boolean'||!Array.isArray(e.ledger)||e.ledger.length>80)return false;let total=0;for(const l of e.loans){if(!Number.isInteger(l.id)||!finite(l.principal)||!finite(l.interest)||!finite(l.initial)||l.initial>MAX_LOAN||l.initial<1e8||l.principal>l.initial+.01||!finite(l.nextDue)||!finite(l.installment))return false;total+=l.principal;}return total<=CREDIT+.01;}
-const served=s=>new Set(s.services.flatMap(l=>l.stops)),cars=s=>s.services.reduce((v,l)=>v+l.fleet*l.cars,0);
-function quote(before,after){const oldTracks=new Set(before.tracks.map(t=>t.id)),newTracks=new Set(after.tracks.map(t=>t.id)),oldStations=served(before),newStations=served(after),addedKm=after.tracks.filter(t=>!oldTracks.has(t.id)).reduce((v,t)=>v+t.km,0),removedKm=before.tracks.filter(t=>!newTracks.has(t.id)).reduce((v,t)=>v+t.km,0),addedStations=[...newStations].filter(id=>!oldStations.has(id)).length,removedStations=[...oldStations].filter(id=>!newStations.has(id)).length,deltaCars=cars(after)-cars(before),deltaVehicle=F.value(after)-F.value(before),deltaFacility=U.facilitiesValue(after)-U.facilitiesValue(before),construction=addedKm*TRACK+addedStations*STATION+Math.max(0,deltaVehicle)+Math.max(0,deltaFacility),salvage=removedKm*TRACK*.2+removedStations*STATION*.2+Math.max(0,-deltaVehicle)*.5+Math.max(0,-deltaFacility)*.2;return {construction,salvage,net:construction-salvage,addedKm,addedStations,deltaCars};}
-function preview(s,operation){const c=R.clone(s),result=operation(c);if(result?.error)return result;return {...quote(s,c),result,after:c};}
-function change(s,operation){init(s);const plan=preview(s,operation);if(plan.error)return plan;const e=s.economy;if(plan.net>e.cash+.01)return {error:'余额不足。当前建设需要 '+(plan.net*.05/1e4).toFixed(1)+' 万元人民币，请缩短线路或申请贷款。'};const c=plan.after;c.economy.cash=Math.max(0,e.cash-plan.net);c.economy.construction+=plan.construction;c.economy.salvage+=plan.salvage;record(c.economy,plan.net>=0?'建设与车辆投入':'资产回收',-plan.net);Object.assign(s,c);Q.sync(s,s.economy.minute);settle(s);return {...plan.result,quote:plan};}
-function available(s){const e=init(s).economy;return e.loans.length>=3?0:Math.max(0,Math.min(MAX_LOAN,CREDIT-e.loans.reduce((v,l)=>v+l.principal,0)));}
-function borrow(s,amount){init(s);const e=s.economy;if(!Number.isFinite(amount)||amount<1e8||amount>available(s)+.01)return {error:'贷款额度不足：最多 3 笔，未偿本金合计不超过 1.5 亿元人民币，每笔 500 万—5000 万元。'};e.cash+=amount;e.loans.push({id:e.nextLoan++,initial:amount,principal:amount,interest:0,installment:amount/TERM,nextDue:e.minute+1440});record(e,'贷款到账',amount);settle(s);return {};}
-function repay(s,id){const e=init(s).economy,l=e.loans.find(l=>l.id===id);if(!l)return {error:'贷款不存在。'};const bill=l.principal+l.interest;if(e.cash+.01<bill)return {error:'余额不足以结清这笔贷款。'};e.cash-=bill;e.principalPaid+=l.principal;e.interestPaid+=l.interest;e.loans=e.loans.filter(l=>l.id!==id);record(e,'提前结清贷款',-bill);settle(s);return {};}
-function settle(s){const e=s.economy;e.blocked=false;if(e.arrears>0){const paid=Math.min(e.cash,e.arrears);e.cash-=paid;e.arrears-=paid;if(e.arrears>.001)e.blocked=true;else e.arrears=0;}
- for(const l of [...e.loans]){while(l.principal>.001&&e.minute+1e-5>=l.nextDue){const principal=Math.min(l.principal,l.installment),bill=principal+l.interest;if(e.cash+.001<bill){e.blocked=true;break;}e.cash=Math.max(0,e.cash-bill);e.interestPaid+=l.interest;e.principalPaid+=principal;l.principal-=principal;l.interest=0;l.nextDue+=1440;record(e,'每日偿还贷款本息',-bill);}}
- e.loans=e.loans.filter(l=>l.principal>.001);if(e.cash<=.001)e.blocked=true;return !e.blocked;}
-function advance(s,rt,minutes){if(!Number.isFinite(minutes)||minutes<0||minutes>1440)throw Error('Invalid management interval');const e=init(s).economy;if(e.blocked&&!settle(s))return false;let left=minutes;const trackFixed=s.tracks.reduce((v,t)=>v+t.km*2200,0);while(left>1e-9){let dt=Math.min(.1,left);const due=Math.min(Infinity,...e.loans.map(l=>l.nextDue));if(due>rt.minute&&due<rt.minute+dt)dt=due-rt.minute;const revenue=rt.revenue,expense=rt.vehicleExpense;P.advance(rt,s,dt);const earned=rt.revenue-revenue,active=s.services.reduce((v,l)=>v+(l.fleetManaged?F.planned(l,rt.minute):l.fleet),0),owned=s.depot?Object.values(s.depot.stock).reduce((a,b)=>a+b,0):active,fixed=trackFixed+U.upkeep(s)+active*18000+Math.max(0,owned-active)*2700,cost=(rt.vehicleExpense-expense+fixed*dt/1440)*BAL.OPERATING_FACTOR,grant=earned*BAL.GRANT_RATE;Q.finance(s,rt,cost,fixed*dt/1440*BAL.OPERATING_FACTOR);e.revenue+=earned;e.operatingGrant+=grant;e.operating+=cost;e.cash+=earned+grant-cost;if(e.cash<0){e.arrears-=e.cash;e.cash=0;}for(const l of e.loans)l.interest+=l.principal*RATE*dt/1440;e.minute=rt.minute;if(s.urban)U.advance(s,C.create(s.region),rt.minute);if(s.operationsReview)RV.sample(s,rt);left-=dt;if(!settle(s))return false;}return true;}
-function signature(s){return 'transit-city-v19|'+s.region+'|'+JSON.stringify([s.routeModel,s.services.map(l=>[l.id,l.stops,l.trackIds,l.headway,l.fleet,l.cars,l.open,l.close,l.fareBands,l.patterns,l.loopDirection,l.stockSpec,l.fleetManaged,l.dispatch]),s.depot,s.urban?[s.urban.version,s.urban.revision]:null,s.tracks.map(t=>[t.id,t.km,t.bends,t.curve])]);}
-const api={init,validate,quote,preview,change,available,borrow,repay,settle,advance,signature,INITIAL,CREDIT,MAX_LOAN,RATE,TERM,TRACK,STATION,CAR};if(node)module.exports=api;else root.RailManagement=api;
-})(typeof globalThis!=='undefined'?globalThis:this);
+(function(root) {
+  'use strict';
+  const node = typeof module !== 'undefined' && module.exports,
+    R = node ? require('./engine') : root.RailSim,
+    N = node ? require('./network') : root.RailNetwork,
+    P = node ? require('./passengers') : root.RailPassengers;
+  const Q = node ? require('./ridership') : root.RailRidership,
+    BAL = node ? require('./game-balance') : root.RailBalance;
+  const F = node ? require('./fleet') : root.RailFleet,
+    U = node ? require('./urban-growth') : root.RailUrban,
+    C = node ? require('./city') : root.RailCity,
+    RV = node ? require('./operations-review') : root.RailOperationsReview;
+  const INITIAL = 5e9,
+    CREDIT = 3e9,
+    MAX_LOAN = 1e9,
+    RATE = .0005,
+    TERM = 30,
+    TRACK = BAL.TRACK,
+    STATION = BAL.STATION,
+    CAR = BAL.CAR;
+
+  function init(s) {
+    Q.init(s);
+    if (!s.economy) s.economy = {
+      balanceVersion: BAL.VERSION,
+      operatingGrant: 0,
+      infrastructureRebate: 0,
+      cash: INITIAL,
+      loans: [],
+      nextLoan: 1,
+      construction: 0,
+      salvage: 0,
+      revenue: 0,
+      operating: 0,
+      interestPaid: 0,
+      principalPaid: 0,
+      arrears: 0,
+      blocked: false,
+      minute: 420,
+      ledger: [{
+        minute: 420,
+        type: '初始资金',
+        amount: INITIAL
+      }]
+    };
+    const e = s.economy;
+    if (e.balanceVersion !== BAL.VERSION) {
+      const rebate = s.tracks.reduce((v, t) => v + t.km * (200e6 - TRACK), 0) + served(s).size * (80e6 -
+        STATION) + cars(s) * (5e6 - CAR);
+      e.operatingGrant = Number.isFinite(e.operatingGrant) ? e.operatingGrant : 0;
+      e.infrastructureRebate = (Number.isFinite(e.infrastructureRebate) ? e.infrastructureRebate : 0) +
+        rebate;
+      e.cash += rebate;
+      e.balanceVersion = BAL.VERSION;
+      if (rebate > 0) record(e, '建设成本调整返还', rebate);
+    }
+    return s;
+  }
+
+  function record(e, type, amount, minute = e.minute) {
+    e.ledger.unshift({
+      minute,
+      type,
+      amount
+    });
+    e.ledger = e.ledger.slice(0, 80);
+  }
+
+  function validate(s) {
+    const e = s.economy,
+      finite = n => Number.isFinite(n) && n >= 0;
+    if (!e || !['cash', 'construction', 'salvage', 'revenue', 'operating', 'operatingGrant',
+        'infrastructureRebate', 'interestPaid', 'principalPaid', 'arrears', 'minute'
+      ].every(k => finite(e[k])) || e.minute < 420 || e.minute > 1e8 || !Array.isArray(e.loans) || e.loans
+      .length > 3 || !Number.isInteger(e.nextLoan) || typeof e.blocked !== 'boolean' || !Array.isArray(e
+        .ledger) || e.ledger.length > 80) return false;
+    let total = 0;
+    for (const l of e.loans) {
+      if (!Number.isInteger(l.id) || !finite(l.principal) || !finite(l.interest) || !finite(l.initial) || l
+        .initial > MAX_LOAN || l.initial < 1e8 || l.principal > l.initial + .01 || !finite(l.nextDue) || !
+        finite(l.installment)) return false;
+      total += l.principal;
+    }
+    return total <= CREDIT + .01;
+  }
+  const served = s => new Set(s.services.flatMap(l => l.stops)),
+    cars = s => s.services.reduce((v, l) => v + l.fleet * l.cars, 0);
+
+  function quote(before, after) {
+    const oldTracks = new Set(before.tracks.map(t => t.id)),
+      newTracks = new Set(after.tracks.map(t => t.id)),
+      oldStations = served(before),
+      newStations = served(after),
+      addedKm = after.tracks.filter(t => !oldTracks.has(t.id)).reduce((v, t) => v + t.km, 0),
+      removedKm = before.tracks.filter(t => !newTracks.has(t.id)).reduce((v, t) => v + t.km, 0),
+      addedStations = [...newStations].filter(id => !oldStations.has(id)).length,
+      removedStations = [...oldStations].filter(id => !newStations.has(id)).length,
+      deltaCars = cars(after) - cars(before),
+      deltaVehicle = F.value(after) - F.value(before),
+      deltaFacility = U.facilitiesValue(after) - U.facilitiesValue(before),
+      construction = addedKm * TRACK + addedStations * STATION + Math.max(0, deltaVehicle) + Math.max(0,
+        deltaFacility),
+      salvage = removedKm * TRACK * .2 + removedStations * STATION * .2 + Math.max(0, -deltaVehicle) * .5 +
+      Math.max(0, -deltaFacility) * .2;
+    return {
+      construction,
+      salvage,
+      net: construction - salvage,
+      addedKm,
+      addedStations,
+      deltaCars
+    };
+  }
+
+  function preview(s, operation) {
+    const c = R.clone(s),
+      result = operation(c);
+    if (result?.error) return result;
+    return {
+      ...quote(s, c),
+      result,
+      after: c
+    };
+  }
+
+  function change(s, operation) {
+    init(s);
+    const plan = preview(s, operation);
+    if (plan.error) return plan;
+    const e = s.economy;
+    if (plan.net > e.cash + .01) return {
+      error: '余额不足。当前建设需要 ' + (plan.net * .05 / 1e4).toFixed(1) + ' 万元人民币，请缩短线路或申请贷款。'
+    };
+    const c = plan.after;
+    c.economy.cash = Math.max(0, e.cash - plan.net);
+    c.economy.construction += plan.construction;
+    c.economy.salvage += plan.salvage;
+    record(c.economy, plan.net >= 0 ? '建设与车辆投入' : '资产回收', -plan.net);
+    Object.assign(s, c);
+    Q.sync(s, s.economy.minute);
+    settle(s);
+    return {
+      ...plan.result,
+      quote: plan
+    };
+  }
+
+  function available(s) {
+    const e = init(s).economy;
+    return e.loans.length >= 3 ? 0 : Math.max(0, Math.min(MAX_LOAN, CREDIT - e.loans.reduce((v, l) => v + l
+      .principal, 0)));
+  }
+
+  function borrow(s, amount) {
+    init(s);
+    const e = s.economy;
+    if (!Number.isFinite(amount) || amount < 1e8 || amount > available(s) + .01) return {
+      error: '贷款额度不足：最多 3 笔，未偿本金合计不超过 1.5 亿元人民币，每笔 500 万—5000 万元。'
+    };
+    e.cash += amount;
+    e.loans.push({
+      id: e.nextLoan++,
+      initial: amount,
+      principal: amount,
+      interest: 0,
+      installment: amount / TERM,
+      nextDue: e.minute + 1440
+    });
+    record(e, '贷款到账', amount);
+    settle(s);
+    return {};
+  }
+
+  function repay(s, id) {
+    const e = init(s).economy,
+      l = e.loans.find(l => l.id === id);
+    if (!l) return {
+      error: '贷款不存在。'
+    };
+    const bill = l.principal + l.interest;
+    if (e.cash + .01 < bill) return {
+      error: '余额不足以结清这笔贷款。'
+    };
+    e.cash -= bill;
+    e.principalPaid += l.principal;
+    e.interestPaid += l.interest;
+    e.loans = e.loans.filter(l => l.id !== id);
+    record(e, '提前结清贷款', -bill);
+    settle(s);
+    return {};
+  }
+
+  function settle(s) {
+    const e = s.economy;
+    e.blocked = false;
+    if (e.arrears > 0) {
+      const paid = Math.min(e.cash, e.arrears);
+      e.cash -= paid;
+      e.arrears -= paid;
+      if (e.arrears > .001) e.blocked = true;
+      else e.arrears = 0;
+    }
+    for (const l of [...e.loans]) {
+      while (l.principal > .001 && e.minute + 1e-5 >= l.nextDue) {
+        const principal = Math.min(l.principal, l.installment),
+          bill = principal + l.interest;
+        if (e.cash + .001 < bill) {
+          e.blocked = true;
+          break;
+        }
+        e.cash = Math.max(0, e.cash - bill);
+        e.interestPaid += l.interest;
+        e.principalPaid += principal;
+        l.principal -= principal;
+        l.interest = 0;
+        l.nextDue += 1440;
+        record(e, '每日偿还贷款本息', -bill);
+      }
+    }
+    e.loans = e.loans.filter(l => l.principal > .001);
+    if (e.cash <= .001) e.blocked = true;
+    return !e.blocked;
+  }
+
+  function advance(s, rt, minutes) {
+    if (!Number.isFinite(minutes) || minutes < 0 || minutes > 1440) throw Error(
+      'Invalid management interval');
+    const e = init(s).economy;
+    if (e.blocked && !settle(s)) return false;
+    let left = minutes;
+    const trackFixed = s.tracks.reduce((v, t) => v + t.km * 2200, 0);
+    while (left > 1e-9) {
+      let dt = Math.min(.1, left);
+      const due = Math.min(Infinity, ...e.loans.map(l => l.nextDue));
+      if (due > rt.minute && due < rt.minute + dt) dt = due - rt.minute;
+      const revenue = rt.revenue,
+        expense = rt.vehicleExpense;
+      P.advance(rt, s, dt);
+      const earned = rt.revenue - revenue,
+        active = s.services.reduce((v, l) => v + (l.fleetManaged ? F.planned(l, rt.minute) : l.fleet), 0),
+        owned = s.depot ? Object.values(s.depot.stock).reduce((a, b) => a + b, 0) : active,
+        fixed = trackFixed + U.upkeep(s) + active * 18000 + Math.max(0, owned - active) * 2700,
+        cost = (rt.vehicleExpense - expense + fixed * dt / 1440) * BAL.OPERATING_FACTOR,
+        grant = earned * BAL.GRANT_RATE;
+      Q.finance(s, rt, cost, fixed * dt / 1440 * BAL.OPERATING_FACTOR);
+      e.revenue += earned;
+      e.operatingGrant += grant;
+      e.operating += cost;
+      e.cash += earned + grant - cost;
+      if (e.cash < 0) {
+        e.arrears -= e.cash;
+        e.cash = 0;
+      }
+      for (const l of e.loans) l.interest += l.principal * RATE * dt / 1440;
+      e.minute = rt.minute;
+      if (s.urban) U.advance(s, C.create(s.region), rt.minute);
+      if (s.operationsReview) RV.sample(s, rt);
+      left -= dt;
+      if (!settle(s)) return false;
+    }
+    return true;
+  }
+
+  function signature(s) {
+    return 'transit-city-v19|' + s.region + '|' + JSON.stringify([s.routeModel, s.services.map(l => [l.id, l
+      .stops, l.trackIds, l.headway, l.fleet, l.cars, l.open, l.close, l.fareBands, l.patterns, l
+      .loopDirection, l.stockSpec, l.fleetManaged, l.dispatch
+    ]), s.depot, s.urban ? [s.urban.version, s.urban.revision] : null, s.tracks.map(t => [t.id, t.km,
+      t.bends, t.curve
+    ])]);
+  }
+  const api = {
+    init,
+    validate,
+    quote,
+    preview,
+    change,
+    available,
+    borrow,
+    repay,
+    settle,
+    advance,
+    signature,
+    INITIAL,
+    CREDIT,
+    MAX_LOAN,
+    RATE,
+    TERM,
+    TRACK,
+    STATION,
+    CAR
+  };
+  if (node) module.exports = api;
+  else root.RailManagement = api;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
