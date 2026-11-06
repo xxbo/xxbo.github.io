@@ -299,12 +299,27 @@
     };
   }
 
+  let projection=null;
+  function projectionDay(s,rt){
+    if(!projection||projection.s!==s||projection.minute!==rt.minute)return ensureDay(s,rt.minute);
+    if(!projection.day)projection.day=ensureDay(s,rt.minute);
+    return projection.day;
+  }
+  function projectedFlow(d,minute,kind,n){
+    if(!projection)return FLOW.record(d,minute,kind,n);
+    const field=kind==='enter'?'entered':kind==='board'?'boarded':kind==='complete'?'completed':null;
+    if(!field||!Number.isFinite(n)||n<=0)return;
+    const base=FLOW.start(d),i=Math.floor((minute-base)/FLOW.STEP);
+    if(d.flow&&minute>=base&&minute<=base+DAY&&i>=0&&i<FLOW.SLOTS)d.flow[field][i]+=n;
+  }
+  function projectEvents(s,rt,apply){const previous=projection;projection={s,minute:rt.minute,day:null};try{return apply();}finally{projection=previous;}}
+
   function event(s, rt, j, kind, count, wait = 0, line = null, stationId = null) {
     const q = s.ridership;
     if (!q || !count) return;
-    const d = ensureDay(s, rt.minute),
+    const d = projectionDay(s, rt),
       ids = j.lineIds || [];
-    FLOW.record(d, rt.minute, kind, count);
+    projectedFlow(d, rt.minute, kind, count);
     if (stationId !== null && ['enter', 'board', 'alight'].includes(kind)) {
       d.stations = d.stations || {};
       const st = d.stations[stationId] || (d.stations[stationId] = {
@@ -510,12 +525,12 @@
       b[k] : 0)]));
   }
 
-  function travel(s, rt, t, km, vehicle = null) {
+  function travel(s, rt, t, km, vehicle = null, occupancy = t.onboard) {
     if (!s.ridership || km <= 0) return;
-    const d = ensureDay(s, rt.minute),
+    const d = projectionDay(s, rt),
       id = t.parentLine || t.service,
       st = lineStats(d, id),
-      pkm = km * t.onboard;
+      pkm = km * occupancy;
     d.passengerKm = (d.passengerKm || 0) + pkm;
     st.passengerKm = (st.passengerKm || 0) + pkm;
     st.vehicleKm = (st.vehicleKm || 0) + km;
@@ -545,6 +560,7 @@
     }
   }
   const api = {
+    projectEvents,
     travel,
     finance,
     RECORD_FIELDS,

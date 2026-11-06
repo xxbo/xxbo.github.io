@@ -1,6 +1,8 @@
 //! Deterministic metro routing and demand kernels with versioned f64-array ABIs.
 //! Heap tie order, tolerances and arithmetic order intentionally match the frozen JS oracle.
 mod demand;
+mod numbers;
+mod queues;
 mod simulation;
 mod world;
 use std::cell::RefCell;
@@ -83,6 +85,8 @@ struct Core {
     searches: u32,
     world_cache: Option<Rc<world::Prepared>>,
     simulation_state: Option<simulation::MotionState>,
+    queue_state: Option<queues::Queues>,
+    sampling_state: Option<simulation::Sampling>,
 }
 thread_local! { static CORE: RefCell<Core> = RefCell::new(Core::default()); }
 

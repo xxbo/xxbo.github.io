@@ -3,7 +3,7 @@ const {
   spawnSync
 } = require('node:child_process');
 if (!process.argv[2]) {
-  const results = ['map43-js', 'rust-wasm'].map(mode => {
+  const results = ['map43-js', 'map44-mixed', 'rust-wasm'].map(mode => {
     const r = spawnSync(process.execPath, ['--expose-gc', __filename, mode], {
       encoding: 'utf8',
       timeout: 180000
@@ -11,7 +11,7 @@ if (!process.argv[2]) {
     if (r.status) throw Error(r.stderr);
     return JSON.parse(r.stdout);
   });
-  if (results[0].checksum !== results[1].checksum) throw Error(
+  if (results.some(r => r.checksum !== results[0].checksum)) throw Error(
     'Continuous simulation checksum mismatch');
   console.log(JSON.stringify({
     workload: '10 lines, 25 stations; 10 warmup minutes then 3 x 60 game minutes; full state/accounting parity',
@@ -19,7 +19,8 @@ if (!process.argv[2]) {
   }, null, 2));
 } else {
   const P = process.argv[2] === 'map43-js' ? require('./fixtures/rail-map43-passengers.cjs') :
-    require('../rail/passengers');
+    process.argv[2] === 'map44-mixed' ? require('./fixtures/rail-map44-passengers.cjs') : require(
+      '../rail/passengers');
   const {
     create
   } = require('./fixtures/rail-memory-grid.cjs'), D = require('../rail/demand-model'), crypto =

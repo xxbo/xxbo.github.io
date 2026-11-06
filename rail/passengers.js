@@ -9,6 +9,7 @@
   const Q = node ? require('./ridership') : root.RailRidership;
   const F = node ? require('./fleet') : root.RailFleet;
   const SIM = node ? require('./simulation-wasm') : root.RailSimulation;
+  const QUEUES=node?require('./queue-runtime'):root.RailQueueRuntime;
   const key = (id, dir, station) => `${id}|${dir}|${station}`;
 
   function definitions(s, m) {
@@ -186,103 +187,7 @@
     return rt;
   }
 
-  function enqueue(rt, j, leg, amount, reserved = false) {
-    const l = j.legs[leg],
-      k = key(l.service, l.dir, l.from),
-      q = rt.queues[k] || (rt.queues[k] = {}),
-      token = j.id + ':' + leg + (rt.arrivalMode === 'integer' ? ':' + Math.floor(rt.minute) :
-        '');
-    if (!q[token]) rt.waitSince[k + '#' + token] = rt.minute;
-    q[token] = (q[token] || 0) + amount;
-    if (!reserved) rt.stationOccupancy[l.from] = (rt.stationOccupancy[l.from] || 0) + amount;
-  }
-
-  function waitingTransfer(rt, j, leg, n) {
-    if (n <= 0) return;
-    const l = j.legs[leg];
-    rt.stationOccupancy[l.from] = (rt.stationOccupancy[l.from] || 0) + n;
-    rt.transfers.push({
-      journey: j.id,
-      leg,
-      amount: n,
-      ready: rt.minute + X.TRANSFER,
-      station: l.from
-    });
-  }
-
-  function reject(rt, s, j, n) {
-    if (n <= 0) return;
-    rt.cancelled += n;
-    rt.rejected = (rt.rejected || 0) + n;
-    Q.event(s, rt, j, 'reject', n);
-  }
-
-  function admit(rt, s, j, leg, amount, transfer = false) {
-    if (s.routeModel !== 9) {
-      if (transfer) waitingTransfer(rt, j, leg, amount);
-      else enqueue(rt, j, leg, amount);
-      return;
-    }
-    const id = j.legs[leg].from,
-      limit = rt.stationLimits[id] || Q.limits(s, id),
-      inside = Math.max(0, Math.min(amount, limit.capacity - (rt.stationOccupancy[id] || 0)));
-    if (inside) {
-      if (!transfer && leg === 0) Q.event(s, rt, j, 'enter', inside, 0, null, id);
-      if (transfer) waitingTransfer(rt, j, leg, inside);
-      else enqueue(rt, j, leg, inside);
-    }
-    let rest = amount - inside;
-    if (rest > 0) {
-      const outside = rt.outside[id] || (rt.outside[id] = {}),
-        token = j.id + ':' + leg + ':' + Math.floor(rt.minute),
-        total = Object.values(outside).reduce((v, n) => v + n, 0),
-        take = Math.max(0, Math.min(rest, limit.outsideCapacity - total));
-      if (take) {
-        if (!outside[token]) rt.outsideSince[id + '#' + token] = rt.minute;
-        outside[token] = (outside[token] || 0) + take;
-        rest -= take;
-      }
-      reject(rt, s, j, rest);
-    }
-  }
-
-  function gates(rt, s) {
-    for (const [id, q] of Object.entries(rt.outside)) {
-      const limit = rt.stationLimits[id] || Q.limits(s, +id);
-      for (const [token, n] of Object.entries(q)) {
-        const [ji, leg] = token.split(':').map(Number), j = rt.defs[ji], since = rt.outsideSince[
-          id + '#' +
-          token] ?? rt.minute;
-        if (rt.minute - since >= 15) {
-          reject(rt, s, j, n);
-          delete q[token];
-          delete rt.outsideSince[id + '#' + token];
-          continue;
-        }
-        if (leg > 0 && rt.minute - since < X.TRANSFER) continue;
-        const take = Math.max(0, Math.min(n, limit.capacity - (rt.stationOccupancy[id] || 0)));
-        if (take) {
-          if (leg === 0) Q.event(s, rt, j, 'enter', take, 0, null, +id);
-          enqueue(rt, j, leg, take);
-          q[token] -= take;
-          if (q[token] < 1e-9) {
-            delete q[token];
-            delete rt.outsideSince[id + '#' + token];
-          }
-        }
-      }
-    }
-    for (const [k, q] of Object.entries(rt.queues)) {
-      const id = +k.split('|')[2];
-      for (const [token, n] of Object.entries(q))
-        if (rt.minute - (rt.waitSince[k + '#' + token] ?? rt.minute) > 60) {
-          reject(rt, s, rt.defs[+token.split(':')[0]], n);
-          rt.stationOccupancy[id] = Math.max(0, (rt.stationOccupancy[id] || 0) - n);
-          delete q[token];
-          delete rt.waitSince[k + '#' + token];
-        }
-    }
-  }
+  function reject(rt,s,j,n){if(n<=0)return;rt.cancelled+=n;rt.rejected=(rt.rejected||0)+n;Q.event(s,rt,j,'reject',n);}
 
   function generate(rt, s, dt) {
     if (rt.demandCatalog && rt.defs.length > 45000 && rt.minute - (rt.lastDefCompact ?? -
@@ -292,12 +197,12 @@
       rt._demandIndex = null;
     }
     rt.demandCarry = (rt.demandCarry || 0) + dt;
-    if (rt.demandCarry < 1 - 1e-9) return;
+    if (rt.demandCarry < 1 - 1e-9) return {arrivals:[],gates:false};
     const interval = Math.floor(rt.demandCarry + 1e-9);
     rt.demandCarry -= interval;
     dt = interval;
     Q.step(s, rt, dt);
-    if (rt.arrivalMode === 'integer') gates(rt, s);
+    const incoming=[];
     const catalog = rt.demandCatalog || rt.defs,
       minute = Math.round(rt.minute * 1e6) / 1e6,
       rates = {};
@@ -307,13 +212,7 @@
         .fleet > 0))
       .map(l => l.id));
 
-    function arrive(j, n) {
-      if (n <= 0) return;
-      rt.generated += n;
-      Q.event(s, rt, j, 'attempt', n);
-      if (!open.has(j.legs[0]?.service)) rt.cancelled += n;
-      else admit(rt, s, materialize(rt, j), 0, n);
-    }
+    function arrive(j,n){if(n>0)incoming.push({j,id:open.has(j.legs[0]?.service)?materialize(rt,j).id:-1,n});}
     if (rt.arrivalMode !== 'integer') {
       for (const j of catalog) {
         const amount = j.daily * (j.externalKind ? C.profile(j.purpose, j.back, minute, j
@@ -321,7 +220,7 @@
           dt : rates[j.purpose + ':' + j.back]);
         if (amount >= 1e-12) arrive(j, amount);
       }
-      return;
+      return {arrivals:incoming,gates:false};
     }
     // Global residual + systematic sampling: a tiny OD is not rounded away independently.
     // Expected total is preserved to less than one passenger; actual queues contain whole people.
@@ -332,75 +231,8 @@
     rt.expectedGenerated = (rt.expectedGenerated || 0) + sampled.total;
     rt.arrivalRemainder = sampled.remainder;
     rt.rngState = sampled.rng;
-    for (let i = 0; i < sampled.events.length; i += 2) arrive(catalog[sampled.events[i]], sampled
-      .events[i + 1]);
-  }
-
-  function board(rt, t) {
-    const s = rt.plan,
-      {
-        k,
-        tokens,
-        data
-      } = SIM.boarding(rt, t),
-      q = rt.queues[k];
-    for (let i = 0; i < data[0]; i++) {
-      const at = 1 + i * 4,
-        token = tokens[data[at]],
-        action = data[at + 1],
-        take = data[at + 2],
-        wait = data[at + 3];
-      if (action === 2) {
-        reject(rt, s, rt.defs[+token.split(':')[0]], take);
-        rt.stationOccupancy[t.stops[t.index]] = Math.max(0, (rt.stationOccupancy[t.stops[t
-          .index]] || 0) - take);
-      } else if (action === 3) {
-        t.passengers[token] = (t.passengers[token] || 0) + take;
-        t.onboard += take;
-        rt.boarded += take;
-        rt.stationOccupancy[t.stops[t.index]] = Math.max(0, (rt.stationOccupancy[t.stops[t
-          .index]] || 0) - take);
-        Q.event(s, rt, rt.defs[+token.split(':')[0]], 'board', take, wait, t.parentLine || t
-          .service, t.stops[t.index]);
-        rt.lineBoarded[t.service] = (rt.lineBoarded[t.service] || 0) + take;
-        q[token] -= take;
-      }
-      if (action !== 3 || q[token] < 1e-9) {
-        delete q[token];
-        delete rt.waitSince[k + '#' + token];
-      }
-    }
-  }
-
-  function unload(rt, t) {
-    const n = t.stops[t.index];
-    for (const [token, count] of Object.entries(t.passengers)) {
-      const [id, leg] = token.split(':').map(Number), j = rt.defs[id];
-      if (!j || j.legs[leg]?.to !== n) continue;
-      t.onboard -= count;
-      rt.alighted += count;
-      Q.event(rt.plan, rt, j, 'alight', count, 0, null, n);
-      delete t.passengers[token];
-      if (j.legs[leg + 1]) {
-        if (j.legs.slice(leg + 1).every(e => legValid(rt.plan, e))) admit(rt, rt.plan, j, leg + 1,
-          count,
-          true);
-        else {
-          const next = reroute(rt, j, n);
-          if (next) admit(rt, rt.plan, next, 0, count, true);
-          else reject(rt, rt.plan, j, count);
-        }
-      } else {
-        rt.completed += count;
-        Q.event(rt.plan, rt, j, 'complete', count);
-        rt.revenue += count * j.fare;
-        rt.purposeCompleted[j.purpose] += count;
-        for (const [line, share] of Object.entries(j.byLine)) rt.lineRevenue[line] = (rt
-          .lineRevenue[
-            line] || 0) + count * j.fare * share;
-      }
-    }
-    t.onboard = Math.max(0, t.onboard);
+    for(let i=0;i<sampled.events.length;i+=2)arrive(catalog[sampled.events[i]],sampled.events[i+1]);
+    return {arrivals:incoming,gates:true};
   }
 
   function refreshFleet(rt) {
@@ -463,11 +295,7 @@
       refreshFleet(rt);
       rt.fleetMinute = Math.floor(rt.minute);
     }
-    for (const x of [...rt.transfers])
-      if (x.ready <= rt.minute) {
-        enqueue(rt, rt.defs[x.journey], x.leg, x.amount, true);
-        rt.transfers.splice(rt.transfers.indexOf(x), 1);
-      } generate(rt, s, dt);
+    const incoming=generate(rt,s,dt);
     const index = planIndex(s);
     for (const {
         l,
@@ -502,60 +330,7 @@
       }
       d.next = next;
     }
-    const batch = SIM.motion(rt, s, index, trainTrack);
-    for (let i = 0; i < batch.context.length; i++) {
-      const {
-        t,
-        l
-      } = batch.context[i], row = batch.data.subarray(i * 8, i * 8 + 8), action = row[0];
-      if (action === 0) continue;
-      if (action === 1) {
-        t.status = 'finished';
-        rt.cancelled += t.onboard;
-        t.onboard = 0;
-        continue;
-      }
-      if (action >= 2 && action <= 5) {
-        t.progress = row[1];
-        Q.travel(s, rt, t, row[2], l);
-        rt.vehicleExpense += row[3];
-        if (action >= 3) {
-          t.index = row[4];
-          t.status = 'dwell';
-          t.ready = row[5];
-          t.progress = 0;
-          if (t.callStops.includes(t.stops[t.index])) unload(rt, t);
-          if (action === 4) {
-            t.index = row[6];
-            t.ready = row[7];
-            t.laps = (t.laps || 0) + 1;
-          } else if (action === 5) {
-            rt.cancelled += t.onboard;
-            t.onboard = 0;
-            t.passengers = {};
-            t.status = 'finished';
-          }
-        }
-      } else if (action === 6) t.status = 'signal';
-      else if (action === 7) {
-        const tr = trainTrack(rt, index, t, t.trackIds[t.dir === 1 ? t.index : t.index - 1]);
-        const from = t.stops[t.index],
-          to = t.stops[t.index + t.dir],
-          block = tr.id + '|' + (from === tr.a ? 1 : -1);
-        board(rt, t);
-        rt.blocks[block] = row[7];
-        t.status = 'moving';
-        t.departedAt = rt.minute;
-        t.arriveAt = row[5];
-        t.segment = {
-          track: tr.id,
-          from,
-          to
-        };
-        t.progress = 0;
-      }
-    }
-    rt.trains = rt.trains.filter(t => t.status !== 'finished');
+    QUEUES.step(rt,s,index,trainTrack,incoming.arrivals,incoming.gates,reroute);
   }
 
   function advance(rt, s, minutes) {

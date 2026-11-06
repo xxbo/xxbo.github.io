@@ -6,7 +6,7 @@
     B = node ? require('../../rail/operations') : root.RailOperations,
     C = node ? require('../../rail/city') : root.RailCity;
   const X = node ? require('../../rail/service-plan') : root.RailServicePlan;
-  const Q = node ? require('../../rail/ridership') : root.RailRidership;
+  const Q = node ? require('./rail-map44-ridership.cjs') : root.RailRidership;
   const F = node ? require('../../rail/fleet') : root.RailFleet;
   const DR = node ? require('../../rail/demand-rates') : root.RailDemandRates;
   const key = (id, dir, station) => `${id}|${dir}|${station}`;

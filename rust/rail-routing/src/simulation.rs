@@ -121,18 +121,21 @@ fn sample(v: &[f64]) -> Vec<f64> {
         weights.push(weight);
         total += weight;
     }
-    let accrued = v[4] + total;
+    sample_weights(&weights, total, v[4], v[5])
+}
+fn sample_weights(weights: &[f64], total: f64, carry: f64, state: f64) -> Vec<f64> {
+    let accrued = carry + total;
     let count = (accrued + 1e-9).floor();
     let remainder = max(0.0, accrued - count);
-    let mut out = vec![total, remainder, v[5], 0.0];
+    let mut out = vec![total, remainder, state, 0.0];
     if count == 0.0 || total <= 0.0 {
         return out;
     }
     assert!(count <= u32::MAX as f64);
-    let seed = if v[5] == 0.0 {
+    let seed = if state == 0.0 {
         2463534242
     } else {
-        int(v[5]) as u32
+        int(state) as u32
     };
     let rng = 1664525u32.wrapping_mul(seed).wrapping_add(1013904223);
     out[2] = rng as f64;
@@ -219,6 +222,7 @@ pub extern "C" fn simulation_run() -> *const f64 {
             input,
             output,
             simulation_state,
+            sampling_state,
             ..
         } = &mut *c;
         *output = match int(input[0]) {
@@ -227,6 +231,8 @@ pub extern "C" fn simulation_run() -> *const f64 {
             2 => sample(input),
             3 => dispatch(input),
             4 => persistent(input, simulation_state),
+            6 => incremental(input, simulation_state),
+            7 => cached_sample(input, sampling_state),
             _ => panic!("unknown simulation operation"),
         };
         c.output.as_ptr()
@@ -260,8 +266,10 @@ pub(super) struct MotionState {
     routes: Vec<Vec<(f64, f64)>>,
     calls: Vec<Vec<bool>>,
     blocks: usize,
+    delta: crate::numbers::Map<usize, DeltaTrain>,
+    order: Vec<usize>,
 }
-fn persistent(v: &[f64], cache: &mut Option<MotionState>) -> Vec<f64> {
+pub(super) fn persistent(v: &[f64], cache: &mut Option<MotionState>) -> Vec<f64> {
     let token = v[1];
     let now = v[2];
     let spacing = v[3];
@@ -300,6 +308,8 @@ fn persistent(v: &[f64], cache: &mut Option<MotionState>) -> Vec<f64> {
             routes,
             calls,
             blocks: nb,
+            delta: crate::numbers::Map::default(),
+            order: vec![],
         });
     }
     assert_eq!(at, v.len());
@@ -365,4 +375,190 @@ fn persistent(v: &[f64], cache: &mut Option<MotionState>) -> Vec<f64> {
         }
     }
     out
+}
+
+struct DeltaTrain {
+    group: usize,
+    row: [f64; 20],
+    route: Vec<(f64, f64)>,
+    calls: Vec<bool>,
+}
+pub(super) fn motion_packet(v: &[f64], cache: &mut Option<MotionState>) -> Vec<f64> {
+    if v[0] == 6.0 {
+        incremental(v, cache)
+    } else {
+        persistent(v, cache)
+    }
+}
+fn incremental(v: &[f64], cache: &mut Option<MotionState>) -> Vec<f64> {
+    let token = v[1];
+    let now = v[2];
+    let spacing = v[3];
+    let reset = v[4] != 0.0;
+    let nb = int(v[5]);
+    let releases = &v[6..6 + nb];
+    let mut at = 6 + nb;
+    if reset {
+        *cache = Some(MotionState {
+            token,
+            rows: vec![],
+            routes: vec![],
+            calls: vec![],
+            blocks: nb,
+            delta: crate::numbers::Map::default(),
+            order: vec![],
+        });
+    }
+    let s = cache.as_mut().expect("incremental motion missing");
+    assert_eq!(s.token, token);
+    s.blocks = nb;
+    let norder = v[at];
+    at += 1;
+    if norder >= 0.0 {
+        s.order = (0..int(norder))
+            .map(|_| {
+                let id = int(v[at]);
+                at += 1;
+                id
+            })
+            .collect();
+    }
+    let n = int(v[at]);
+    at += 1;
+    for _ in 0..n {
+        let id = int(v[at]);
+        let group = int(v[at + 1]);
+        at += 2;
+        let mut row = [0.0; 20];
+        row.copy_from_slice(&v[at..at + 20]);
+        at += 20;
+        let nr = int(v[at]);
+        at += 1;
+        let mut route = vec![];
+        for _ in 0..nr {
+            route.push((v[at], v[at + 1]));
+            at += 2;
+        }
+        let nc = int(v[at]);
+        at += 1;
+        let calls = v[at..at + nc].iter().map(|&x| x != 0.0).collect();
+        at += nc;
+        s.delta.insert(
+            id,
+            DeltaTrain {
+                group,
+                row,
+                route,
+                calls,
+            },
+        );
+    }
+    assert_eq!(at, v.len());
+    if norder >= 0.0 {
+        let alive = s.order.iter().copied().collect::<crate::numbers::Set<_>>();
+        s.delta.retain(|id, _| alive.contains(id));
+    }
+    let mut counts = crate::numbers::Map::default();
+    for id in &s.order {
+        *counts.entry(s.delta[id].group).or_insert(0.0) += 1.0;
+    }
+    let mut input = vec![0.0, now, spacing, nb as f64, s.order.len() as f64];
+    input.extend_from_slice(releases);
+    for id in &s.order {
+        let t = s.delta.get_mut(id).unwrap();
+        let row = &mut t.row;
+        row[13] = counts[&t.group];
+        let ix = if row[3] == 1.0 { row[2] } else { row[2] - 1.0 };
+        let edge = if ix >= 0.0 {
+            t.route.get(ix as usize).copied()
+        } else {
+            None
+        };
+        row[17] = edge.map_or(0.0, |e| e.0);
+        row[19] = edge.map_or(-1.0, |e| e.1);
+        let next = row[2] + row[3];
+        let reset = if row[3] == 1.0 { 0 } else { int(row[4]) };
+        row[15] = if next >= 0.0 && t.calls.get(next as usize) == Some(&true) {
+            1.0
+        } else {
+            0.0
+        };
+        row[16] = if t.calls.get(reset) == Some(&true) {
+            1.0
+        } else {
+            0.0
+        };
+        input.extend_from_slice(row);
+    }
+    let out = motion(&input);
+    for (id, r) in s.order.iter().zip(out.chunks_exact(8)) {
+        let row = &mut s.delta.get_mut(id).unwrap().row;
+        match r[0] as u8 {
+            1 => row[1] = 3.0,
+            2 => row[5] = r[1],
+            3 | 5 => {
+                row[2] = r[4];
+                row[8] = r[5];
+                row[5] = 0.0;
+                row[1] = if r[0] == 5.0 { 3.0 } else { 0.0 };
+            }
+            4 => {
+                row[2] = r[6];
+                row[8] = r[7];
+                row[5] = 0.0;
+                row[1] = 0.0;
+            }
+            6 => row[1] = 2.0,
+            7 => {
+                row[1] = 1.0;
+                row[5] = 0.0;
+                row[6] = now;
+                row[7] = r[5];
+            }
+            _ => {}
+        }
+    }
+    out
+}
+
+pub(super) struct Sampling {
+    token: f64,
+    fi: Vec<usize>,
+    pi: Vec<usize>,
+}
+fn cached_sample(v: &[f64], cache: &mut Option<Sampling>) -> Vec<f64> {
+    let token = v[1];
+    let load = v[2] != 0.0;
+    let n = int(v[3]);
+    let nf = int(v[4]);
+    let np = int(v[5]);
+    let base = 8 + nf + np + n;
+    assert_eq!(v.len(), base + if load { n * 2 } else { 0 });
+    if load {
+        let mut fi = Vec::with_capacity(n);
+        let mut pi = Vec::with_capacity(n);
+        for pair in v[base..].chunks_exact(2) {
+            let f = int(pair[0]);
+            let p = int(pair[1]);
+            assert!(f < nf && p < np);
+            fi.push(f);
+            pi.push(p);
+        }
+        *cache = Some(Sampling { token, fi, pi });
+    }
+    let c = cache.as_ref().expect("sampling metadata missing");
+    assert_eq!(c.token, token);
+    assert_eq!(c.fi.len(), n);
+    let fv = &v[8..8 + nf];
+    let pv = &v[8 + nf..8 + nf + np];
+    let daily = &v[8 + nf + np..base];
+    let mut weights = Vec::with_capacity(n);
+    let mut total = 0.0;
+    for i in 0..n {
+        let w = daily[i] * fv[c.fi[i]] * pv[c.pi[i]];
+        assert!(w.is_finite() && w >= 0.0);
+        weights.push(w);
+        total += w;
+    }
+    sample_weights(&weights, total, v[6], v[7])
 }
