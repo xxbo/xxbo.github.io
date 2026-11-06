@@ -83,3 +83,6 @@ GitHub Pages 上的东京圈铁路经营实验。静态网页，无自己的后�
 - [MAP44：列车运行与乘客分配内核](rust-wasm-map44.md)
 
 - [MAP45：持久队列、事件批处理与跨语言开销修复](rust-wasm-map45.md)
+
+- [核心 Rust 迁移盘点与剩余工作](core-rust-inventory.md)
+- [MAP46：原生运营统计与增量纪录投影](rust-wasm-map46.md)

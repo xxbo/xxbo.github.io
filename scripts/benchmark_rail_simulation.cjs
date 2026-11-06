@@ -4,7 +4,7 @@ const {
 } = require('node:child_process');
 const gridSize = Number(process.argv[2]) || 5;
 if (!process.argv[2] || /^\d+$/.test(process.argv[2])) {
-  const results = ['map43-js', 'map44-mixed', 'rust-wasm'].map(mode => {
+  const results = ['map43-js', 'map45-queues', 'rust-wasm'].map(mode => {
     const r = spawnSync(process.execPath, ['--expose-gc', __filename, mode, String(gridSize)], {
       encoding: 'utf8',
       timeout: 180000
@@ -20,7 +20,7 @@ if (!process.argv[2] || /^\d+$/.test(process.argv[2])) {
   }, null, 2));
 } else {
   const P = process.argv[2] === 'map43-js' ? require('./fixtures/rail-map43-passengers.cjs') :
-    process.argv[2] === 'map44-mixed' ? require('./fixtures/rail-map44-passengers.cjs') : require(
+    process.argv[2] === 'map45-queues' ? require('./fixtures/rail-map45-passengers.cjs') : require(
       '../rail/passengers');
   const {
     create

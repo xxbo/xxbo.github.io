@@ -86,6 +86,7 @@ struct Journey {
     fare: f64,
     purpose: usize,
     byline: Rc<[(usize, u64)]>,
+    line_ids: Rc<[usize]>,
     legs: Rc<[Leg]>,
 }
 struct Cargo {
@@ -97,6 +98,7 @@ struct Cargo {
     stops: Vec<usize>,
     calls: HashSet<usize>,
     onboard: f64,
+    cars: f64,
     passengers: Ordered<Token, f64>,
 }
 #[derive(Clone, Copy)]
@@ -107,17 +109,17 @@ struct Transfer {
     ready: f64,
     _station: usize,
 }
-struct Read<'a> {
-    v: &'a [f64],
-    at: usize,
+pub(super) struct Read<'a> {
+    pub(super) v: &'a [f64],
+    pub(super) at: usize,
 }
 impl<'a> Read<'a> {
-    fn f(&mut self) -> f64 {
+    pub(super) fn f(&mut self) -> f64 {
         let x = self.v[self.at];
         self.at += 1;
         x
     }
-    fn u(&mut self) -> usize {
+    pub(super) fn u(&mut self) -> usize {
         int(self.f())
     }
     fn tok(&mut self) -> Token {
@@ -142,6 +144,9 @@ impl<'a> Read<'a> {
 }
 pub(super) struct Queues {
     token: f64,
+    stats_protocol: bool,
+    stats: Option<crate::statistics::Statistics>,
+    arrival_ids: Vec<Vec<usize>>,
     now: f64,
     modern: bool,
     integer: bool,
@@ -149,6 +154,7 @@ pub(super) struct Queues {
     defs: HashMap<usize, Journey>,
     leg_pool: HashSet<Rc<[Leg]>>,
     share_pool: HashSet<Rc<[(usize, u64)]>>,
+    line_pool: HashSet<Rc<[usize]>>,
     limits: HashMap<usize, (f64, f64)>,
     trains: HashMap<usize, Cargo>,
     queues: HashMap<Key, Ordered<Token, Cohort>>,
@@ -171,6 +177,9 @@ impl Queues {
     fn new(token: f64) -> Self {
         Self {
             token,
+            stats_protocol: false,
+            stats: None,
+            arrival_ids: vec![],
             now: 0.0,
             modern: false,
             integer: false,
@@ -178,6 +187,7 @@ impl Queues {
             defs: HashMap::default(),
             leg_pool: HashSet::default(),
             share_pool: HashSet::default(),
+            line_pool: HashSet::default(),
             limits: HashMap::default(),
             trains: HashMap::default(),
             queues: HashMap::default(),
@@ -217,6 +227,26 @@ impl Queues {
         line: Option<usize>,
         station: Option<usize>,
     ) {
+        if self.stats_protocol {
+            if let Some(stats) = &mut self.stats {
+                if kind == 0 {
+                    stats.event(kind, &self.arrival_ids[j], 0.0, &[], n, wait, line, station);
+                } else {
+                    let trip = &self.defs[&j];
+                    stats.event(
+                        kind,
+                        &trip.line_ids,
+                        trip.fare,
+                        &trip.byline,
+                        n,
+                        wait,
+                        line,
+                        station,
+                    );
+                }
+            }
+            return;
+        }
         self.cmd(
             1.0,
             &[
@@ -619,6 +649,15 @@ impl Queues {
                 .map(|_| (r.u(), r.f().to_bits()))
                 .collect::<Vec<_>>();
             let byline = intern(&mut self.share_pool, byline);
+            let line_ids = if self.stats_protocol {
+                let n = r.u();
+                intern(
+                    &mut self.line_pool,
+                    (0..n).map(|_| r.u()).collect::<Vec<_>>(),
+                )
+            } else {
+                intern(&mut self.line_pool, vec![])
+            };
             let nl = r.u();
             let legs = (0..nl)
                 .map(|_| Leg {
@@ -636,6 +675,7 @@ impl Queues {
                     fare,
                     purpose,
                     byline,
+                    line_ids,
                     legs,
                 },
             );
@@ -650,6 +690,7 @@ impl Queues {
             let capacity = r.f();
             let dir = r.f() as i32;
             let is_loop = r.f() != 0.0;
+            let cars = if self.stats_protocol { r.f() } else { 6.0 };
             let ns = r.u();
             let stops = (0..ns).map(|_| r.u()).collect();
             let nc = r.u();
@@ -673,6 +714,7 @@ impl Queues {
                     stops,
                     calls,
                     onboard,
+                    cars,
                     passengers,
                 },
             );
@@ -749,7 +791,8 @@ pub extern "C" fn simulation_step() -> *const f64 {
             ..
         } = &mut *c;
         let mut r = Read { v: input, at: 0 };
-        assert_eq!(r.f(), 1.0);
+        let protocol = r.f();
+        assert!(protocol == 1.0 || protocol == 2.0);
         let token = r.f();
         let phase = r.u();
         let load = r.u() != 0;
@@ -771,6 +814,7 @@ pub extern "C" fn simulation_step() -> *const f64 {
         let q = queue_state.as_mut().expect("queue state missing");
         assert_eq!(q.token, token);
         q.now = now;
+        q.stats_protocol = protocol == 2.0;
         q.modern = modern;
         q.integer = integer;
         q.transfer = transfer;
@@ -799,7 +843,31 @@ pub extern "C" fn simulation_step() -> *const f64 {
             .map(|_| [r.f(), r.f(), r.f(), r.f()])
             .collect::<Vec<_>>();
         let na = r.u();
-        let arrivals = (0..na).map(|_| [r.f(), r.f(), r.f()]).collect::<Vec<_>>();
+        q.arrival_ids.clear();
+        let arrivals = (0..na)
+            .map(|_| {
+                let row = [r.f(), r.f(), r.f()];
+                if q.stats_protocol {
+                    let n = r.u();
+                    q.arrival_ids.push((0..n).map(|_| r.u()).collect());
+                }
+                row
+            })
+            .collect::<Vec<_>>();
+        if q.stats_protocol {
+            let mode = r.f();
+            if mode < 0.0 {
+                q.stats = None;
+            } else if mode == 1.0 {
+                q.stats = Some(crate::statistics::Statistics::read(&mut r, now));
+            } else {
+                assert_eq!(mode, 0.0);
+                q.stats
+                    .as_mut()
+                    .expect("statistics state missing")
+                    .frame(&mut r, now);
+            }
+        }
         assert_eq!(r.at, input.len());
         let motion = if phase == 0 {
             crate::simulation::motion_packet(motion_input, simulation_state)
@@ -856,7 +924,14 @@ pub extern "C" fn simulation_step() -> *const f64 {
             match op[0] as u8 {
                 0 => {
                     if op[2] > 0.0 {
-                        q.cmd(2.0, &[id as f64, op[2], q.trains[&id].onboard]);
+                        if q.stats_protocol {
+                            let t = &q.trains[&id];
+                            if let Some(stats) = &mut q.stats {
+                                stats.travel(t.parent, op[2], t.onboard, t.cars);
+                            }
+                        } else {
+                            q.cmd(2.0, &[id as f64, op[2], q.trains[&id].onboard]);
+                        }
                     }
                     q.inc(7, op[3]);
                 }
@@ -884,6 +959,11 @@ pub extern "C" fn simulation_step() -> *const f64 {
         }
         for id in q.purpose_delta.keys() {
             q.cmd(15.0, &[id as f64, q.purpose_delta.get(id).unwrap()]);
+        }
+        if q.stats_protocol {
+            if let Some(stats) = &mut q.stats {
+                q.commands.extend(stats.finish());
+            }
         }
         let pending = request.is_some();
         let (j, station, amount) =

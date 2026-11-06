@@ -9,7 +9,7 @@
   const Q = node ? require('./ridership') : root.RailRidership;
   const F = node ? require('./fleet') : root.RailFleet;
   const SIM = node ? require('./simulation-wasm') : root.RailSimulation;
-  const QUEUES=node?require('./queue-runtime'):root.RailQueueRuntime;
+  const QUEUES = node ? require('./queue-runtime') : root.RailQueueRuntime;
   const key = (id, dir, station) => `${id}|${dir}|${station}`;
 
   function definitions(s, m) {
@@ -187,7 +187,15 @@
     return rt;
   }
 
-  function reject(rt,s,j,n){if(n<=0)return;rt.cancelled+=n;rt.rejected=(rt.rejected||0)+n;Q.event(s,rt,j,'reject',n);}
+  function reject(rt, journey, count, events) {
+    if (count <= 0) return;
+    rt.cancelled += count;
+    rt.rejected = (rt.rejected || 0) + count;
+    events.push({
+      journey,
+      count
+    });
+  }
 
   function generate(rt, s, dt) {
     if (rt.demandCatalog && rt.defs.length > 45000 && rt.minute - (rt.lastDefCompact ?? -
@@ -197,12 +205,15 @@
       rt._demandIndex = null;
     }
     rt.demandCarry = (rt.demandCarry || 0) + dt;
-    if (rt.demandCarry < 1 - 1e-9) return {arrivals:[],gates:false};
+    if (rt.demandCarry < 1 - 1e-9) return {
+      arrivals: [],
+      gates: false
+    };
     const interval = Math.floor(rt.demandCarry + 1e-9);
     rt.demandCarry -= interval;
     dt = interval;
     Q.step(s, rt, dt);
-    const incoming=[];
+    const incoming = [];
     const catalog = rt.demandCatalog || rt.defs,
       minute = Math.round(rt.minute * 1e6) / 1e6,
       rates = {};
@@ -212,7 +223,13 @@
         .fleet > 0))
       .map(l => l.id));
 
-    function arrive(j,n){if(n>0)incoming.push({j,id:open.has(j.legs[0]?.service)?materialize(rt,j).id:-1,n});}
+    function arrive(j, n) {
+      if (n > 0) incoming.push({
+        j,
+        id: open.has(j.legs[0]?.service) ? materialize(rt, j).id : -1,
+        n
+      });
+    }
     if (rt.arrivalMode !== 'integer') {
       for (const j of catalog) {
         const amount = j.daily * (j.externalKind ? C.profile(j.purpose, j.back, minute, j
@@ -220,7 +237,10 @@
           dt : rates[j.purpose + ':' + j.back]);
         if (amount >= 1e-12) arrive(j, amount);
       }
-      return {arrivals:incoming,gates:false};
+      return {
+        arrivals: incoming,
+        gates: false
+      };
     }
     // Global residual + systematic sampling: a tiny OD is not rounded away independently.
     // Expected total is preserved to less than one passenger; actual queues contain whole people.
@@ -231,8 +251,12 @@
     rt.expectedGenerated = (rt.expectedGenerated || 0) + sampled.total;
     rt.arrivalRemainder = sampled.remainder;
     rt.rngState = sampled.rng;
-    for(let i=0;i<sampled.events.length;i+=2)arrive(catalog[sampled.events[i]],sampled.events[i+1]);
-    return {arrivals:incoming,gates:true};
+    for (let i = 0; i < sampled.events.length; i += 2) arrive(catalog[sampled.events[i]], sampled
+      .events[i + 1]);
+    return {
+      arrivals: incoming,
+      gates: true
+    };
   }
 
   function refreshFleet(rt) {
@@ -295,7 +319,7 @@
       refreshFleet(rt);
       rt.fleetMinute = Math.floor(rt.minute);
     }
-    const incoming=generate(rt,s,dt);
+    const incoming = generate(rt, s, dt);
     const index = planIndex(s);
     for (const {
         l,
@@ -330,7 +354,7 @@
       }
       d.next = next;
     }
-    QUEUES.step(rt,s,index,trainTrack,incoming.arrivals,incoming.gates,reroute);
+    QUEUES.step(rt, s, index, trainTrack, incoming.arrivals, incoming.gates, reroute);
   }
 
   function advance(rt, s, minutes) {
@@ -708,6 +732,7 @@
         legValid(plan,
           e))));
     }
+    const rejected = [];
     const migrate = (token, count, station, since, put) => {
       const [id, leg] = token.split(':').map(Number), j = rt.defs[id];
       if (j?.legs.slice(leg).every(e => legValid(plan, e))) {
@@ -716,7 +741,7 @@
       }
       const next = j && reroute(rt, j, station);
       if (next) put(next, 0, next.id + ':0:' + Math.floor(since), count, since);
-      else reject(rt, s, j, count);
+      else reject(rt, j, count, rejected);
     };
     const queues = {},
       waitSince = {},
@@ -786,6 +811,7 @@
         }
       }
     rt.fleetMinute = -1;
+    Q.rejectBatch(s, rt, rejected);
     return rt;
   }
 

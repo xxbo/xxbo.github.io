@@ -4,6 +4,7 @@ mod demand;
 mod numbers;
 mod queues;
 mod simulation;
+mod statistics;
 mod world;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};

@@ -30,7 +30,7 @@
     let c = states.get(rt);
     if (!c || c.plan !== s || c.defs !== rt.defs) {
       c = {
-        token: ++serial,
+        token: Core.allocateToken(),
         plan: s,
         defs: rt.defs,
         names: [],
@@ -86,6 +86,8 @@
       for (let k = valid.length - 2; k >= 0; k--) valid[k] = valid[k] && valid[k + 1];
       out.push(j.id, j.fare, intern(c.purposeIds, c.purposes, j.purpose), byline.length);
       for (const [id, n] of byline) out.push(named(c, id), n);
+      const ids = j.lineIds || [];
+      out.push(ids.length, ...ids.map(id => named(c, id)));
       out.push(j.legs.length);
       j.legs.forEach((e, k) => {
         out.push(named(c, e.service), e.dir, e.from, e.to, +valid[k]);
@@ -147,7 +149,8 @@
     for (const t of fresh) {
       c.seen.add(t);
       trainData.push(uid(t), named(c, t.service), named(c, t.parentLine || t.service), t.capacity,
-        t.dir, +t.loop, t.stops.length, ...t.stops, t.callStops.length, ...t.callStops, t
+        t.dir, +t.loop, (t.retiringRun || job.index.runs.get(t.service))?.cars || 6, t.stops
+        .length, ...t.stops, t.callStops.length, ...t.callStops, t
         .onboard);
       tokens(trainData, t.passengers);
     }
@@ -166,18 +169,24 @@
     const motion = resume ? new Float64Array(0) : job.motion.input;
     const ops = resume?.ops || [],
       arrivals = resume ? [] : job.arrivals;
-    const header = [1, c.token, resume ? 1 : 0, +full, rt.minute, s.routeModel === 9 ? 1 : 0, rt
+    const header = [2, c.token, resume ? 1 : 0, +full, rt.minute, s.routeModel === 9 ? 1 : 0, rt
       .arrivalMode === 'integer' ? 1 : 0, X.TRANSFER, resume ? 0 : +job.gates, resume?.cursor ||
       0, resume?.original ?? -1, resume?.next ?? -1, resume?.amount || 0, motion.length
     ];
     const tail = [rt.trains.length, ...rt.trains.map(uid), ops.length / 4, ...ops, arrivals
       .length
     ];
-    arrivals.forEach((a, i) => tail.push(a.id, i, a.n));
+    arrivals.forEach((a, i) => {
+      const ids = a.j.lineIds || [];
+      tail.push(a.id, i, a.n, ids.length, ...ids.map(id => named(c, id)));
+    });
+    const statistics = Q.nativeStatisticsFrame(c, s, rt, full);
     const input = new Float64Array(header.length + motion.length + definition.length + limits
-      .length + trainData.length + snapshot.length + tail.length);
+      .length + trainData.length + snapshot.length + tail.length + statistics.length);
     let at = 0;
-    for (const part of [header, motion, definition, limits, trainData, snapshot, tail]) {
+    for (const part of [header, motion, definition, limits, trainData, snapshot, tail,
+        statistics
+      ]) {
       input.set(part, at);
       at += part.length;
     }
@@ -227,7 +236,7 @@
   }
 
   function project(c, rt, s, job, data) {
-    return Q.projectEvents(s, rt, () => projectCommands(c, rt, s, job, data));
+    return projectCommands(c, rt, s, job, data);
   }
 
   function projectCommands(c, rt, s, job, data) {
@@ -240,6 +249,7 @@
     at += motionLength;
     const ops = data.slice(at, at + opsLength);
     at += opsLength;
+    const statistics = Q.nativeStatisticsProjector(c, s, rt);
     const transferDeletes = [];
     const compactTransfers = () => {
       if (!transferDeletes.length) return;
@@ -291,19 +301,11 @@
         f = data[at + 5],
         g = data[at + 6],
         h = data[at + 7];
+      if (op >= 32) {
+        statistics(data, at);
+        continue;
+      }
       switch (op) {
-        case 1:
-          Q.event(s, rt, a === 0 ? job.arrivals[b].j : rt.defs[b], kinds[a], d, e, f < 0 ? null :
-            c.names[f], g < 0 ? null : g);
-          break;
-        case 2: {
-          const {
-            t,
-            l
-          } = c.trains.get(a);
-          Q.travel(s, rt, t, b, l, d);
-          break;
-        }
         case 3: {
           const k = key(a, b, d),
             q = rt.queues[k] || (rt.queues[k] = {});

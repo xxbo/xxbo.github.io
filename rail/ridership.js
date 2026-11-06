@@ -6,6 +6,12 @@
     X = node ? require('./service-plan') : root.RailServicePlan;
   const BAL = node ? require('./game-balance') : root.RailBalance;
   const FLOW = node ? require('./flow-history') : root.RailFlowHistory;
+  const Statistics = node ? require('./statistics-wasm') : root.RailStatistics;
+  const statistics = Statistics.bind({
+    ensureDay,
+    lineStats,
+    day: minute => day(minute)
+  });
   const VERSION = 14,
     DAY = 1440,
     ORIGIN = 420,
@@ -36,7 +42,8 @@
   function init(s, minute = s.economy?.minute || 420) {
     if (s.routeModel !== 9) return null;
     let q = s.ridership;
-    if (!q || q.version !== VERSION || !q.lines || !q.current || !q.records || !Array.isArray(q.history) ||
+    if (!q || q.version !== VERSION || !q.lines || !q.current || !q.records || !Array.isArray(q
+        .history) ||
       !Array.isArray(q.hour)) {
       q = s.ridership = {
         version: VERSION,
@@ -66,12 +73,16 @@
         boarded: 0
       };
     }
-    if (!Number.isFinite(q.records.totalPassengerKm)) q.records.totalPassengerKm = 0;
+    if (!Number.isFinite(q.records.totalPassengerKm)) {
+      q.records.totalPassengerKm = 0;
+      statistics.invalidate(s);
+    }
     if (!Number.isFinite(q.current.revenue)) {
       q.current.revenue = 0;
       q.current.operating = 0;
       q.current.passengerKm = 0;
       q.current.metricsSince = minute;
+      statistics.invalidate(s);
     }
     if (q.current.number === day(minute)) FLOW.touch(q.current, minute);
     sync(s, minute);
@@ -81,19 +92,24 @@
   function sync(s, minute = s.economy?.minute || 420) {
     const q = s.ridership;
     if (!q || q.version !== VERSION) return;
+    let changed = false;
     for (const l of lines(s))
-      if (!q.lines[l.id]) q.lines[l.id] = {
-        opened: minute,
-        awareness: START,
-        trust: 1,
-        serviceDays: 0,
-        migrated: false,
-        bestDay: 0,
-        attempted: 0,
-        lost: 0,
-        wait: 0,
-        boarded: 0
-      };
+      if (!q.lines[l.id]) {
+        changed = true;
+        q.lines[l.id] = {
+          opened: minute,
+          awareness: START,
+          trust: 1,
+          serviceDays: 0,
+          migrated: false,
+          bestDay: 0,
+          attempted: 0,
+          lost: 0,
+          wait: 0,
+          boarded: 0
+        };
+      }
+    if (changed) statistics.invalidate(s);
   }
   const WEIGHTS = {
     crowding: .22,
@@ -141,15 +157,18 @@
       direct = loop ? km : X.distance(s.nodes[l.stops[0]], s.nodes[l.stops.at(-1)]),
       speed = duration ? km / duration * 60 : 0,
       ts = rt.trains.filter(t => (t.parentLine || t.service) === l.id),
-      load = ts.length ? ts.reduce((v, t) => v + t.onboard / Math.max(1, t.capacity), 0) / ts.length : 0,
+      load = ts.length ? ts.reduce((v, t) => v + t.onboard / Math.max(1, t.capacity), 0) / ts
+      .length : 0,
       loss = r.attempted ? clamp(r.lost / r.attempted, 0, 1) : 0,
-      wait = Math.max(r.boarded ? r.wait / r.boarded : 0, Number.isFinite(headway) ? headway / 2 : 45);
+      wait = Math.max(r.boarded ? r.wait / r.boarded : 0, Number.isFinite(headway) ? headway / 2 :
+        45);
     const reached = new Set(l.stops);
     let change = true;
     while (change) {
       change = false;
       for (const x of lines(s))
-        if ((!x.fleetManaged || (node ? require('./fleet') : root.RailFleet).planned(x, rt.minute) > 0) && x
+        if ((!x.fleetManaged || (node ? require('./fleet') : root.RailFleet).planned(x, rt
+            .minute) > 0) && x
           .stops.some(id => reached.has(id)))
           for (const id of x.stops)
             if (!reached.has(id)) {
@@ -157,13 +176,15 @@
               change = true;
             }
     }
-    const fs = (s.urban?.facilities || []).filter(f => l.stops.some(id => X.distance(s.nodes[id], f) <= 3)),
+    const fs = (s.urban?.facilities || []).filter(f => l.stops.some(id => X.distance(s.nodes[id],
+        f) <= 3)),
       weight = f => {
         const t = (node ? require('./urban-growth') : root.RailUrban).TYPES[f.kind];
         return t.visits[f.level - 1] + t.jobs[f.level - 1];
       },
       total = fs.reduce((v, f) => v + weight(f), 0),
-      covered = fs.reduce((v, f) => v + ([...reached].some(id => X.distance(s.nodes[id], f) * 1.25 <= .8) ?
+      covered = fs.reduce((v, f) => v + ([...reached].some(id => X.distance(s.nodes[id], f) *
+          1.25 <= .8) ?
         weight(f) : 0), 0),
       reference = {
         ...l,
@@ -213,7 +234,8 @@
         total: v.total
       };
       const alpha = r.feedbackMinute == null ? 1 : 1 - Math.exp(-minutes / 90);
-      r.satisfaction = clamp((r.satisfaction ?? .7) + (v.score - (r.satisfaction ?? .7)) * alpha, 0, 1);
+      r.satisfaction = clamp((r.satisfaction ?? .7) + (v.score - (r.satisfaction ?? .7)) * alpha,
+        0, 1);
       r.feedbackMinute = rt.minute;
     }
   }
@@ -236,8 +258,10 @@
     const ls = lines(s).filter(l => l.stops.includes(id)),
       cars = Math.max(4, ...ls.map(l => l.cars || 6)),
       platforms = Math.max(2, Math.min(6, ls.length * 2)),
-      length = Math.max(cars * 20 + 20, ...ls.filter(l => l.fleetManaged).map(l => (typeof module !==
-          'undefined' && module.exports ? require('./fleet') : root.RailFleet).SPECS[l.stockSpec].length +
+      length = Math.max(cars * 20 + 20, ...ls.filter(l => l.fleetManaged).map(l => (
+          typeof module !==
+          'undefined' && module.exports ? require('./fleet') : root.RailFleet).SPECS[l
+          .stockSpec].length +
         20)),
       usableWidth = 3,
       area = length * usableWidth * platforms,
@@ -259,11 +283,13 @@
     const d = day(minute);
     if (q.current.number !== d) {
       const boundary = ORIGIN + (d - 1) * DAY,
-        continuous = q.current.flow && q.current.number === d - 1 && q.current.flow.through >= boundary - 1;
+        continuous = q.current.flow && q.current.number === d - 1 && q.current.flow.through >=
+        boundary - 1;
       if (q.current.flow && q.current.number === d - 1) FLOW.touch(q.current, boundary);
       q.history.push({
         ...q.current,
-        maturity: Object.fromEntries(Object.entries(q.lines).map(([id, l]) => [id, l.awareness * l
+        maturity: Object.fromEntries(Object.entries(q.lines).map(([id, l]) => [id, l
+          .awareness * l
           .trust
         ]))
       });
@@ -299,95 +325,8 @@
     };
   }
 
-  let projection=null;
-  function projectionDay(s,rt){
-    if(!projection||projection.s!==s||projection.minute!==rt.minute)return ensureDay(s,rt.minute);
-    if(!projection.day)projection.day=ensureDay(s,rt.minute);
-    return projection.day;
-  }
-  function projectedFlow(d,minute,kind,n){
-    if(!projection)return FLOW.record(d,minute,kind,n);
-    const field=kind==='enter'?'entered':kind==='board'?'boarded':kind==='complete'?'completed':null;
-    if(!field||!Number.isFinite(n)||n<=0)return;
-    const base=FLOW.start(d),i=Math.floor((minute-base)/FLOW.STEP);
-    if(d.flow&&minute>=base&&minute<=base+DAY&&i>=0&&i<FLOW.SLOTS)d.flow[field][i]+=n;
-  }
-  function projectEvents(s,rt,apply){const previous=projection;projection={s,minute:rt.minute,day:null};try{return apply();}finally{projection=previous;}}
-
-  function event(s, rt, j, kind, count, wait = 0, line = null, stationId = null) {
-    const q = s.ridership;
-    if (!q || !count) return;
-    const d = projectionDay(s, rt),
-      ids = j.lineIds || [];
-    projectedFlow(d, rt.minute, kind, count);
-    if (stationId !== null && ['enter', 'board', 'alight'].includes(kind)) {
-      d.stations = d.stations || {};
-      const st = d.stations[stationId] || (d.stations[stationId] = {
-        entered: 0,
-        boarded: 0,
-        alighted: 0
-      });
-      st[kind === 'enter' ? 'entered' : kind === 'board' ? 'boarded' : 'alighted'] += count;
-    }
-    if (kind === 'attempt') {
-      d.attempted += count;
-      for (const id of ids) {
-        lineStats(d, id).attempted += count;
-        if (q.lines[id]) q.lines[id].attempted += count;
-      }
-    }
-    if (kind === 'reject') {
-      d.rejected += count;
-      for (const id of ids) {
-        lineStats(d, id).rejected += count;
-        if (q.lines[id]) q.lines[id].lost += count;
-      }
-    }
-    if (kind === 'board') {
-      d.boarded += count;
-      d.waitMinutes += wait * count;
-      if (line) {
-        const st = lineStats(d, line);
-        st.boarded += count;
-        st.waitMinutes += wait * count;
-        if (q.lines[line]) {
-          q.lines[line].boarded += count;
-          q.lines[line].wait += wait * count;
-        }
-      }
-    }
-    if (kind === 'complete') {
-      const revenue = count * (j.fare || 0);
-      d.revenue = (d.revenue || 0) + revenue;
-      for (const [id, share] of Object.entries(j.byLine || {})) {
-        const st = lineStats(d, id);
-        st.revenue = (st.revenue || 0) + revenue * share;
-      }
-      d.completed += count;
-      q.records.totalCompleted += count;
-      for (const id of ids) {
-        const st = lineStats(d, id);
-        st.completed += count;
-        if (q.lines[id]) q.lines[id].bestDay = Math.max(q.lines[id].bestDay, st.completed);
-      }
-      const minute = Math.floor(rt.minute + 1e-7);
-      q.hour = q.hour.filter(b => b.minute > minute - 60);
-      if (q.hour.at(-1)?.minute === minute) q.hour.at(-1).count += count;
-      else q.hour.push({
-        minute,
-        count
-      });
-      const total = q.hour.reduce((v, b) => v + b.count, 0);
-      if (total > q.records.bestHour) {
-        q.records.bestHour = total;
-        q.records.bestHourMinute = minute;
-      }
-      if (d.completed > q.records.bestDay) {
-        q.records.bestDay = d.completed;
-        q.records.bestDayNumber = d.number;
-      }
-    }
-  }
+  const event = (...args) => statistics.event(...args);
+  const projectEvents = (s, rt, apply) => apply();
 
   function step(s, rt, minutes) {
     const q = s.ridership;
@@ -399,9 +338,11 @@
     for (const run of (rt.plan || s).services)
       for (const dir of X.directions(run)) {
         const departure = rt.departures[run.id + '|' + dir];
-        if (departure?.lastRun !== undefined && rt.minute - departure.lastRun <= 1.5 * (departure.headway ||
+        if (departure?.lastRun !== undefined && rt.minute - departure.lastRun <= 1.5 * (departure
+            .headway ||
             run.headway))
-          for (const id of new Set([run.parentLine || run.id, ...(run.fareLines || [])])) active.add(id);
+          for (const id of new Set([run.parentLine || run.id, ...(run.fareLines || [])])) active
+            .add(id);
       }
     for (const l of lines(s)) {
       const r = q.lines[l.id];
@@ -422,13 +363,15 @@
     updateSatisfaction(s, rt, minutes);
     q.lastMinute = rt.minute;
     q.hour = q.hour.filter(b => b.minute > Math.floor(rt.minute) - 60);
+    statistics.invalidate(s);
   }
 
   function line(s, id) {
     const q = s.ridership?.lines[id];
     return q ? {
       ...q,
-      factor: s.ridership.model === 22 ? multiplier(q.satisfaction ?? .7) : q.awareness * q.trust
+      factor: s.ridership.model === 22 ? multiplier(q.satisfaction ?? .7) : q.awareness * q
+        .trust
     } : {
       awareness: 1,
       trust: 1,
@@ -437,7 +380,8 @@
       bestDay: 0
     };
   }
-  const RECORD_FIELDS = ['bestDay', 'bestHour', 'totalCompleted', 'totalPassengerKm', 'bestNetworkKm',
+  const RECORD_FIELDS = ['bestDay', 'bestHour', 'totalCompleted', 'totalPassengerKm',
+    'bestNetworkKm',
     'bestLineKm', 'bestRevenue'
   ];
 
@@ -475,15 +419,16 @@
       suffix: '人次',
       category: '客流'
     }];
-    const add = (key, category, unit, suffix, tiers) => tiers.forEach(([target, name], i) => list.push({
-      id: key + i,
-      name,
-      target,
-      value: r[key] || 0,
-      category,
-      unit,
-      suffix
-    }));
+    const add = (key, category, unit, suffix, tiers) => tiers.forEach(([target, name], i) => list
+      .push({
+        id: key + i,
+        name,
+        target,
+        value: r[key] || 0,
+        category,
+        unit,
+        suffix
+      }));
     add('totalCompleted', '客流', '单局累计完成出行', '人次', [
       [1e5, '十万次抵达'],
       [1e6, '百万旅程']
@@ -520,24 +465,14 @@
   }
 
   function mergeRecords(a = {}, b = {}) {
-    return Object.fromEntries(RECORD_FIELDS.filter((k, i) => i < 3 || Number.isFinite(a[k]) || Number
-      .isFinite(b[k])).map(k => [k, Math.max(Number.isFinite(a[k]) ? a[k] : 0, Number.isFinite(b[k]) ?
+    return Object.fromEntries(RECORD_FIELDS.filter((k, i) => i < 3 || Number.isFinite(a[k]) ||
+      Number
+      .isFinite(b[k])).map(k => [k, Math.max(Number.isFinite(a[k]) ? a[k] : 0, Number
+      .isFinite(b[k]) ?
       b[k] : 0)]));
   }
 
-  function travel(s, rt, t, km, vehicle = null, occupancy = t.onboard) {
-    if (!s.ridership || km <= 0) return;
-    const d = projectionDay(s, rt),
-      id = t.parentLine || t.service,
-      st = lineStats(d, id),
-      pkm = km * occupancy;
-    d.passengerKm = (d.passengerKm || 0) + pkm;
-    st.passengerKm = (st.passengerKm || 0) + pkm;
-    st.vehicleKm = (st.vehicleKm || 0) + km;
-    const run = vehicle || t.retiringRun || rt.plan.services.find(l => l.id === t.service);
-    st.operating = (st.operating || 0) + km * (180 + (run?.cars || 6) * 25) * BAL.OPERATING_FACTOR;
-    s.ridership.records.totalPassengerKm = (s.ridership.records.totalPassengerKm || 0) + pkm;
-  }
+  const travel = (...args) => statistics.travel(...args);
   let costCache = null;
 
   function finance(s, rt, cost, fixed) {
@@ -546,7 +481,8 @@
     d.operating = (d.operating || 0) + cost;
     if (!costCache || costCache.services !== s.services || costCache.tracks !== s.tracks) {
       const km = new Map(s.tracks.map(t => [t.id, t.km]));
-      const rows = s.services.map(l => [l.id, l.trackIds.reduce((v, id) => v + (km.get(id) || 0), 0)]),
+      const rows = s.services.map(l => [l.id, l.trackIds.reduce((v, id) => v + (km.get(id) || 0),
+          0)]),
         total = rows.reduce((v, r) => v + r[1], 0);
       costCache = {
         services: s.services,
@@ -557,9 +493,13 @@
     for (const [id, weight] of costCache.rows) {
       const st = lineStats(d, id);
       st.operating = (st.operating || 0) + fixed * weight;
+      statistics.financeChanged(s, id, st.operating);
     }
   }
   const api = {
+    rejectBatch: statistics.rejectBatch,
+    nativeStatisticsFrame: statistics.frame,
+    nativeStatisticsProjector: statistics.projector,
     projectEvents,
     travel,
     finance,

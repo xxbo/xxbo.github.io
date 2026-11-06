@@ -1,4 +1,6 @@
-const Sim = require('../rail/simulation-wasm'),
+const previous = process.argv[2] === 'map45';
+const Sim = previous ? require('./fixtures/rail-map45-simulation.cjs') : require(
+    '../rail/simulation-wasm'),
   Core = require('../rail/routing-wasm');
 const metrics = {};
 
@@ -21,8 +23,9 @@ const kernel = Core.kernel;
 Core.kernel = function(name, input, ...args) {
   const start = performance.now();
   const result = kernel(name, input, ...args);
-  if (name === 'simulation_run' || name === 'simulation_step') {
-    const op = name === 'simulation_step' ? 'queue' : 'op' + input[0],
+  if (name === 'simulation_run' || name === 'simulation_step' || name === 'statistics_run') {
+    const op = name === 'simulation_step' ? 'queue' : name === 'statistics_run' ? 'statistics' :
+      'op' + input[0],
       m = metrics[op] || (metrics[op] = {
         calls: 0,
         ms: 0,
@@ -32,11 +35,20 @@ Core.kernel = function(name, input, ...args) {
     m.calls++;
     m.ms += performance.now() - start;
     m.inputBytes += input.length * 8;
+    m.outputBytes = (m.outputBytes || 0) + result.length * 8;
+    if (name === 'simulation_step') {
+      for (let at = 17 + result[6] + result[7] * 4; at < result.length; at += 8) {
+        if (result[at] === 1) m.eventRows = (m.eventRows || 0) + 1;
+        else if (result[at] === 2) m.travelRows = (m.travelRows || 0) + 1;
+        else if (result[at] >= 32) m.statisticsRows = (m.statisticsRows || 0) + 1;
+      }
+    }
     if ((input[0] === 4 && input[4]) || (name === 'simulation_step' && input[3])) m.fullSyncs++;
   }
   return result;
 };
-const P = require('../rail/passengers'),
+const P = previous ? require('./fixtures/rail-map45-passengers.cjs') : require(
+  '../rail/passengers'),
   D = require('../rail/demand-model'),
   {
     create
@@ -70,6 +82,7 @@ for (const k of Object.keys(metrics)) delete metrics[k];
 const start = performance.now();
 P.advance(rt, s, 60);
 console.log(JSON.stringify({
+  backend: previous ? 'MAP45' : 'MAP46',
   totalMs: performance.now() - start,
   metrics
 }, null, 2));

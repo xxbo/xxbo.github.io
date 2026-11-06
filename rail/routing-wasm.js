@@ -19,6 +19,8 @@
     activeQueueToken = 0,
     activeSamplingToken = 0,
     queueSteps = 0,
+    statisticsCalls = 0,
+    statisticsBatches = 0,
     nativeTokens = 0,
     recycles = 0;
   let recycleBytes = 64 * 1024 * 1024;
@@ -28,7 +30,7 @@
     peakMemoryBytes = 0;
   const recycleLimit = () => recycleBytes === 0 ? 0 : Math.max(recycleBytes,
     simulationRecycleBytes);
-  const asset = node ? null : new URL('wasm/rail-core-v5.wasm?v=45',
+  const asset = node ? null : new URL('wasm/rail-core-v6.wasm?v=46',
     root.document?.currentScript?.src || root.location.href).href;
 
   function install(module) {
@@ -41,7 +43,7 @@
     });
     if (next.exports.routing_abi() !== ABI || next.exports.demand_abi?.() !== 1 || next.exports
       .world_abi?.() !== 1 || next.exports.simulation_abi?.() !== 1 || next.exports.queue_abi?.
-    () !== 1) throw Error('寻路WASM接口版本不匹配');
+      () !== 1 || next.exports.statistics_abi?.() !== 1) throw Error('寻路WASM接口版本不匹配');
     compiled = module;
     instance = next;
     active = null;
@@ -257,7 +259,8 @@
 
   function kernel(name, values, read = null, context = null) {
     if (!['demand_ipf', 'demand_distribution', 'demand_mode', 'demand_strategy',
-        'demand_capacity', 'world_run', 'world_policy', 'simulation_run', 'simulation_step'
+        'demand_capacity', 'world_run', 'world_policy', 'simulation_run', 'simulation_step',
+        'statistics_run'
       ].includes(name)) throw Error('未知需求核心操作');
     try {
       const wasm = exports();
@@ -269,6 +272,7 @@
       wasm.output_clear();
       if (name === 'simulation_step') {
         queueSteps++;
+        if (values[0] === 2) statisticsBatches++;
         simulationCalls++;
         activeQueueToken = values[1];
         if (values[13] > 0) activeSimulationToken = values[15];
@@ -281,7 +285,8 @@
         simulationCalls++;
         if (values[0] === 4 || values[0] === 6) activeSimulationToken = values[1];
         if (values[0] === 7) activeSamplingToken = values[1];
-      } else demandCalls++;
+      } else if (name === 'statistics_run') statisticsCalls++;
+      else demandCalls++;
       peakMemoryBytes = Math.max(peakMemoryBytes, wasm.memory.buffer.byteLength);
       if (name === 'simulation_run' && activeQueueToken && recycleBytes >= 64 * 1024 * 1024) {
         simulationRecycleBytes = Math.max(simulationRecycleBytes,
@@ -382,6 +387,9 @@
       forecastCalls,
       simulationCalls,
       queueSteps,
+      statisticsCalls,
+      statisticsBatches,
+      statisticsAbi: 1,
       queueAbi: 1,
       simulationAbi: 1,
       worldAbi: 1,
@@ -405,7 +413,7 @@
     const fs = require('node:fs'),
       path = require('node:path');
     install(new WebAssembly.Module(fs.readFileSync(path.join(__dirname,
-      'wasm/rail-core-v5.wasm'))));
+      'wasm/rail-core-v6.wasm'))));
     module.exports = api;
   } else {
     root.RailRouting = api;
