@@ -22,6 +22,12 @@
     nativeTokens = 0,
     recycles = 0;
   let recycleBytes = 64 * 1024 * 1024;
+  // A persistent queue may itself need more than the old transient 64 MiB budget.
+  // Learn a bounded simulation working-set allowance, avoiding rebuild thrashing.
+  let simulationRecycleBytes = 0,
+    peakMemoryBytes = 0;
+  const recycleLimit = () => recycleBytes === 0 ? 0 : Math.max(recycleBytes,
+    simulationRecycleBytes);
   const asset = node ? null : new URL('wasm/rail-core-v5.wasm?v=45',
     root.document?.currentScript?.src || root.location.href).href;
 
@@ -34,7 +40,8 @@
       }
     });
     if (next.exports.routing_abi() !== ABI || next.exports.demand_abi?.() !== 1 || next.exports
-      .world_abi?.() !== 1 || next.exports.simulation_abi?.() !== 1 || next.exports.queue_abi?.() !== 1) throw Error('寻路WASM接口版本不匹配');
+      .world_abi?.() !== 1 || next.exports.simulation_abi?.() !== 1 || next.exports.queue_abi?.
+    () !== 1) throw Error('寻路WASM接口版本不匹配');
     compiled = module;
     instance = next;
     active = null;
@@ -177,7 +184,7 @@
         }
       });
       calls++;
-      if (wasm.memory.buffer.byteLength > recycleBytes) {
+      if (wasm.memory.buffer.byteLength > recycleLimit()) {
         install(compiled);
         recycles++;
       }
@@ -260,13 +267,28 @@
       // Short object projections consume synchronously; persistent matrices own a copy.
       const data = read ? read(view, context) : view.slice();
       wasm.output_clear();
-      if(name==='simulation_step'){queueSteps++;simulationCalls++;activeQueueToken=values[1];if(values[13]>0)activeSimulationToken=values[15];}
-      else if (name === 'simulation_run') {
+      if (name === 'simulation_step') {
+        queueSteps++;
         simulationCalls++;
-        if (values[0] === 4 || values[0]===6) activeSimulationToken = values[1];
-        if(values[0]===7)activeSamplingToken=values[1];
+        activeQueueToken = values[1];
+        if (values[13] > 0) activeSimulationToken = values[15];
+        if (recycleBytes >= 64 * 1024 * 1024) {
+          simulationRecycleBytes = Math.max(simulationRecycleBytes,
+            Math.min(192 * 1024 * 1024, Math.ceil(wasm.memory.buffer.byteLength * 1.5 / 65536) *
+              65536));
+        }
+      } else if (name === 'simulation_run') {
+        simulationCalls++;
+        if (values[0] === 4 || values[0] === 6) activeSimulationToken = values[1];
+        if (values[0] === 7) activeSamplingToken = values[1];
       } else demandCalls++;
-      if (wasm.memory.buffer.byteLength > recycleBytes) {
+      peakMemoryBytes = Math.max(peakMemoryBytes, wasm.memory.buffer.byteLength);
+      if (name === 'simulation_run' && activeQueueToken && recycleBytes >= 64 * 1024 * 1024) {
+        simulationRecycleBytes = Math.max(simulationRecycleBytes,
+          Math.min(192 * 1024 * 1024, Math.ceil(wasm.memory.buffer.byteLength * 1.5 / 65536) *
+            65536));
+      }
+      if (wasm.memory.buffer.byteLength > recycleLimit()) {
         install(compiled);
         recycles++;
       }
@@ -304,7 +326,7 @@
         graph
       });
       wasm.output_clear();
-      if (wasm.memory.buffer.byteLength > recycleBytes) {
+      if (wasm.memory.buffer.byteLength > recycleLimit()) {
         install(compiled);
         recycles++;
       }
@@ -323,7 +345,7 @@
       const wasm = exports();
       const result = wasm.demand_mode_scalar(...values);
       demandCalls++;
-      if (wasm.memory.buffer.byteLength > recycleBytes) {
+      if (wasm.memory.buffer.byteLength > recycleLimit()) {
         install(compiled);
         recycles++;
       }
@@ -340,9 +362,14 @@
     kernel,
     modeKernel,
     simulationToken: () => activeSimulationToken,
-    queueToken:()=>activeQueueToken,
-    allocateToken:()=>++nativeTokens,
-    samplingToken:()=>activeSamplingToken,
+    queueToken: () => activeQueueToken,
+    allocateToken: () => ++nativeTokens,
+    samplingToken: () => activeSamplingToken,
+    recycleSimulation: () => {
+      simulationRecycleBytes = 0;
+      install(compiled);
+      recycles++;
+    },
     forecastKernel,
     prepare,
     compactPaths,
@@ -355,18 +382,22 @@
       forecastCalls,
       simulationCalls,
       queueSteps,
-      queueAbi:1,
+      queueAbi: 1,
       simulationAbi: 1,
       worldAbi: 1,
       abi: ABI,
       ready: !!instance,
       searches: calls,
       recycles,
+      peakMemoryBytes,
+      recycleLimitBytes: recycleLimit(),
       memoryBytes: instance?.exports.memory.buffer.byteLength || 0
     }),
     // Also used by deterministic module-failure/recycling tests; no alternate algorithm.
     create: (bytes, options = {}) => {
       if (options.recycleBytes !== undefined) recycleBytes = options.recycleBytes;
+      simulationRecycleBytes = 0;
+      peakMemoryBytes = 0;
       return install(new WebAssembly.Module(bytes));
     }
   };

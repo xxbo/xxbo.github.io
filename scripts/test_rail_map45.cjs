@@ -110,6 +110,47 @@ for (let i = 0; i < 30; i++) step(recovery, .5);
 Core.create(bytes, {
   recycleBytes: 64 * 1024 * 1024
 });
+// A large persistent working set must not rebuild on every tick at the old 64 MiB watermark.
+// Repeated paths represent the shared itinerary metadata in real OD catalogs.
+const ndefs = 180000,
+  legs = 10,
+  stride = 5 + legs * 5;
+const large = new Float64Array(43 + ndefs * stride);
+const qt = Core.allocateToken(),
+  mt = Core.allocateToken();
+large.set([1, qt, 0, 1, 480, 1, 1, 4, 0, 0, -1, -1, 0, 8,
+  6, mt, 480, 2, 1, 0, 0, 0, ndefs
+]);
+let at = 23;
+for (let id = 0; id < ndefs; id++) {
+  large.set([id, 100, 0, 0, legs], at);
+  at += 5;
+  for (let k = 0; k < legs; k++) {
+    large.set([0, 1, k, k + 1, 1], at);
+    at += 5;
+  }
+}
+const beforeRecycles = Core.status().recycles;
+assert.equal(Core.kernel('simulation_step', large).length, 17);
+assert(Core.status().memoryBytes > 64 * 1024 * 1024);
+for (let i = 0; i < 25; i++) {
+  const small = new Float64Array(28);
+  small.set([1, qt, 0, 0, 480 + i / 10, 1, 1, 4, 0, 0, -1, -1, 0, 8,
+    6, mt, 480 + i / 10, 2, 0, 0, -1, 0
+  ]);
+  assert.equal(Core.kernel('simulation_step', small).length, 17);
+}
+assert.equal(Core.status().recycles, beforeRecycles, 'resident queues must not thrash');
+assert(Core.status().recycleLimitBytes <= 192 * 1024 * 1024);
+const emptyWorld = N.upgrade(N.emptyWorld('gba'));
+const emptyRuntime = P.create(emptyWorld, {
+  flows: []
+}, 480, false);
+P.advance(emptyRuntime, emptyWorld, .1);
+assert(Core.status().memoryBytes < 64 * 1024 * 1024, 'new games release the old simulation arena');
+Core.recycleSimulation();
+assert(Core.status().memoryBytes < 64 * 1024 * 1024);
+assert.equal(Core.queueToken(), 0);
 assert.equal(Core.status().queueAbi, 1);
 assert(resumes > 0, 'must exercise native reroute continuation');
 const source = fs.readFileSync(require('node:path').join(__dirname, '../rail/passengers.js'),
@@ -118,5 +159,5 @@ for (const name of ['function board(', 'function unload(', 'function gates(', 'f
     'function waitingTransfer('
   ]) assert(!source.includes(name), name + ' remains in production JS');
 console.log(
-  `MAP45 passed: ${checkpoints} exact frozen MAP44 checkpoints; bounded gates, rejection, integer/weighted cohorts, transfers, fare/accounting, ${resumes} reroute continuations, extension/deletion, full reload and forced native recycling.`
-  );
+  `MAP45 passed: ${checkpoints} exact frozen MAP44 checkpoints; bounded gates, rejection, integer/weighted cohorts, transfers, fare/accounting, ${resumes} reroute continuations, extension/deletion, full reload, forced native recycling, 180000 shared itineraries without thrashing, and new-game arena release.`
+);

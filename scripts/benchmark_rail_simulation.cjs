@@ -2,9 +2,10 @@
 const {
   spawnSync
 } = require('node:child_process');
-if (!process.argv[2]) {
+const gridSize = Number(process.argv[2]) || 5;
+if (!process.argv[2] || /^\d+$/.test(process.argv[2])) {
   const results = ['map43-js', 'map44-mixed', 'rust-wasm'].map(mode => {
-    const r = spawnSync(process.execPath, ['--expose-gc', __filename, mode], {
+    const r = spawnSync(process.execPath, ['--expose-gc', __filename, mode, String(gridSize)], {
       encoding: 'utf8',
       timeout: 180000
     });
@@ -14,7 +15,7 @@ if (!process.argv[2]) {
   if (results.some(r => r.checksum !== results[0].checksum)) throw Error(
     'Continuous simulation checksum mismatch');
   console.log(JSON.stringify({
-    workload: '10 lines, 25 stations; 10 warmup minutes then 3 x 60 game minutes; full state/accounting parity',
+    workload: `${gridSize * 2} lines, ${gridSize * gridSize} stations; 30 warmup minutes then 5 x 120 game minutes; full state/accounting parity`,
     results
   }, null, 2));
 } else {
@@ -25,7 +26,7 @@ if (!process.argv[2]) {
     create
   } = require('./fixtures/rail-memory-grid.cjs'), D = require('../rail/demand-model'), crypto =
     require('node:crypto');
-  const s = create(5),
+  const s = create(Number(process.argv[3]) || 5),
     fields = ['people', 'jobs', 'shops', 'industry', 'leisure'];
   const cells = s.nodes.map((n, i) => ({
     id: 'c' + i,
@@ -50,18 +51,19 @@ if (!process.argv[2]) {
   };
   const f = D.evaluate(s, city),
     rt = P.create(s, f, 480, false);
-  P.advance(rt, s, 10);
+  P.advance(rt, s, 30);
   global.gc();
   const ms = [];
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < 5; i++) {
     const start = performance.now();
-    P.advance(rt, s, 60);
+    P.advance(rt, s, 120);
     ms.push(performance.now() - start);
     global.gc();
   }
   console.log(JSON.stringify({
     backend: process.argv[2],
-    medianMs: ms.sort((a, b) => a - b)[1],
+    medianMs: [...ms].sort((a, b) => a - b)[2],
+    samplesMs: ms,
     rssMB: process.resourceUsage().maxRSS / 1024,
     heapMB: process.memoryUsage().heapUsed / 1048576,
     checksum: crypto.createHash('sha256').update(JSON.stringify({

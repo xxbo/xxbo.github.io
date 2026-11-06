@@ -74,7 +74,8 @@
   function motion(rt, s, index, track, deferred = false) {
     if (!rt.trains.length) return {
       context: [],
-      data: new Float64Array(0), input:new Float64Array([4,0,rt.minute,B.SPACING,1,0,0])
+      data: new Float64Array(0),
+      input: new Float64Array([4, 0, rt.minute, B.SPACING, 1, 0, 0])
     };
     let cache = motionStates.get(rt);
     const reload = !cache || cache.plan !== s || cache.minute !== Math.floor(rt.minute) || Core
@@ -186,34 +187,129 @@
       input[2] = rt.minute;
       for (const [key, id] of cache.blocks) input[6 + id] = rt.blocks[key] || 0;
     }
-    return deferred ? {context:cache.context,input} : {context:cache.context,data:call(input)};
+    return deferred ? {
+      context: cache.context,
+      input
+    } : {
+      context: cache.context,
+      data: call(input)
+    };
   }
 
-  const deltaStates=new WeakMap();
-  function incremental(rt,s,index,track,identity){
-    let c=deltaStates.get(rt),reset=!c||c.plan!==s||Core.simulationToken()!==c.token;
-    if(reset){c={plan:s,token:Core.allocateToken(),blocks:new Map(),groups:new Map(),context:[],seen:new WeakSet(),minute:-1};deltaStates.set(rt,c);}
-    const changed=c.context.length!==rt.trains.length||rt.trains.some((t,i)=>c.context[i].t!==t);
-    const parameters=c.minute!==Math.floor(rt.minute),updates=[],chunks=[];let length=0;
-    for(const t of rt.trains){
-      if(!parameters&&c.seen.has(t))continue;
-      const l=t.retiringRun||index.runs.get(t.service);let layout=trainLayouts.get(t);
-      if(!layout||layout.plan!==s||layout.blocks!==c.blocks||layout.l!==l||layout.stops!==t.stops||layout.calls!==t.callStops||layout.tracks!==t.trackIds){
-        const a=new Array(20).fill(0);a[0]=l?1:0;a[3]=t.dir;a[4]=t.stops.length-1;a[9]=+t.loop;a[10]=t.retiringRun?1:0;a[18]=l?.cars||0;a[19]=-1;
-        a.push(t.trackIds.length);for(let i=0;i<t.trackIds.length;i++){const tr=l&&track(rt,index,t,t.trackIds[i]);if(!tr){a.push(0,-1);continue;}const from=t.stops[t.dir===1?i:i+1],block=tr.id+'|'+(from===tr.a?1:-1);a.push(tr.km,intern(c.blocks,block));}
-        const calls=new Set(t.callStops);a.push(t.stops.length,...t.stops.map(id=>calls.has(id)?1:0));
-        layout={plan:s,blocks:c.blocks,l,stops:t.stops,calls:t.callStops,tracks:t.trackIds,data:new Float64Array(a),context:{t,l}};trainLayouts.set(t,layout);
-      }
-      let run=l&&runLayouts.get(l);if(l&&(!run||run.plan!==s||run.minute!==Math.floor(rt.minute)||run.fleet!==l.fleet)){run={plan:s,minute:Math.floor(rt.minute),fleet:l.fleet,perDir:l.fleet/X.directions(l).length,open:B.isOpen(l,rt.minute)?1:0,dwell:t.loop?X.loopDwell(s,l):B.DWELL};runLayouts.set(l,run);}
-      const a=layout.data;a[1]=t.status==='moving'?1:t.status==='finished'?3:0;a[2]=t.index;a[5]=t.progress;a[6]=t.departedAt??0;a[7]=t.arriveAt??0;a[8]=t.ready??0;a[11]=run?.open||0;a[12]=run?.perDir||0;a[14]=run?.dwell||0;
-      updates.push([identity(t),intern(c.groups,t.service+'|'+t.dir)]);chunks.push(a);length+=a.length+2;c.seen.add(t);
+  const deltaStates = new WeakMap();
+
+  function incremental(rt, s, index, track, identity) {
+    let c = deltaStates.get(rt),
+      reset = !c || c.plan !== s || Core.simulationToken() !== c.token;
+    if (reset) {
+      c = {
+        plan: s,
+        token: Core.allocateToken(),
+        blocks: new Map(),
+        groups: new Map(),
+        context: [],
+        seen: new WeakSet(),
+        minute: -1
+      };
+      deltaStates.set(rt, c);
     }
-    if(changed||reset)c.context=rt.trains.map(t=>trainLayouts.get(t).context);
-    const count=changed||reset?rt.trains.length:-1,input=new Float64Array(8+c.blocks.size+(count<0?0:count)+length);
-    input.set([6,c.token,rt.minute,2,+reset,c.blocks.size]);for(const[k,id]of c.blocks)input[6+id]=rt.blocks[k]||0;
-    let at=6+c.blocks.size;input[at++]=count;if(count>=0)for(const t of rt.trains)input[at++]=identity(t);input[at++]=updates.length;
-    for(let i=0;i<chunks.length;i++){input.set(updates[i],at);at+=2;input.set(chunks[i],at);at+=chunks[i].length;}c.minute=Math.floor(rt.minute);
-    return {context:c.context,input};
+    const changed = c.context.length !== rt.trains.length || rt.trains.some((t, i) => c.context[i]
+      .t !== t);
+    const parameters = c.minute !== Math.floor(rt.minute),
+      updates = [],
+      chunks = [];
+    let length = 0;
+    for (const t of rt.trains) {
+      if (!parameters && c.seen.has(t)) continue;
+      const l = t.retiringRun || index.runs.get(t.service);
+      let layout = trainLayouts.get(t);
+      if (!layout || layout.plan !== s || layout.blocks !== c.blocks || layout.l !== l || layout
+        .stops !== t.stops || layout.calls !== t.callStops || layout.tracks !== t.trackIds) {
+        const a = new Array(20).fill(0);
+        a[0] = l ? 1 : 0;
+        a[3] = t.dir;
+        a[4] = t.stops.length - 1;
+        a[9] = +t.loop;
+        a[10] = t.retiringRun ? 1 : 0;
+        a[18] = l?.cars || 0;
+        a[19] = -1;
+        a.push(t.trackIds.length);
+        for (let i = 0; i < t.trackIds.length; i++) {
+          const tr = l && track(rt, index, t, t.trackIds[i]);
+          if (!tr) {
+            a.push(0, -1);
+            continue;
+          }
+          const from = t.stops[t.dir === 1 ? i : i + 1],
+            block = tr.id + '|' + (from === tr.a ? 1 : -1);
+          a.push(tr.km, intern(c.blocks, block));
+        }
+        const calls = new Set(t.callStops);
+        a.push(t.stops.length, ...t.stops.map(id => calls.has(id) ? 1 : 0));
+        layout = {
+          plan: s,
+          blocks: c.blocks,
+          l,
+          stops: t.stops,
+          calls: t.callStops,
+          tracks: t.trackIds,
+          data: new Float64Array(a),
+          context: {
+            t,
+            l
+          }
+        };
+        trainLayouts.set(t, layout);
+      }
+      let run = l && runLayouts.get(l);
+      if (l && (!run || run.plan !== s || run.minute !== Math.floor(rt.minute) || run.fleet !== l
+          .fleet)) {
+        run = {
+          plan: s,
+          minute: Math.floor(rt.minute),
+          fleet: l.fleet,
+          perDir: l.fleet / X.directions(l).length,
+          open: B.isOpen(l, rt.minute) ? 1 : 0,
+          dwell: t.loop ? X.loopDwell(s, l) : B.DWELL
+        };
+        runLayouts.set(l, run);
+      }
+      const a = layout.data;
+      a[1] = t.status === 'moving' ? 1 : t.status === 'finished' ? 3 : 0;
+      a[2] = t.index;
+      a[5] = t.progress;
+      a[6] = t.departedAt ?? 0;
+      a[7] = t.arriveAt ?? 0;
+      a[8] = t.ready ?? 0;
+      a[11] = run?.open || 0;
+      a[12] = run?.perDir || 0;
+      a[14] = run?.dwell || 0;
+      updates.push([identity(t), intern(c.groups, t.service + '|' + t.dir)]);
+      chunks.push(a);
+      length += a.length + 2;
+      c.seen.add(t);
+    }
+    if (changed || reset) c.context = rt.trains.map(t => trainLayouts.get(t).context);
+    const count = changed || reset ? rt.trains.length : -1,
+      input = new Float64Array(8 + c.blocks.size + (count < 0 ? 0 : count) + length);
+    input.set([6, c.token, rt.minute, 2, +reset, c.blocks.size]);
+    for (const [k, id] of c.blocks) input[6 + id] = rt.blocks[k] || 0;
+    let at = 6 + c.blocks.size;
+    input[at++] = count;
+    if (count >= 0)
+      for (const t of rt.trains) input[at++] = identity(t);
+    input[at++] = updates.length;
+    for (let i = 0; i < chunks.length; i++) {
+      input.set(updates[i], at);
+      at += 2;
+      input.set(chunks[i], at);
+      at += chunks[i].length;
+    }
+    c.minute = Math.floor(rt.minute);
+    return {
+      context: c.context,
+      input
+    };
   }
 
   function boarding(rt, t) {
@@ -274,19 +370,35 @@
       profiles,
       fi,
       pi,
-      token:Core.allocateToken(),input: new Float64Array(8 + factors.length + profiles.length + catalog.length)
+      token: Core.allocateToken(),
+      input: new Float64Array(8 + factors.length + profiles.length + catalog.length)
     };
     catalogs.set(catalog, c);
     return c;
   }
 
-  function arrivals(catalog,factor,profile,remainder,rng){
-    const c=prepare(catalog),nf=c.factors.length,np=c.profiles.length,load=Core.samplingToken()!==c.token;
-    const input=load?new Float64Array(c.input.length+catalog.length*2):c.input;
-    input.set([7,c.token,+load,catalog.length,nf,np,remainder,rng]);input.set(c.factors.map(factor),8);input.set(c.profiles.map(profile),8+nf);
-    for(let i=0;i<catalog.length;i++)input[8+nf+np+i]=catalog[i].daily;
-    if(load)for(let i=0;i<catalog.length;i++){input[c.input.length+i*2]=c.fi[i];input[c.input.length+i*2+1]=c.pi[i];}
-    const out=call(input);return {total:out[0],remainder:out[1],rng:out[2],events:out.subarray(4)};
+  function arrivals(catalog, factor, profile, remainder, rng) {
+    const c = prepare(catalog),
+      nf = c.factors.length,
+      np = c.profiles.length,
+      load = Core.samplingToken() !== c.token;
+    const input = load ? new Float64Array(c.input.length + catalog.length * 2) : c.input;
+    input.set([7, c.token, +load, catalog.length, nf, np, remainder, rng]);
+    input.set(c.factors.map(factor), 8);
+    input.set(c.profiles.map(profile), 8 + nf);
+    for (let i = 0; i < catalog.length; i++) input[8 + nf + np + i] = catalog[i].daily;
+    if (load)
+      for (let i = 0; i < catalog.length; i++) {
+        input[c.input.length + i * 2] = c.fi[i];
+        input[c.input.length + i * 2 + 1] = c.pi[i];
+      }
+    const out = call(input);
+    return {
+      total: out[0],
+      remainder: out[1],
+      rng: out[2],
+      events: out.subarray(4)
+    };
   }
   const api = {
     incremental,

@@ -171,7 +171,8 @@
       0, resume?.original ?? -1, resume?.next ?? -1, resume?.amount || 0, motion.length
     ];
     const tail = [rt.trains.length, ...rt.trains.map(uid), ops.length / 4, ...ops, arrivals
-      .length];
+      .length
+    ];
     arrivals.forEach((a, i) => tail.push(a.id, i, a.n));
     const input = new Float64Array(header.length + motion.length + definition.length + limits
       .length + trainData.length + snapshot.length + tail.length);
@@ -239,6 +240,18 @@
     at += motionLength;
     const ops = data.slice(at, at + opsLength);
     at += opsLength;
+    const transferDeletes = [];
+    const compactTransfers = () => {
+      if (!transferDeletes.length) return;
+      let deleted = 0,
+        kept = 0;
+      for (let read = 0; read < rt.transfers.length; read++) {
+        if (read === transferDeletes[deleted]) deleted++;
+        else rt.transfers[kept++] = rt.transfers[read];
+      }
+      rt.transfers.length = kept;
+      transferDeletes.length = 0;
+    };
     let lastToken = '',
       tj = -1,
       tl = -1,
@@ -321,6 +334,7 @@
           c.trains.get(a).t.passengers = {};
           break;
         case 11:
+          compactTransfers();
           rt.transfers.push({
             journey: a,
             leg: b,
@@ -330,7 +344,7 @@
           });
           break;
         case 12:
-          rt.transfers.splice(a, 1);
+          transferDeletes.push(a + transferDeletes.length);
           break;
         case 13:
           rt.lineRevenue[c.names[a]] = b;
@@ -348,6 +362,7 @@
           throw Error('未知队列事件 ' + op);
       }
     }
+    compactTransfers();
     for (let i = 0; i < 8; i++)
       if (dirty & (1 << i)) rt[counters[i]] = data[9 + i];
     return data[1] ? {
@@ -360,14 +375,20 @@
   }
 
   function step(rt, s, index, track, arrivals, gates, reroute) {
-    const c = cache(rt, s),
-      job = {
-        index,
-        track,
-        arrivals,
-        gates,
-        motion: SIM.incremental(rt, s, index, track, uid)
-      };
+    const c = cache(rt, s);
+    // New games / compacted archives can release the previous arena before rehydration.
+    // Do this before encoding motion so both native state machines receive full layouts.
+    if (!c.sent && Core.queueToken() !== c.token && Core.status().memoryBytes > 64 * 1024 *
+      1024) {
+      Core.recycleSimulation();
+    }
+    const job = {
+      index,
+      track,
+      arrivals,
+      gates,
+      motion: SIM.incremental(rt, s, index, track, uid)
+    };
     let pending = project(c, rt, s, job, packet(c, rt, s, job, null));
     while (pending) {
       const next = reroute(rt, rt.defs[pending.original], pending.station);

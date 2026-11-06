@@ -4,6 +4,16 @@ use crate::numbers::{Map as HashMap, Set as HashSet};
 use crate::{int, CORE};
 use std::collections::BTreeMap;
 use std::hash::Hash;
+use std::rc::Rc;
+// Identical OD paths and revenue splits are shared across purposes and time profiles.
+fn intern<T: Eq + Hash>(pool: &mut HashSet<Rc<[T]>>, values: Vec<T>) -> Rc<[T]> {
+    if let Some(existing) = pool.get(values.as_slice()) {
+        return Rc::clone(existing);
+    }
+    let value: Rc<[T]> = values.into();
+    pool.insert(Rc::clone(&value));
+    value
+}
 #[derive(Clone)]
 struct Ordered<K, V> {
     index: HashMap<K, usize>,
@@ -64,6 +74,7 @@ struct Cohort {
     since: Option<f64>,
 }
 type Key = (usize, i32, usize);
+#[derive(PartialEq, Eq, Hash)]
 struct Leg {
     service: usize,
     dir: i32,
@@ -74,8 +85,8 @@ struct Leg {
 struct Journey {
     fare: f64,
     purpose: usize,
-    byline: Vec<(usize, f64)>,
-    legs: Vec<Leg>,
+    byline: Rc<[(usize, u64)]>,
+    legs: Rc<[Leg]>,
 }
 struct Cargo {
     service: usize,
@@ -136,6 +147,8 @@ pub(super) struct Queues {
     integer: bool,
     transfer: f64,
     defs: HashMap<usize, Journey>,
+    leg_pool: HashSet<Rc<[Leg]>>,
+    share_pool: HashSet<Rc<[(usize, u64)]>>,
     limits: HashMap<usize, (f64, f64)>,
     trains: HashMap<usize, Cargo>,
     queues: HashMap<Key, Ordered<Token, Cohort>>,
@@ -163,6 +176,8 @@ impl Queues {
             integer: false,
             transfer: 0.0,
             defs: HashMap::default(),
+            leg_pool: HashSet::default(),
+            share_pool: HashSet::default(),
             limits: HashMap::default(),
             trains: HashMap::default(),
             queues: HashMap::default(),
@@ -374,17 +389,18 @@ impl Queues {
         self.ocmd(6.0, id, t, f64::NAN);
     }
     fn release(&mut self) {
-        let mut i = 0;
-        while i < self.transfers.len() {
-            let x = self.transfers[i];
+        let mut kept = 0;
+        for read in 0..self.transfers.len() {
+            let x = self.transfers[read];
             if x.ready <= self.now {
                 self.enqueue(x.j, x.leg, x.n, true);
-                self.transfers.remove(i);
-                self.cmd(12.0, &[i as f64]);
+                self.cmd(12.0, &[kept as f64]);
             } else {
-                i += 1;
+                self.transfers[kept] = x;
+                kept += 1;
             }
         }
+        self.transfers.truncate(kept);
     }
     fn gates(&mut self) {
         let stations = self.outside.keys().copied().collect::<Vec<_>>();
@@ -563,8 +579,9 @@ impl Queues {
                 let value = self.purposes.get(purpose).unwrap_or(f64::NAN) + count;
                 self.purposes.set(purpose, value);
                 self.purpose_delta.set(purpose, value);
-                for (line, share) in byline {
-                    let value = self.revenue.get(line).unwrap_or(0.0) + count * fare * share;
+                for &(line, share) in byline.iter() {
+                    let value = self.revenue.get(line).unwrap_or(0.0)
+                        + count * fare * f64::from_bits(share);
                     self.revenue.set(line, value);
                     self.revenue_delta.set(line, value);
                 }
@@ -598,7 +615,10 @@ impl Queues {
             let fare = r.f();
             let purpose = r.u();
             let nb = r.u();
-            let byline = (0..nb).map(|_| (r.u(), r.f())).collect();
+            let byline = (0..nb)
+                .map(|_| (r.u(), r.f().to_bits()))
+                .collect::<Vec<_>>();
+            let byline = intern(&mut self.share_pool, byline);
             let nl = r.u();
             let legs = (0..nl)
                 .map(|_| Leg {
@@ -608,7 +628,8 @@ impl Queues {
                     to: r.u(),
                     valid: r.f() != 0.0,
                 })
-                .collect();
+                .collect::<Vec<_>>();
+            let legs = intern(&mut self.leg_pool, legs);
             self.defs.insert(
                 id,
                 Journey {
@@ -895,6 +916,24 @@ pub extern "C" fn simulation_step() -> *const f64 {
 #[cfg(test)]
 mod tests {
     use super::Ordered;
+    #[test]
+    fn identical_itineraries_share_storage() {
+        use super::{intern, HashSet, Leg, Rc};
+        let mut pool = HashSet::default();
+        let path = || {
+            vec![Leg {
+                service: 2,
+                dir: 1,
+                from: 4,
+                to: 9,
+                valid: true,
+            }]
+        };
+        let a = intern(&mut pool, path());
+        let b = intern(&mut pool, path());
+        assert!(Rc::ptr_eq(&a, &b));
+        assert_eq!(pool.len(), 1);
+    }
     #[test]
     fn ordered_delete_reinsert_and_compaction() {
         let mut q = Ordered::new();
