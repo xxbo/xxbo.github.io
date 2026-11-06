@@ -79,3 +79,5 @@ GitHub Pages 上的东京圈铁路经营实验。静态网页，无自己的后�
 代码分层、状态边界、后台任务约定与验证命令见 [architecture.md](architecture.md)。完整游戏回归：`node scripts/run_rail_tests.cjs`。可选合成统计基准：`node scripts/benchmark_rail.cjs`。
 
 - [MAP43：接驳、枢纽与整段需求预测迁入Rust](rust-wasm-map43.md)
+
+- [MAP44：列车运行与乘客分配内核](rust-wasm-map44.md)

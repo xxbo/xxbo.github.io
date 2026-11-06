@@ -1550,6 +1550,7 @@ pub extern "C" fn forecast_run() -> *const f64 {
             graph,
             searches,
             world_cache,
+            ..
         } = &mut *c;
         let fees = int(input[0]);
         let graph = graph.as_mut().expect("forecast graph missing");

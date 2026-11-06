@@ -11,7 +11,7 @@
     loading.append(title, detail, retry);
     return;
   }
-  const UI_VERSION = '43';
+  const UI_VERSION = '44';
   'use strict';
   const DETAIL = RailMapDetail;
   let lodLevel = null,
@@ -299,7 +299,7 @@
     updatedAt: null
   };
   const demandClient = RailWorkerClient.create({
-    createWorker: () => typeof Worker === 'function' ? new Worker('demand-worker.js?v=43') : null,
+    createWorker: () => typeof Worker === 'function' ? new Worker('demand-worker.js?v=44') : null,
     timeout: 45000,
     timeoutMessage: '后台需求计算超过45秒，已回收计算线程；旧需求继续运行。',
     errorMessage: '客流后台计算失败',
@@ -2796,7 +2796,7 @@
     }
     try {
       if (!centerWorker) {
-        centerWorker = new Worker('operations-worker.js?v=43');
+        centerWorker = new Worker('operations-worker.js?v=44');
         centerForecastSent = null;
       }
       centerWorker.onerror = e => fail(e.message || '后台诊断不可用');
@@ -3055,7 +3055,7 @@
       cache = forecast.diagnostics?.memory;
     const mb = value => value === null || value === undefined ? '未提供' : (value / 1024 / 1024).toFixed(1) +
       ' MB';
-    return `<details id="memory-details" class="console-details" ${$('memory-details')?.open?'open':''}><summary>内存与后台任务</summary><div class="detail-row"><span>寻路核心</span><b>Rust / WASM · 寻路＋完整需求预测</b></div><p class="station-note">堆内存为当前页面JS估计，Worker、图片与浏览器总内存需结合浏览器任务管理器；采样最多保留48条。</p><div class="detail-row"><span>页面JS堆 / 采样峰值</span><b>${mb(latest?.heap)} / ${mb(latest?.peak)}</b></div><div class="detail-row"><span>预测路径 / 实际使用出行组合</span><b>${forecast.flows.length} / ${traffic.defs.length}</b></div><div class="detail-row"><span>保存编码 / 待保存</span><b>${queue.active?1:0} / ${queue.pending?1:0}</b></div><div class="detail-row"><span>已合并保存请求</span><b>${queue.coalesced}</b></div>${cache?`<div class="detail-row"><span>整段预测调用</span><b>${cache.wasm?.forecastCalls||0} 次</b></div><div class="detail-row"><span>需求线程WASM线性内存</span><b>${mb(cache.wasm?.memoryBytes)}</b></div><div class="detail-row"><span>寻路树组缓存峰值 / 预算</span><b>${cache.routeTrees.peak} / ${cache.routeTrees.limit}</b></div><div class="detail-row"><span>路线策略缓存峰值 / 预算</span><b>${cache.strategies.peak} / ${cache.strategies.limit}</b></div>`:''}</details>`;
+    return `<details id="memory-details" class="console-details" ${$('memory-details')?.open?'open':''}><summary>内存与后台任务</summary><div class="detail-row"><span>寻路核心</span><b>Rust / WASM · 需求预测＋列车运行核</b></div><p class="station-note">堆内存为当前页面JS估计，Worker、图片与浏览器总内存需结合浏览器任务管理器；采样最多保留48条。</p><div class="detail-row"><span>运行分配内核调用</span><b>${RailRouting.status().simulationCalls||0} 次</b></div><div class="detail-row"><span>页面JS堆 / 采样峰值</span><b>${mb(latest?.heap)} / ${mb(latest?.peak)}</b></div><div class="detail-row"><span>预测路径 / 实际使用出行组合</span><b>${forecast.flows.length} / ${traffic.defs.length}</b></div><div class="detail-row"><span>保存编码 / 待保存</span><b>${queue.active?1:0} / ${queue.pending?1:0}</b></div><div class="detail-row"><span>已合并保存请求</span><b>${queue.coalesced}</b></div>${cache?`<div class="detail-row"><span>整段预测调用</span><b>${cache.wasm?.forecastCalls||0} 次</b></div><div class="detail-row"><span>需求线程WASM线性内存</span><b>${mb(cache.wasm?.memoryBytes)}</b></div><div class="detail-row"><span>寻路树组缓存峰值 / 预算</span><b>${cache.routeTrees.peak} / ${cache.routeTrees.limit}</b></div><div class="detail-row"><span>路线策略缓存峰值 / 预算</span><b>${cache.strategies.peak} / ${cache.strategies.limit}</b></div>`:''}</details>`;
   }
 
   function diagnosticContent() {

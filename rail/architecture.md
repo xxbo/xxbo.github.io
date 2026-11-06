@@ -1,4 +1,4 @@
-# 轨道都市代码维护指南（MAP38–43）
+# 轨道都市代码维护指南（MAP38–44）
 
 这是分批重构的第一轮。保留无构建步骤的 GitHub Pages 发布方式、现有全局 API、游戏版本7、存档格式1和两个地图的独立存档键。没有更换框架、修改需求公式、计费规则、模拟步长或随机数顺序。
 
@@ -83,3 +83,5 @@ ui仍包含地图编辑、导航、表单和多个长模板；本轮没有一次
 新增Rust `demand`模块与JS `demand-kernels`传输层，将OD/IPF、方式选择、频率策略和容量分配循环迁入同一WASM核心，删除生产DD中的旧算法。详细ABI、标准Math导入、缓冲区所有权、对照与性能取舍见 [rust-wasm-map42.md](rust-wasm-map42.md)。需求模型的接驳/枢纽/分组协调和连续模拟继续按批迁移。页面和demand-worker必须在demand-model前加载demand-kernels；共享实例初始化仍等待RailRoutingReady。当前构建产物为core-v2，CI重建核验；MAP41旧二进制仅兼容缓存中的旧客户端。
 
 完整需求批量迁移、所有权和对照结果见 [MAP43](rust-wasm-map43.md)。
+
+连续模拟的原生/JS边界、缓存同步与实际性能见 [MAP44](rust-wasm-map44.md)。

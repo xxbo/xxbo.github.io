@@ -14,9 +14,11 @@
     calls = 0,
     demandCalls = 0,
     forecastCalls = 0,
+    simulationCalls = 0,
+    activeSimulationToken = 0,
     recycles = 0;
   let recycleBytes = 64 * 1024 * 1024;
-  const asset = node ? null : new URL('wasm/rail-core-v3.wasm?v=43',
+  const asset = node ? null : new URL('wasm/rail-core-v4.wasm?v=44',
     root.document?.currentScript?.src || root.location.href).href;
 
   function install(module) {
@@ -27,10 +29,12 @@
         hypot: Math.hypot
       }
     });
-    if (next.exports.routing_abi() !== ABI || next.exports.demand_abi?.() !== 1 || next.exports.world_abi?.() !== 1) throw Error('寻路WASM接口版本不匹配');
+    if (next.exports.routing_abi() !== ABI || next.exports.demand_abi?.() !== 1 || next.exports
+      .world_abi?.() !== 1 || next.exports.simulation_abi?.() !== 1) throw Error('寻路WASM接口版本不匹配');
     compiled = module;
     instance = next;
     active = null;
+    activeSimulationToken = 0;
     return api;
   }
 
@@ -92,16 +96,21 @@
         const group = edge.service + '|' + (edge.dir || 0);
         if (!groups.has(group)) groups.set(group, groups.size);
         const start = parts.length / 2;
-        for (const part of edge.parts || []) parts.push(intern(lineIds, lines, part.line), number(part.km));
+        for (const part of edge.parts || []) parts.push(intern(lineIds, lines, part.line), number(
+          part.km));
         edges.push(edge);
         const owner = state.companies?.findIndex(c => c.id === edge.owner) ?? -1;
-        records.push(from, edge.to, service, edge.dir || 0, 0, number(edge.km), number(edge.minutes),
+        records.push(from, edge.to, service, edge.dir || 0, 0, number(edge.km), number(edge
+            .minutes),
           number(edge.headway), groups.get(group), start, parts.length / 2 - start,
-          owner < 0 ? 31 : owner, number(edge.fare, 0), number(edge.penalty, 0), edge.through ? 1 : 0);
+          owner < 0 ? 31 : owner, number(edge.fare, 0), number(edge.penalty, 0), edge.through ?
+          1 : 0);
       }
     }
     const data = new Float64Array(7 + records.length + parts.length);
-    data.set([ABI, legacy ? 1 : 0, adjacency.length, lines.length, edges.length, parts.length / 2, state.companies?.length || 0]);
+    data.set([ABI, legacy ? 1 : 0, adjacency.length, lines.length, edges.length, parts.length / 2,
+      state.companies?.length || 0
+    ]);
     data.set(records, 7);
     data.set(parts, 7 + records.length);
     const graph = {
@@ -223,7 +232,8 @@
       edges: edgeList,
       transfers: data[at + 10],
       fares,
-      key: edgeList.length ? [data[at], service, data[at + 2], lastLine, data[at + 4]].join('|') : data[at] + '|'
+      key: edgeList.length ? [data[at], service, data[at + 2], lastLine, data[at + 4]].join('|') :
+        data[at] + '|'
     };
   }
 
@@ -233,7 +243,9 @@
   }
 
   function kernel(name, values, read = null, context = null) {
-    if (!['demand_ipf', 'demand_distribution', 'demand_mode', 'demand_strategy', 'demand_capacity', 'world_run', 'world_policy'].includes(name)) throw Error('未知需求核心操作');
+    if (!['demand_ipf', 'demand_distribution', 'demand_mode', 'demand_strategy',
+        'demand_capacity', 'world_run', 'world_policy', 'simulation_run'
+      ].includes(name)) throw Error('未知需求核心操作');
     try {
       const wasm = exports();
       write(values);
@@ -242,7 +254,10 @@
       // Short object projections consume synchronously; persistent matrices own a copy.
       const data = read ? read(view, context) : view.slice();
       wasm.output_clear();
-      demandCalls++;
+      if (name === 'simulation_run') {
+        simulationCalls++;
+        if (values[0] === 4) activeSimulationToken = values[1];
+      } else demandCalls++;
       if (wasm.memory.buffer.byteLength > recycleBytes) {
         install(compiled);
         recycles++;
@@ -265,7 +280,8 @@
         wasm.graph_load();
         active = graph;
       }
-      const fees = prices(state, graph), input = new Float64Array(1 + fees.length + values.length);
+      const fees = prices(state, graph),
+        input = new Float64Array(1 + fees.length + values.length);
       input[0] = fees.length;
       input.set(fees, 1);
       input.set(values, 1 + fees.length);
@@ -275,16 +291,21 @@
       calls += view[2];
       demandCalls++;
       forecastCalls++;
-      const result = read(view, {...context, graph});
+      const result = read(view, {
+        ...context,
+        graph
+      });
       wasm.output_clear();
       if (wasm.memory.buffer.byteLength > recycleBytes) {
         install(compiled);
         recycles++;
       }
       return result;
-    } catch(error) {
+    } catch (error) {
       if (compiled) install(compiled);
-      throw Error('Rust/WASM批量预测失败：' + error.message, {cause: error});
+      throw Error('Rust/WASM批量预测失败：' + error.message, {
+        cause: error
+      });
     }
   }
 
@@ -310,6 +331,7 @@
     init,
     kernel,
     modeKernel,
+    simulationToken: () => activeSimulationToken,
     forecastKernel,
     prepare,
     compactPaths,
@@ -320,6 +342,8 @@
       demandAbi: 1,
       demandCalls,
       forecastCalls,
+      simulationCalls,
+      simulationAbi: 1,
       worldAbi: 1,
       abi: ABI,
       ready: !!instance,
@@ -336,7 +360,8 @@
   if (node) {
     const fs = require('node:fs'),
       path = require('node:path');
-    install(new WebAssembly.Module(fs.readFileSync(path.join(__dirname, 'wasm/rail-core-v3.wasm'))));
+    install(new WebAssembly.Module(fs.readFileSync(path.join(__dirname,
+      'wasm/rail-core-v4.wasm'))));
     module.exports = api;
   } else {
     root.RailRouting = api;
