@@ -3,6 +3,7 @@
   'use strict';
   const node = typeof module !== 'undefined' && module.exports;
   const Core = node ? require('./routing-wasm') : root.RailRouting;
+  const Engine = node ? require('./engine-wasm') : root.RailNativeEngine;
   const SIM = node ? require('./simulation-wasm') : root.RailSimulation;
   const Q = node ? require('./ridership') : root.RailRidership;
   const X = node ? require('./service-plan') : root.RailServicePlan;
@@ -181,16 +182,28 @@
       tail.push(a.id, i, a.n, ids.length, ...ids.map(id => named(c, id)));
     });
     const statistics = Q.nativeStatisticsFrame(c, s, rt, full);
-    const input = new Float64Array(header.length + motion.length + definition.length + limits
-      .length + trainData.length + snapshot.length + tail.length + statistics.length);
-    let at = 0;
+    const finance = job.settlement ? Engine.encode(c, rt, job.settlement, named, full) : null;
+    const size = header.length + motion.length + definition.length + limits.length + trainData
+      .length +
+      snapshot.length + tail.length + statistics.length;
+    // Encode directly into the transaction buffer; avoid a second full queue copy.
+    const input = new Float64Array(size + (finance ? 2 + finance.length : 0));
+    let at = finance ? 2 : 0;
     for (const part of [header, motion, definition, limits, trainData, snapshot, tail,
-        statistics
-      ]) {
+      statistics]) {
       input.set(part, at);
       at += part.length;
     }
-    return Core.kernel('simulation_step', input);
+    if (!finance) return {
+      queue: Core.kernel('simulation_step', input)
+    };
+    input.set([size, finance.length]);
+    input.set(finance, at);
+    const result = Core.kernel('engine_step', input);
+    return {
+      queue: result.subarray(3, 3 + result[1]),
+      finance: result.subarray(3 + result[1])
+    };
   }
 
   function pose(rt, job, data) {
@@ -236,7 +249,9 @@
   }
 
   function project(c, rt, s, job, data) {
-    return projectCommands(c, rt, s, job, data);
+    const pending = projectCommands(c, rt, s, job, data.queue);
+    if (data.finance?.length) Engine.project(rt, job.settlement, data.finance);
+    return pending;
   }
 
   function projectCommands(c, rt, s, job, data) {
@@ -376,7 +391,7 @@
     } : null;
   }
 
-  function step(rt, s, index, track, arrivals, gates, reroute) {
+  function step(rt, s, index, track, arrivals, gates, reroute, settlement = null) {
     const c = cache(rt, s);
     // New games / compacted archives can release the previous arena before rehydration.
     // Do this before encoding motion so both native state machines receive full layouts.
@@ -385,6 +400,7 @@
       Core.recycleSimulation();
     }
     const job = {
+      settlement,
       index,
       track,
       arrivals,

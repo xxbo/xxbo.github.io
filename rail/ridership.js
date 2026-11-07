@@ -365,9 +365,8 @@
   const travel = (...args) => statistics.travel(...args);
   let costCache = null;
 
-  function financeFrame(s, rt) {
+  function financeLayout(s) {
     if (!s.ridership) return null;
-    const d = ensureDay(s, rt.minute);
     if (!costCache || costCache.services !== s.services || costCache.tracks !== s.tracks) {
       const km = new Map(s.tracks.map(t => [t.id, t.km]));
       const rows = s.services.map(l => [l.id, l.trackIds.reduce((v, id) => v + (km.get(id) || 0),
@@ -379,6 +378,13 @@
         rows: rows.map(([id, length]) => [id, total ? length / total : 0])
       };
     }
+    return costCache.rows;
+  }
+
+  function financeFrame(s, rt) {
+    if (!s.ridership) return null;
+    const d = ensureDay(s, rt.minute);
+    financeLayout(s);
     const stats = costCache.rows.map(([id]) => lineStats(d, id));
     return {
       length: stats.length + 1,
@@ -395,6 +401,12 @@
     };
   }
 
+  function nativeFinanceApply(s, rt, rows, values) {
+    const d = ensureDay(s, rt.minute);
+    d.operating = values[0];
+    rows.forEach(([id], i) => lineStats(d, id).operating = values[i + 1]);
+  }
+
   function finance(s, rt, cost, fixed) {
     const frame = financeFrame(s, rt);
     if (!frame) return;
@@ -406,6 +418,8 @@
 
   const api = {
     financeFrame,
+    financeLayout,
+    nativeFinanceApply,
     rejectBatch: statistics.rejectBatch,
     nativeStatisticsFrame: statistics.frame,
     nativeStatisticsProjector: statistics.projector,

@@ -233,7 +233,7 @@ pub extern "C" fn simulation_run() -> *const f64 {
             4 => persistent(input, simulation_state),
             6 => incremental(input, simulation_state),
             7 => cached_sample(input, sampling_state),
-            8 => timed_sample(input, sampling_state),
+            8 | 9 => timed_sample(input, sampling_state),
             _ => panic!("unknown simulation operation"),
         };
         c.output.as_ptr()
@@ -571,6 +571,7 @@ fn cached_sample(v: &[f64], cache: &mut Option<Sampling>) -> Vec<f64> {
 }
 
 struct TemporalSampling {
+    daily: Vec<f64>,
     factors: Vec<(bool, Vec<usize>)>,
     profiles: Vec<(usize, bool, usize)>,
 }
@@ -583,7 +584,9 @@ fn timed_sample(v: &[f64], cache: &mut Option<Sampling>) -> Vec<f64> {
     let integer = v[10] != 0.0;
     let model = v[11];
     let nl = int(v[12]);
-    let base = 13 + nl * 4 + n;
+    let delta = v[0] == 9.0;
+    let daily_at = 13 + nl * 4;
+    let base = daily_at + n;
     if load {
         let mut at = base;
         let mut factors = Vec::with_capacity(nf);
@@ -621,8 +624,30 @@ fn timed_sample(v: &[f64], cache: &mut Option<Sampling>) -> Vec<f64> {
             token,
             fi,
             pi,
-            temporal: Some(TemporalSampling { factors, profiles }),
+            temporal: Some(TemporalSampling {
+                factors,
+                profiles,
+                daily: if delta {
+                    v[daily_at..base].to_vec()
+                } else {
+                    vec![]
+                },
+            }),
         });
+    } else if delta {
+        let count = int(v[daily_at]);
+        assert_eq!(v.len(), daily_at + 1 + count * 2);
+        let c = cache.as_mut().expect("temporal sampling metadata missing");
+        assert_eq!(c.token, token);
+        let daily = &mut c
+            .temporal
+            .as_mut()
+            .expect("incorrect sampling protocol")
+            .daily;
+        assert_eq!(daily.len(), n);
+        for pair in v[daily_at + 1..].chunks_exact(2) {
+            daily[int(pair[0])] = pair[1];
+        }
     } else {
         assert_eq!(v.len(), base);
     }
@@ -659,7 +684,11 @@ fn timed_sample(v: &[f64], cache: &mut Option<Sampling>) -> Vec<f64> {
         .iter()
         .map(|&(p, back, ext)| crate::temporal::profile(p, back, v[8], ext) * v[9])
         .collect::<Vec<_>>();
-    let daily = &v[13 + nl * 4..base];
+    let daily = if delta {
+        &meta.daily[..]
+    } else {
+        &v[daily_at..base]
+    };
     let mut total = 0.0;
     let mut weights = Vec::with_capacity(n);
     if integer {

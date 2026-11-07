@@ -30,7 +30,7 @@ for (const args of [
   if (run.status !== 0) process.exit(run.status || 1);
 }
 const bytes = readFileSync(join(crate, 'target/wasm32-unknown-unknown/release/rail_routing.wasm'));
-const target = join(root, 'rail/wasm/rail-core-v8.wasm');
+const target = join(root, 'rail/wasm/rail-core-v9.wasm');
 const hash = crypto.createHash('sha256').update(bytes).digest('hex');
 if (process.argv.includes('--check')) {
   if (!readFileSync(target).equals(bytes)) throw Error('Committed WASM differs from pinned Rust source build');

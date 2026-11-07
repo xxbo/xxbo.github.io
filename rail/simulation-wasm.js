@@ -426,15 +426,24 @@
         token: Core.allocateToken(),
         names,
         meta: new Float64Array(meta),
-        input: new Float64Array(13 + names.length * 4 + catalog.length)
+        daily: new Float64Array(catalog.length),
+        input: new Float64Array(13 + names.length * 4)
       };
     }
     const t = c.timed,
       load = Core.samplingToken() !== t.token,
       q = s.ridership;
-    const input = load ? new Float64Array(t.input.length + t.meta.length + catalog.length * 2) : t
-      .input;
-    input.set([8, t.token, +load, catalog.length, c.factors.length, c.profiles.length, remainder,
+    const changes = [];
+    for (let i = 0; i < catalog.length; i++) {
+      const daily = catalog[i].daily;
+      if (load || !Object.is(t.daily[i], daily)) {
+        if (!load) changes.push(i, daily);
+        t.daily[i] = daily;
+      }
+    }
+    const input = new Float64Array(t.input.length + (load ? catalog.length + t.meta.length +
+      catalog.length * 2 : 1 + changes.length));
+    input.set([9, t.token, +load, catalog.length, c.factors.length, c.profiles.length, remainder,
       rng, minute, dt, +integer, q ? (q.model === 22 ? 22 : 1) : 0, t.names.length
     ]);
     let at = 13;
@@ -443,13 +452,18 @@
       input.set([r ? 1 : 0, r?.satisfaction ?? .7, Number(r?.awareness), Number(r?.trust)], at);
       at += 4;
     }
-    for (let i = 0; i < catalog.length; i++) input[at + i] = catalog[i].daily;
     if (load) {
-      input.set(t.meta, t.input.length);
-      for (let i = 0, at = t.input.length + t.meta.length; i < catalog.length; i++) {
+      input.set(t.daily, at);
+      at += catalog.length;
+      input.set(t.meta, at);
+      at += t.meta.length;
+      for (let i = 0; i < catalog.length; i++) {
         input[at + i * 2] = c.fi[i];
         input[at + i * 2 + 1] = c.pi[i];
       }
+    } else {
+      input[at++] = changes.length / 2;
+      input.set(changes, at);
     }
     const out = call(input);
     return {

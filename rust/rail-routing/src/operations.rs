@@ -272,7 +272,7 @@ fn settle(e: &mut [f64], loans: &mut Vec<Vec<f64>>, payments: &mut Vec<f64>) {
         e[8] = 1.0;
     }
 }
-fn next(now: f64, left: f64, loans: &[Vec<f64>]) -> f64 {
+pub(super) fn next(now: f64, left: f64, loans: &[Vec<f64>]) -> f64 {
     if left <= 1e-9 {
         return 0.0;
     }
@@ -284,7 +284,7 @@ fn next(now: f64, left: f64, loans: &[Vec<f64>]) -> f64 {
     dt
 }
 // Minute gate and residual share the operating/loan step clock.
-fn generation(carry: f64, dt: f64) -> (f64, f64) {
+pub(super) fn generation(carry: f64, dt: f64) -> (f64, f64) {
     if dt <= 1e-9 {
         return (carry, 0.0);
     }
@@ -446,7 +446,7 @@ fn allocation(r: &mut Reader<'_>) -> Vec<f64> {
     }
     out
 }
-fn run(input: &[f64]) -> Vec<f64> {
+pub(super) fn run(input: &[f64]) -> Vec<f64> {
     let mut r = Reader { a: input, p: 0 };
     assert_eq!(r.f(), 1.0);
     let op = r.n();

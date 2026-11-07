@@ -174,6 +174,13 @@ pub(super) struct Queues {
     purpose_delta: Ordered<usize, f64>,
 }
 impl Queues {
+    pub(super) fn counter(&self, index: usize) -> f64 {
+        self.counters[index]
+    }
+    pub(super) fn finance_stats(&mut self) -> Option<&mut crate::statistics::Statistics> {
+        self.stats.as_mut()
+    }
+
     fn new(token: f64) -> Self {
         Self {
             token,
@@ -790,207 +797,217 @@ pub extern "C" fn simulation_step() -> *const f64 {
             queue_state,
             ..
         } = &mut *c;
-        let mut r = Read { v: input, at: 0 };
-        let protocol = r.f();
-        assert!(protocol == 1.0 || protocol == 2.0);
-        let token = r.f();
-        let phase = r.u();
-        let load = r.u() != 0;
-        let now = r.f();
-        let modern = r.f() != 0.0;
-        let integer = r.f() != 0.0;
-        let transfer = r.f();
-        let gates = r.f() != 0.0;
-        let cursor = r.u();
-        let original = r.f();
-        let rerouted = r.f();
-        let reroute_amount = r.f();
-        let nm = r.u();
-        let motion_input = &r.v[r.at..r.at + nm];
-        r.at += nm;
-        if load {
-            *queue_state = Some(Queues::new(token));
-        }
-        let q = queue_state.as_mut().expect("queue state missing");
-        assert_eq!(q.token, token);
-        q.now = now;
-        q.stats_protocol = protocol == 2.0;
-        q.modern = modern;
-        q.integer = integer;
-        q.transfer = transfer;
-        q.commands.clear();
-        q.changed.clear();
-        q.revenue_delta.clear();
-        q.boarded_delta.clear();
-        q.purpose_delta.clear();
-        q.dirty = 0;
-        q.read_defs(&mut r);
-        let nl = r.u();
-        for _ in 0..nl {
-            let id = r.u();
-            let a = r.f();
-            let b = r.f();
-            q.limits.insert(id, (a, b));
-        }
-        q.read_trains(&mut r);
-        if load {
-            q.load(&mut r);
-        }
-        let norder = r.u();
-        let order = (0..norder).map(|_| r.u()).collect::<Vec<_>>();
-        let nop = r.u();
-        let mut ops = (0..nop)
-            .map(|_| [r.f(), r.f(), r.f(), r.f()])
-            .collect::<Vec<_>>();
-        let na = r.u();
-        q.arrival_ids.clear();
-        let arrivals = (0..na)
-            .map(|_| {
-                let row = [r.f(), r.f(), r.f()];
-                if q.stats_protocol {
-                    let n = r.u();
-                    q.arrival_ids.push((0..n).map(|_| r.u()).collect());
-                }
-                row
-            })
-            .collect::<Vec<_>>();
-        if q.stats_protocol {
-            let mode = r.f();
-            if mode < 0.0 {
-                q.stats = None;
-            } else if mode == 1.0 {
-                q.stats = Some(crate::statistics::Statistics::read(&mut r, now));
-            } else {
-                assert_eq!(mode, 0.0);
-                q.stats
-                    .as_mut()
-                    .expect("statistics state missing")
-                    .frame(&mut r, now);
-            }
-        }
-        assert_eq!(r.at, input.len());
-        let motion = if phase == 0 {
-            crate::simulation::motion_packet(motion_input, simulation_state)
-        } else {
-            vec![]
-        };
-        if phase == 0 {
-            q.release();
-            if gates {
-                q.gates();
-            }
-            for a in arrivals {
-                if a[2] <= 0.0 {
-                    continue;
-                }
-                q.inc(0, a[2]);
-                q.event(0, int(a[1]), a[2], 0.0, None, None);
-                if a[0] < 0.0 {
-                    q.inc(4, a[2]);
-                } else {
-                    q.admit(int(a[0]), 0, a[2], false);
-                }
-            }
-            for (&id, row) in order.iter().zip(motion.chunks_exact(8)) {
-                let action = row[0] as u8;
-                let cargo = &q.trains[&id];
-                match action {
-                    1 => ops.push([3.0, id as f64, 0.0, 0.0]),
-                    2..=5 => {
-                        ops.push([0.0, id as f64, row[2], row[3]]);
-                        if action >= 3 && cargo.calls.contains(&cargo.stops[int(row[4])]) {
-                            ops.push([1.0, id as f64, cargo.stops[int(row[4])] as f64, 0.0]);
-                        }
-                        if action == 5 {
-                            ops.push([3.0, id as f64, 1.0, 0.0]);
-                        }
-                    }
-                    7 => ops.push([2.0, id as f64, cargo.stops[int(row[4])] as f64, row[4]]),
-                    _ => {}
-                }
-            }
-        } else if original >= 0.0 {
-            if rerouted >= 0.0 {
-                q.admit(int(rerouted), 0, reroute_amount, true);
-            } else {
-                q.reject(int(original), reroute_amount);
-            }
-        }
-        let mut request = None;
-        let mut at = cursor;
-        while at < ops.len() {
-            let op = ops[at];
-            let id = int(op[1]);
-            match op[0] as u8 {
-                0 => {
-                    if op[2] > 0.0 {
-                        if q.stats_protocol {
-                            let t = &q.trains[&id];
-                            if let Some(stats) = &mut q.stats {
-                                stats.travel(t.parent, op[2], t.onboard, t.cars);
-                            }
-                        } else {
-                            q.cmd(2.0, &[id as f64, op[2], q.trains[&id].onboard]);
-                        }
-                    }
-                    q.inc(7, op[3]);
-                }
-                1 => {
-                    if let Some(p) = q.unload(id, int(op[2])) {
-                        request = Some(p);
-                        break;
-                    }
-                }
-                2 => q.board(id, int(op[2]), int(op[3])),
-                3 => q.finish(id, op[2] != 0.0),
-                _ => panic!("queue operation"),
-            }
-            at += 1;
-        }
-        let changed = q.changed.iter().copied().collect::<Vec<_>>();
-        for id in changed {
-            q.cmd(9.0, &[id as f64, q.trains[&id].onboard]);
-        }
-        for id in q.revenue_delta.keys() {
-            q.cmd(13.0, &[id as f64, q.revenue_delta.get(id).unwrap()]);
-        }
-        for id in q.boarded_delta.keys() {
-            q.cmd(14.0, &[id as f64, q.boarded_delta.get(id).unwrap()]);
-        }
-        for id in q.purpose_delta.keys() {
-            q.cmd(15.0, &[id as f64, q.purpose_delta.get(id).unwrap()]);
-        }
-        if q.stats_protocol {
-            if let Some(stats) = &mut q.stats {
-                q.commands.extend(stats.finish());
-            }
-        }
-        let pending = request.is_some();
-        let (j, station, amount) =
-            request.map_or((-1.0, -1.0, 0.0), |(j, s, n)| (j as f64, s as f64, n));
-        *output = vec![
-            1.0,
-            if pending { 1.0 } else { 0.0 },
-            at as f64,
-            j,
-            station,
-            amount,
-            motion.len() as f64,
-            if pending { ops.len() as f64 } else { 0.0 },
-            q.dirty as f64,
-        ];
-        output.extend(q.counters);
-        output.extend(motion);
-        if pending {
-            for op in ops {
-                output.extend(op);
-            }
-        }
-        output.extend_from_slice(&q.commands);
-        let alive = order.into_iter().collect::<HashSet<_>>();
-        q.trains.retain(|id, _| alive.contains(id));
+        *output = run(input, simulation_state, queue_state, 0);
         output.as_ptr()
     })
+}
+pub(super) fn run(
+    input: &[f64],
+    simulation_state: &mut Option<crate::simulation::MotionState>,
+    queue_state: &mut Option<Queues>,
+    prefix: usize,
+) -> Vec<f64> {
+    let mut r = Read { v: input, at: 0 };
+    let protocol = r.f();
+    assert!(protocol == 1.0 || protocol == 2.0);
+    let token = r.f();
+    let phase = r.u();
+    let load = r.u() != 0;
+    let now = r.f();
+    let modern = r.f() != 0.0;
+    let integer = r.f() != 0.0;
+    let transfer = r.f();
+    let gates = r.f() != 0.0;
+    let cursor = r.u();
+    let original = r.f();
+    let rerouted = r.f();
+    let reroute_amount = r.f();
+    let nm = r.u();
+    let motion_input = &r.v[r.at..r.at + nm];
+    r.at += nm;
+    if load {
+        *queue_state = Some(Queues::new(token));
+    }
+    let q = queue_state.as_mut().expect("queue state missing");
+    assert_eq!(q.token, token);
+    q.now = now;
+    q.stats_protocol = protocol == 2.0;
+    q.modern = modern;
+    q.integer = integer;
+    q.transfer = transfer;
+    q.commands.clear();
+    q.changed.clear();
+    q.revenue_delta.clear();
+    q.boarded_delta.clear();
+    q.purpose_delta.clear();
+    q.dirty = 0;
+    q.read_defs(&mut r);
+    let nl = r.u();
+    for _ in 0..nl {
+        let id = r.u();
+        let a = r.f();
+        let b = r.f();
+        q.limits.insert(id, (a, b));
+    }
+    q.read_trains(&mut r);
+    if load {
+        q.load(&mut r);
+    }
+    let norder = r.u();
+    let order = (0..norder).map(|_| r.u()).collect::<Vec<_>>();
+    let nop = r.u();
+    let mut ops = (0..nop)
+        .map(|_| [r.f(), r.f(), r.f(), r.f()])
+        .collect::<Vec<_>>();
+    let na = r.u();
+    q.arrival_ids.clear();
+    let arrivals = (0..na)
+        .map(|_| {
+            let row = [r.f(), r.f(), r.f()];
+            if q.stats_protocol {
+                let n = r.u();
+                q.arrival_ids.push((0..n).map(|_| r.u()).collect());
+            }
+            row
+        })
+        .collect::<Vec<_>>();
+    if q.stats_protocol {
+        let mode = r.f();
+        if mode < 0.0 {
+            q.stats = None;
+        } else if mode == 1.0 {
+            q.stats = Some(crate::statistics::Statistics::read(&mut r, now));
+        } else {
+            assert_eq!(mode, 0.0);
+            q.stats
+                .as_mut()
+                .expect("statistics state missing")
+                .frame(&mut r, now);
+        }
+    }
+    assert_eq!(r.at, input.len());
+    let motion = if phase == 0 {
+        crate::simulation::motion_packet(motion_input, simulation_state)
+    } else {
+        vec![]
+    };
+    if phase == 0 {
+        q.release();
+        if gates {
+            q.gates();
+        }
+        for a in arrivals {
+            if a[2] <= 0.0 {
+                continue;
+            }
+            q.inc(0, a[2]);
+            q.event(0, int(a[1]), a[2], 0.0, None, None);
+            if a[0] < 0.0 {
+                q.inc(4, a[2]);
+            } else {
+                q.admit(int(a[0]), 0, a[2], false);
+            }
+        }
+        for (&id, row) in order.iter().zip(motion.chunks_exact(8)) {
+            let action = row[0] as u8;
+            let cargo = &q.trains[&id];
+            match action {
+                1 => ops.push([3.0, id as f64, 0.0, 0.0]),
+                2..=5 => {
+                    ops.push([0.0, id as f64, row[2], row[3]]);
+                    if action >= 3 && cargo.calls.contains(&cargo.stops[int(row[4])]) {
+                        ops.push([1.0, id as f64, cargo.stops[int(row[4])] as f64, 0.0]);
+                    }
+                    if action == 5 {
+                        ops.push([3.0, id as f64, 1.0, 0.0]);
+                    }
+                }
+                7 => ops.push([2.0, id as f64, cargo.stops[int(row[4])] as f64, row[4]]),
+                _ => {}
+            }
+        }
+    } else if original >= 0.0 {
+        if rerouted >= 0.0 {
+            q.admit(int(rerouted), 0, reroute_amount, true);
+        } else {
+            q.reject(int(original), reroute_amount);
+        }
+    }
+    let mut request = None;
+    let mut at = cursor;
+    while at < ops.len() {
+        let op = ops[at];
+        let id = int(op[1]);
+        match op[0] as u8 {
+            0 => {
+                if op[2] > 0.0 {
+                    if q.stats_protocol {
+                        let t = &q.trains[&id];
+                        if let Some(stats) = &mut q.stats {
+                            stats.travel(t.parent, op[2], t.onboard, t.cars);
+                        }
+                    } else {
+                        q.cmd(2.0, &[id as f64, op[2], q.trains[&id].onboard]);
+                    }
+                }
+                q.inc(7, op[3]);
+            }
+            1 => {
+                if let Some(p) = q.unload(id, int(op[2])) {
+                    request = Some(p);
+                    break;
+                }
+            }
+            2 => q.board(id, int(op[2]), int(op[3])),
+            3 => q.finish(id, op[2] != 0.0),
+            _ => panic!("queue operation"),
+        }
+        at += 1;
+    }
+    let changed = q.changed.iter().copied().collect::<Vec<_>>();
+    for id in changed {
+        q.cmd(9.0, &[id as f64, q.trains[&id].onboard]);
+    }
+    for id in q.revenue_delta.keys() {
+        q.cmd(13.0, &[id as f64, q.revenue_delta.get(id).unwrap()]);
+    }
+    for id in q.boarded_delta.keys() {
+        q.cmd(14.0, &[id as f64, q.boarded_delta.get(id).unwrap()]);
+    }
+    for id in q.purpose_delta.keys() {
+        q.cmd(15.0, &[id as f64, q.purpose_delta.get(id).unwrap()]);
+    }
+    if q.stats_protocol {
+        if let Some(stats) = &mut q.stats {
+            q.commands.extend(stats.finish());
+        }
+    }
+    let pending = request.is_some();
+    let (j, station, amount) =
+        request.map_or((-1.0, -1.0, 0.0), |(j, s, n)| (j as f64, s as f64, n));
+    let mut output = vec![0.0; prefix];
+    output.extend_from_slice(&[
+        1.0,
+        if pending { 1.0 } else { 0.0 },
+        at as f64,
+        j,
+        station,
+        amount,
+        motion.len() as f64,
+        if pending { ops.len() as f64 } else { 0.0 },
+        q.dirty as f64,
+    ]);
+    output.extend(q.counters);
+    output.extend(motion);
+    if pending {
+        for op in ops {
+            output.extend(op);
+        }
+    }
+    output.extend_from_slice(&q.commands);
+    let alive = order.into_iter().collect::<HashSet<_>>();
+    q.trains.retain(|id, _| alive.contains(id));
+    output
 }
 
 #[cfg(test)]

@@ -280,7 +280,7 @@
     return tracks.map.get(id) || index.track.get(id);
   }
 
-  function tick(rt, s, dt, target, carry, interval) {
+  function tick(rt, s, dt, target, carry, interval, settlement=null) {
     s = rt.plan || s;
     rt.minute = target;
     if (Math.floor(rt.minute) !== rt.fleetMinute) {
@@ -322,7 +322,7 @@
       }
       d.next = next;
     }
-    QUEUES.step(rt, s, index, trainTrack, incoming.arrivals, incoming.gates, reroute);
+    QUEUES.step(rt, s, index, trainTrack, incoming.arrivals, incoming.gates, reroute, settlement);
   }
 
   function advance(rt, s, minutes) {
@@ -784,8 +784,8 @@
     return reconcile(rt, s, m);
   }
   const api = {
-    advanceTick: (rt, s, dt, target, carry, interval) => {
-      if (dt > 1e-9) tick(rt, s, dt, target, carry, interval);
+    advanceTick: (rt, s, dt, target, carry, interval, settlement=null) => {
+      if (dt > 1e-9) tick(rt, s, dt, target, carry, interval, settlement);
       return rt;
     },
     demandSummary,

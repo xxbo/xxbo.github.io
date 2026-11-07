@@ -114,6 +114,11 @@
     if (finance) input.push(finance.length, ...finance.input);
     else input.push(0);
     const data = run(input);
+    return projectAccounts(s, data, op, left, vehicle, finance);
+  }
+
+  function projectAccounts(s, data, op, left = 0, vehicle = 0, finance = null) {
+    const e = s.economy;
     let at = 8;
     for (const k of ECONOMY) e[k] = k === 'blocked' ? !!data[at++] : data[at++];
     const loans = [];
@@ -185,6 +190,8 @@
   }
   const api = {
     feedback,
+    projectAccounts,
+    ECONOMY,
     accounts,
     clock,
     allocation,

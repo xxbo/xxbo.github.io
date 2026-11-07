@@ -17,6 +17,8 @@
     simulationCalls = 0,
     activeSimulationToken = 0,
     activeQueueToken = 0,
+    activeEngineToken = 0,
+    engineSteps = 0,
     activeSamplingToken = 0,
     queueSteps = 0,
     statisticsCalls = 0,
@@ -33,7 +35,7 @@
     peakMemoryBytes = 0;
   const recycleLimit = () => recycleBytes === 0 ? 0 : Math.max(recycleBytes,
     simulationRecycleBytes);
-  const asset = node ? null : new URL('wasm/rail-core-v8.wasm?v=48',
+  const asset = node ? null : new URL('wasm/rail-core-v9.wasm?v=49',
     root.document?.currentScript?.src || root.location.href).href;
 
   function install(module) {
@@ -46,13 +48,14 @@
     });
     if (next.exports.routing_abi() !== ABI || next.exports.demand_abi?.() !== 1 || next.exports
       .world_abi?.() !== 1 || next.exports.simulation_abi?.() !== 1 || next.exports.queue_abi?.
-      () !== 1 || next.exports.statistics_abi?.() !== 1 || next.exports.operations_abi?.() !== 1)
+      () !== 1 || next.exports.statistics_abi?.() !== 1 || next.exports.operations_abi?.() !== 1 || next.exports.engine_abi?.() !== 1)
       throw Error('寻路WASM接口版本不匹配');
     compiled = module;
     instance = next;
     active = null;
     activeSimulationToken = 0;
     activeQueueToken = 0;
+    activeEngineToken = 0;
     activeSamplingToken = 0;
     return api;
   }
@@ -264,7 +267,7 @@
   function kernel(name, values, read = null, context = null) {
     if (!['demand_ipf', 'demand_distribution', 'demand_mode', 'demand_strategy',
         'demand_capacity', 'world_run', 'world_policy', 'simulation_run', 'simulation_step',
-        'statistics_run', 'operations_run', 'temporal_run'
+        'statistics_run', 'operations_run', 'temporal_run', 'engine_step'
       ].includes(name)) throw Error('未知需求核心操作');
     try {
       const wasm = exports();
@@ -274,7 +277,11 @@
       // Short object projections consume synchronously; persistent matrices own a copy.
       const data = read ? read(view, context) : view.slice();
       wasm.output_clear();
-      if (name === 'simulation_step') {
+      if (name === 'simulation_step' || name === 'engine_step') {
+        if(name==='engine_step') {
+          engineSteps++;activeEngineToken=values[2+values[0]+1];
+          values=values.subarray(2,2+values[0]);
+        }
         queueSteps++;
         if (values[0] === 2) statisticsBatches++;
         simulationCalls++;
@@ -288,8 +295,8 @@
       } else if (name === 'simulation_run') {
         simulationCalls++;
         if (values[0] === 4 || values[0] === 6) activeSimulationToken = values[1];
-        if (values[0] === 7 || values[0] === 8) activeSamplingToken = values[1];
-        if (values[0] === 8) timedArrivalCalls++;
+        if (values[0] === 7 || values[0] === 8 || values[0] === 9) activeSamplingToken = values[1];
+        if (values[0] === 8 || values[0] === 9) timedArrivalCalls++;
       } else if (name === 'statistics_run') statisticsCalls++;
       else if (name === 'operations_run') operationsCalls++;
       else if (name === 'temporal_run') temporalCalls++;
@@ -375,6 +382,7 @@
     modeKernel,
     simulationToken: () => activeSimulationToken,
     queueToken: () => activeQueueToken,
+    engineToken: () => activeEngineToken,
     allocateToken: () => ++nativeTokens,
     samplingToken: () => activeSamplingToken,
     recycleSimulation: () => {
@@ -397,6 +405,8 @@
       statisticsCalls,
       statisticsBatches,
       statisticsAbi: 1,
+      engineAbi: 1,
+      engineSteps,
       operationsAbi: 1,
       temporalAbi: 1,
       temporalCalls,
@@ -425,7 +435,7 @@
     const fs = require('node:fs'),
       path = require('node:path');
     install(new WebAssembly.Module(fs.readFileSync(path.join(__dirname,
-      'wasm/rail-core-v8.wasm'))));
+      'wasm/rail-core-v9.wasm'))));
     module.exports = api;
   } else {
     root.RailRouting = api;

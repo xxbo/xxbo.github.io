@@ -187,6 +187,15 @@ impl Statistics {
             touched: false,
         }
     }
+    pub(super) fn operating(&self, id: usize) -> f64 {
+        self.lines.get(&id).map_or(f64::NAN, |row| row.values[8])
+    }
+    pub(super) fn set_operating(&mut self, id: usize, value: f64) {
+        let row = self.lines.entry(id).or_insert_with(Row::line);
+        let dirty = row.dirty;
+        row.set(8, value);
+        row.dirty = dirty;
+    }
     pub(super) fn frame(&mut self, r: &mut Read, now: f64) {
         self.now = now;
         let n = r.u();

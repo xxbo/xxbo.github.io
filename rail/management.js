@@ -11,6 +11,7 @@
     U = node ? require('./urban-growth') : root.RailUrban,
     C = node ? require('./city') : root.RailCity,
     RV = node ? require('./operations-review') : root.RailOperationsReview;
+  const Engine = node ? require('./engine-wasm') : root.RailNativeEngine;
   const Native = node ? require('./operations-wasm') : root.RailNativeOperations;
   const INITIAL = 5e9,
     CREDIT = 3e9,
@@ -191,7 +192,7 @@
     if (!Number.isFinite(minutes) || minutes < 0 || minutes > 1440) throw Error(
       'Invalid management interval');
     init(s);
-    let frame = Native.accounts(s, rt, 3, minutes);
+    let frame = Engine.begin(s, rt, minutes);
     if (!frame.running) return false;
     const trackFixed = s.tracks.reduce((v, t) => v + t.km * 2200, 0);
     while (frame.left > 1e-9) {
@@ -200,14 +201,23 @@
         target,
         left
       } = frame;
-      const revenue = rt.revenue,
-        expense = rt.vehicleExpense;
-      P.advanceTick(rt, s, dt, target, frame.carry, frame.interval);
-      const active = s.services.reduce((v, l) => v + (l.fleetManaged ? F.planned(l, rt.minute) : l
-        .fleet), 0);
-      const owned = s.depot ? Object.values(s.depot.stock).reduce((a, b) => a + b, 0) : active;
-      frame = Native.accounts(s, rt, 2, left, dt, rt.revenue - revenue, rt.vehicleExpense -
-        expense, trackFixed, U.upkeep(s), active, owned, Q.financeFrame(s, rt));
+      const job = {
+        world: s,
+        left,
+        dt,
+        trackFixed,
+        beforeRevenue: rt.revenue,
+        beforeExpense: rt.vehicleExpense
+      };
+      P.advanceTick(rt, s, dt, target, frame.carry, frame.interval, job);
+      if (dt > 1e-9) frame = job.result;
+      else {
+        const active = s.services.reduce((v, l) => v + (l.fleetManaged ? F.planned(l, rt.minute) :
+          l.fleet), 0);
+        const owned = s.depot ? Object.values(s.depot.stock).reduce((a, b) => a + b, 0) : active;
+        frame = Native.accounts(s, rt, 2, left, dt, 0, 0, trackFixed, U.upkeep(s), active, owned,
+          Q.financeFrame(s, rt));
+      }
       if (s.urban) U.advance(s, C.create(s.region), rt.minute);
       if (s.operationsReview) RV.sample(s, rt);
       if (!frame.running) return false;
