@@ -2,6 +2,7 @@
 //! Heap tie order, tolerances and arithmetic order intentionally match the frozen JS oracle.
 mod demand;
 mod numbers;
+mod operations;
 mod queues;
 mod simulation;
 mod statistics;

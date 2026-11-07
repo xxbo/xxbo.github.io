@@ -7,6 +7,7 @@
   const BAL = node ? require('./game-balance') : root.RailBalance;
   const FLOW = node ? require('./flow-history') : root.RailFlowHistory;
   const Statistics = node ? require('./statistics-wasm') : root.RailStatistics;
+  const Native = node ? require('./operations-wasm') : root.RailNativeOperations;
   const statistics = Statistics.bind({
     ensureDay,
     lineStats,
@@ -147,97 +148,13 @@
   }
 
   function feedback(s, rt, l) {
-    const r = s.ridership.lines[l.id],
-      runs = X.expand(s, rt.minute).services.filter(x => (x.parentLine || x.id) === l.id),
-      freq = runs.reduce((v, x) => v + 1 / X.headway(s, x), 0),
-      headway = freq ? 1 / freq : Infinity,
-      km = l.trackIds.reduce((v, id) => v + (s.tracks.find(t => t.id === id)?.km || 0), 0),
-      duration = runs.reduce((v, x) => v + X.duration(s, x) / Math.max(1, runs.length), 0),
-      loop = l.stops[0] === l.stops.at(-1),
-      direct = loop ? km : X.distance(s.nodes[l.stops[0]], s.nodes[l.stops.at(-1)]),
-      speed = duration ? km / duration * 60 : 0,
-      ts = rt.trains.filter(t => (t.parentLine || t.service) === l.id),
-      load = ts.length ? ts.reduce((v, t) => v + t.onboard / Math.max(1, t.capacity), 0) / ts
-      .length : 0,
-      loss = r.attempted ? clamp(r.lost / r.attempted, 0, 1) : 0,
-      wait = Math.max(r.boarded ? r.wait / r.boarded : 0, Number.isFinite(headway) ? headway / 2 :
-        45);
-    const reached = new Set(l.stops);
-    let change = true;
-    while (change) {
-      change = false;
-      for (const x of lines(s))
-        if ((!x.fleetManaged || (node ? require('./fleet') : root.RailFleet).planned(x, rt
-            .minute) > 0) && x
-          .stops.some(id => reached.has(id)))
-          for (const id of x.stops)
-            if (!reached.has(id)) {
-              reached.add(id);
-              change = true;
-            }
-    }
-    const fs = (s.urban?.facilities || []).filter(f => l.stops.some(id => X.distance(s.nodes[id],
-        f) <= 3)),
-      weight = f => {
-        const t = (node ? require('./urban-growth') : root.RailUrban).TYPES[f.kind];
-        return t.visits[f.level - 1] + t.jobs[f.level - 1];
-      },
-      total = fs.reduce((v, f) => v + weight(f), 0),
-      covered = fs.reduce((v, f) => v + ([...reached].some(id => X.distance(s.nodes[id], f) *
-          1.25 <= .8) ?
-        weight(f) : 0), 0),
-      reference = {
-        ...l,
-        fareBands: undefined
-      },
-      fare = X.fare(l, Math.min(10, Math.max(1, km))),
-      base = X.fare(reference, Math.min(10, Math.max(1, km)));
-    const scores = {
-        crowding: clamp(1 - Math.max(0, load - .55) / .6 - loss * .65, 0, 1),
-        waiting: clamp(1 - Math.max(0, wait - 2) / 18, 0, 1),
-        speed: clamp((speed / 38) * (.35 + .65 * Math.min(1, direct / Math.max(.1, km))), 0, 1),
-        coverage: total ? clamp(covered / total, 0, 1) : .6,
-        fare: clamp(1 - Math.max(0, fare / base - .8) / 1.8, 0, 1),
-        reliability: clamp((freq ? 1 : 0) - loss, 0, 1),
-        hours: clamp((l.close - l.open) / 1080, 0, 1)
-      },
-      score = Object.entries(WEIGHTS).reduce((v, [k, w]) => v + scores[k] * w, 0);
-    return {
-      scores,
-      score,
-      headway,
-      load,
-      wait,
-      loss,
-      speed,
-      covered,
-      total
-    };
+    return Native.feedback(s, rt, 0, false, l);
   }
 
   function updateSatisfaction(s, rt, minutes = 0) {
-    const q = s.ridership;
-    if (q?.model !== 22) return;
+    if (s.ridership?.model !== 22) return;
     sync(s, rt.minute);
-    for (const l of lines(s)) {
-      const r = q.lines[l.id],
-        m = ((rt.minute % DAY) + DAY) % DAY;
-      if (minutes && (m < l.open || m >= l.close)) continue;
-      const v = feedback(s, rt, l);
-      r.scores = v.scores;
-      r.observations = {
-        load: v.load,
-        wait: v.wait,
-        loss: v.loss,
-        speed: v.speed,
-        covered: v.covered,
-        total: v.total
-      };
-      const alpha = r.feedbackMinute == null ? 1 : 1 - Math.exp(-minutes / 90);
-      r.satisfaction = clamp((r.satisfaction ?? .7) + (v.score - (r.satisfaction ?? .7)) * alpha,
-        0, 1);
-      r.feedbackMinute = rt.minute;
-    }
+    Native.feedback(s, rt, minutes, false);
   }
 
   function factor(s, journey) {
@@ -333,34 +250,7 @@
     if (!q) return;
     ensureDay(s, rt.minute);
     sync(s, rt.minute);
-    const m = ((rt.minute % DAY) + DAY) % DAY,
-      active = new Set(rt.trains.map(t => t.parentLine || t.service));
-    for (const run of (rt.plan || s).services)
-      for (const dir of X.directions(run)) {
-        const departure = rt.departures[run.id + '|' + dir];
-        if (departure?.lastRun !== undefined && rt.minute - departure.lastRun <= 1.5 * (departure
-            .headway ||
-            run.headway))
-          for (const id of new Set([run.parentLine || run.id, ...(run.fareLines || [])])) active
-            .add(id);
-      }
-    for (const l of lines(s)) {
-      const r = q.lines[l.id];
-      if (m < l.open || m >= l.close) continue;
-      const delta = minutes / Math.max(60, l.close - l.open),
-        running = active.has(l.id);
-      if (running) {
-        r.serviceDays += delta;
-        r.awareness = 1 - (1 - r.awareness) * Math.exp(-delta / TAU);
-      }
-      const loss = r.attempted ? clamp(r.lost / r.attempted, 0, 1) : 0,
-        wait = r.boarded ? r.wait / r.boarded : 0,
-        target = running ? clamp(1 - .8 * loss - Math.max(0, wait - 10) / 75, .3, 1) : .35;
-      r.trust += (target - r.trust) * (1 - Math.exp(-delta / 2));
-      const fade = Math.exp(-delta);
-      for (const k of ['attempted', 'lost', 'wait', 'boarded']) r[k] *= fade;
-    }
-    updateSatisfaction(s, rt, minutes);
+    Native.feedback(s, rt, minutes, true);
     q.lastMinute = rt.minute;
     q.hour = q.hour.filter(b => b.minute > Math.floor(rt.minute) - 60);
     statistics.invalidate(s);
@@ -475,10 +365,9 @@
   const travel = (...args) => statistics.travel(...args);
   let costCache = null;
 
-  function finance(s, rt, cost, fixed) {
-    if (!s.ridership) return;
+  function financeFrame(s, rt) {
+    if (!s.ridership) return null;
     const d = ensureDay(s, rt.minute);
-    d.operating = (d.operating || 0) + cost;
     if (!costCache || costCache.services !== s.services || costCache.tracks !== s.tracks) {
       const km = new Map(s.tracks.map(t => [t.id, t.km]));
       const rows = s.services.map(l => [l.id, l.trackIds.reduce((v, id) => v + (km.get(id) || 0),
@@ -490,13 +379,33 @@
         rows: rows.map(([id, length]) => [id, total ? length / total : 0])
       };
     }
-    for (const [id, weight] of costCache.rows) {
-      const st = lineStats(d, id);
-      st.operating = (st.operating || 0) + fixed * weight;
-      statistics.financeChanged(s, id, st.operating);
-    }
+    const stats = costCache.rows.map(([id]) => lineStats(d, id));
+    return {
+      length: stats.length + 1,
+      input: [Number(d.operating), ...stats.flatMap((st, i) => [Number(st.operating), costCache
+        .rows[i][1]
+      ])],
+      apply: values => {
+        d.operating = values[0];
+        for (let i = 0; i < stats.length; i++) {
+          stats[i].operating = values[i + 1];
+          statistics.financeChanged(s, costCache.rows[i][0], stats[i].operating);
+        }
+      }
+    };
   }
+
+  function finance(s, rt, cost, fixed) {
+    const frame = financeFrame(s, rt);
+    if (!frame) return;
+    const rows = [];
+    for (let i = 1; i < frame.input.length; i += 2) rows.push([frame.input[i], frame.input[i +
+      1]]);
+    frame.apply(Native.allocation(frame.input[0], cost, fixed, rows).subarray(1));
+  }
+
   const api = {
+    financeFrame,
     rejectBatch: statistics.rejectBatch,
     nativeStatisticsFrame: statistics.frame,
     nativeStatisticsProjector: statistics.projector,

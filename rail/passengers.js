@@ -9,6 +9,7 @@
   const Q = node ? require('./ridership') : root.RailRidership;
   const F = node ? require('./fleet') : root.RailFleet;
   const SIM = node ? require('./simulation-wasm') : root.RailSimulation;
+  const Native = node ? require('./operations-wasm') : root.RailNativeOperations;
   const QUEUES = node ? require('./queue-runtime') : root.RailQueueRuntime;
   const key = (id, dir, station) => `${id}|${dir}|${station}`;
 
@@ -197,21 +198,19 @@
     });
   }
 
-  function generate(rt, s, dt) {
+  function generate(rt, s, interval, carry) {
     if (rt.demandCatalog && rt.defs.length > 45000 && rt.minute - (rt.lastDefCompact ?? -
         Infinity) >= 5) {
       compactDefinitions(rt);
       rt.lastDefCompact = rt.minute;
       rt._demandIndex = null;
     }
-    rt.demandCarry = (rt.demandCarry || 0) + dt;
-    if (rt.demandCarry < 1 - 1e-9) return {
+    rt.demandCarry = carry;
+    if (!interval) return {
       arrivals: [],
       gates: false
     };
-    const interval = Math.floor(rt.demandCarry + 1e-9);
-    rt.demandCarry -= interval;
-    dt = interval;
+    const dt = interval;
     Q.step(s, rt, dt);
     const incoming = [];
     const catalog = rt.demandCatalog || rt.defs,
@@ -312,14 +311,14 @@
     return tracks.map.get(id) || index.track.get(id);
   }
 
-  function tick(rt, s, dt) {
+  function tick(rt, s, dt, target, carry, interval) {
     s = rt.plan || s;
-    rt.minute += dt;
+    rt.minute = target;
     if (Math.floor(rt.minute) !== rt.fleetMinute) {
       refreshFleet(rt);
       rt.fleetMinute = Math.floor(rt.minute);
     }
-    const incoming = generate(rt, s, dt);
+    const incoming = generate(rt, s, interval, carry);
     const index = planIndex(s);
     for (const {
         l,
@@ -360,12 +359,9 @@
   function advance(rt, s, minutes) {
     if (!Number.isFinite(minutes) || minutes < 0 || minutes > 1440) throw Error(
       'Invalid simulation interval');
-    let left = minutes;
-    while (left > 1e-9) {
-      const dt = Math.min(.1, left);
-      tick(rt, s, dt);
-      left -= dt;
-    }
+    const agenda = Native.clock(rt.minute, minutes, rt.demandCarry || 0);
+    for (let at = 1; at < agenda.length; at += 4) tick(rt, s, agenda[at], agenda[at + 1], agenda[
+      at + 2], agenda[at + 3]);
     return rt;
   }
 
@@ -819,6 +815,10 @@
     return reconcile(rt, s, m);
   }
   const api = {
+    advanceTick: (rt, s, dt, target, carry, interval) => {
+      if (dt > 1e-9) tick(rt, s, dt, target, carry, interval);
+      return rt;
+    },
     demandSummary,
     MAX_SAVED_DEFINITIONS,
     reconcile,

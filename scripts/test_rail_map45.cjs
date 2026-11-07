@@ -97,7 +97,7 @@ for (const weighted of [false, true]) {
   for (let i = 0; i < 20; i++) step(p, .5);
 }
 const bytes = fs.readFileSync(require('node:path').join(__dirname,
-  '../rail/wasm/rail-core-v6.wasm'));
+  '../rail/wasm/rail-core-v7.wasm'));
 Core.create(bytes, {
   recycleBytes: 0
 });
