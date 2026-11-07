@@ -248,7 +248,7 @@ for (const minutes of [0, 1e-10, 1e-9, 1.1e-9, .0999999999999, .1, .100000000000
 {
   const a = create(2),
     b = structuredClone(a);
-  for (const amount of [NaN, Infinity, -1, 0, 99999999, 1e8, 2e8, 1e9, 1e9]) {
+  for (const amount of [NaN, Infinity, '100000000', [1e8], null, -1, 0, 99999999, 1e8, 2e8, 1e9, 1e9]) {
     exact(M.borrow(a, amount), OldM.borrow(b, amount));
     exact(a, b);
     assert.equal(M.available(a), OldM.available(b));

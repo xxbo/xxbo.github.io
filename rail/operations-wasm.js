@@ -171,7 +171,7 @@
   function credit(s, action, amount = 0, index = -1) {
     return accounts(s, {
       minute: s.economy.minute
-    }, 6, amount, index, s.economy.nextLoan, action);
+    }, 6, typeof amount === 'number' ? amount : NaN, index, s.economy.nextLoan, action);
   }
 
   function clock(minute, minutes, carry) {
