@@ -214,13 +214,9 @@
     Q.step(s, rt, dt);
     const incoming = [];
     const catalog = rt.demandCatalog || rt.defs,
-      minute = Math.round(rt.minute * 1e6) / 1e6,
-      rates = {};
-    for (const p of ['work', 'shopping', 'leisure'])
-      for (const b of [false, true]) rates[p + ':' + b] = C.profile(p, b, minute) * dt;
+      minute = Math.round(rt.minute * 1e6) / 1e6;
     const open = new Set(s.services.filter(l => B.isOpen(l, minute) && (!l.fleetManaged || l
-        .fleet > 0))
-      .map(l => l.id));
+      .fleet > 0)).map(l => l.id));
 
     function arrive(j, n) {
       if (n > 0) incoming.push({
@@ -229,51 +225,24 @@
         n
       });
     }
-    if (rt.arrivalMode !== 'integer') {
-      for (const j of catalog) {
-        const amount = j.daily * (j.externalKind ? C.profile(j.purpose, j.back, minute, j
-            .externalKind) *
-          dt : rates[j.purpose + ':' + j.back]);
-        if (amount >= 1e-12) arrive(j, amount);
-      }
-      return {
-        arrivals: incoming,
-        gates: false
-      };
+    const integer = rt.arrivalMode === 'integer';
+    const sampled = SIM.timedArrivals(catalog, s, minute, dt, rt.arrivalRemainder || 0, rt
+      .rngState, integer);
+    if (integer) {
+      rt.expectedGenerated = (rt.expectedGenerated || 0) + sampled.total;
+      rt.arrivalRemainder = sampled.remainder;
+      rt.rngState = sampled.rng;
     }
-    // Global residual + systematic sampling: a tiny OD is not rounded away independently.
-    // Expected total is preserved to less than one passenger; actual queues contain whole people.
-    const sampled = SIM.arrivals(catalog, j => Q.factor(s, j), j => j.externalKind ? C.profile(j
-        .purpose, j.back,
-        minute, j.externalKind) * dt : rates[j.purpose + ':' + j.back], rt.arrivalRemainder ||
-      0, rt.rngState);
-    rt.expectedGenerated = (rt.expectedGenerated || 0) + sampled.total;
-    rt.arrivalRemainder = sampled.remainder;
-    rt.rngState = sampled.rng;
     for (let i = 0; i < sampled.events.length; i += 2) arrive(catalog[sampled.events[i]], sampled
       .events[i + 1]);
     return {
       arrivals: incoming,
-      gates: true
+      gates: integer
     };
   }
 
   function refreshFleet(rt) {
-    for (const l of rt.plan.services) {
-      if (!l.fleetManaged) continue;
-      const base = rt.plan.baseLines.find(b => b.id === l.parentLine);
-      l.fleet = F.allocations(base, rt.minute)[l.patternIndex];
-      for (const dir of X.directions(l)) {
-        const d = rt.departures[l.id + '|' + dir],
-          h = R.effectiveHeadway(rt.plan, l);
-        if (d && h !== d.headway) {
-          d.next = Number.isFinite(h) ? Math.max(rt.minute, Math.min(d.next, (d.lastRun ?? rt
-              .minute) +
-            h)) : Infinity;
-          d.headway = h;
-        }
-      }
-    }
+    (node ? require('./temporal-wasm') : root.RailTemporal).refreshFleet(rt);
   }
   const planIndexes = new WeakMap();
 

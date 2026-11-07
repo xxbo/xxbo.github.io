@@ -233,6 +233,7 @@ pub extern "C" fn simulation_run() -> *const f64 {
             4 => persistent(input, simulation_state),
             6 => incremental(input, simulation_state),
             7 => cached_sample(input, sampling_state),
+            8 => timed_sample(input, sampling_state),
             _ => panic!("unknown simulation operation"),
         };
         c.output.as_ptr()
@@ -525,6 +526,7 @@ pub(super) struct Sampling {
     token: f64,
     fi: Vec<usize>,
     pi: Vec<usize>,
+    temporal: Option<TemporalSampling>,
 }
 fn cached_sample(v: &[f64], cache: &mut Option<Sampling>) -> Vec<f64> {
     let token = v[1];
@@ -544,7 +546,12 @@ fn cached_sample(v: &[f64], cache: &mut Option<Sampling>) -> Vec<f64> {
             fi.push(f);
             pi.push(p);
         }
-        *cache = Some(Sampling { token, fi, pi });
+        *cache = Some(Sampling {
+            token,
+            fi,
+            pi,
+            temporal: None,
+        });
     }
     let c = cache.as_ref().expect("sampling metadata missing");
     assert_eq!(c.token, token);
@@ -561,4 +568,122 @@ fn cached_sample(v: &[f64], cache: &mut Option<Sampling>) -> Vec<f64> {
         total += w;
     }
     sample_weights(&weights, total, v[6], v[7])
+}
+
+struct TemporalSampling {
+    factors: Vec<(bool, Vec<usize>)>,
+    profiles: Vec<(usize, bool, usize)>,
+}
+fn timed_sample(v: &[f64], cache: &mut Option<Sampling>) -> Vec<f64> {
+    let token = v[1];
+    let load = v[2] != 0.0;
+    let n = int(v[3]);
+    let nf = int(v[4]);
+    let np = int(v[5]);
+    let integer = v[10] != 0.0;
+    let model = v[11];
+    let nl = int(v[12]);
+    let base = 13 + nl * 4 + n;
+    if load {
+        let mut at = base;
+        let mut factors = Vec::with_capacity(nf);
+        let mut profiles = Vec::with_capacity(np);
+        for _ in 0..nf {
+            let hub = v[at] != 0.0;
+            let len = int(v[at + 1]);
+            at += 2;
+            let ids = v[at..at + len]
+                .iter()
+                .map(|&x| {
+                    let id = int(x);
+                    assert!(id < nl);
+                    id
+                })
+                .collect();
+            at += len;
+            factors.push((hub, ids));
+        }
+        for _ in 0..np {
+            profiles.push((int(v[at]), v[at + 1] != 0.0, int(v[at + 2])));
+            at += 3;
+        }
+        assert_eq!(v.len(), at + n * 2);
+        let mut fi = Vec::with_capacity(n);
+        let mut pi = Vec::with_capacity(n);
+        for pair in v[at..].chunks_exact(2) {
+            let f = int(pair[0]);
+            let p = int(pair[1]);
+            assert!(f < nf && p < np);
+            fi.push(f);
+            pi.push(p);
+        }
+        *cache = Some(Sampling {
+            token,
+            fi,
+            pi,
+            temporal: Some(TemporalSampling { factors, profiles }),
+        });
+    } else {
+        assert_eq!(v.len(), base);
+    }
+    let c = cache.as_ref().expect("temporal sampling metadata missing");
+    assert_eq!(c.token, token);
+    assert_eq!(c.fi.len(), n);
+    let meta = c.temporal.as_ref().expect("incorrect sampling protocol");
+    assert_eq!(meta.factors.len(), nf);
+    assert_eq!(meta.profiles.len(), np);
+    let line_rows = &v[13..13 + nl * 4];
+    let factors = meta
+        .factors
+        .iter()
+        .map(|(hub, ids)| {
+            if model == 0.0 {
+                return 1.0;
+            }
+            ids.iter().fold(f64::INFINITY, |value, &id| {
+                let r = &line_rows[id * 4..id * 4 + 4];
+                let factor = if r[0] == 0.0 {
+                    1.0
+                } else if model == 22.0 {
+                    0.25 + 0.75 * max(0.0, min(1.0, r[1]))
+                } else {
+                    let awareness = if *hub { 1.0 - (1.0 - r[2]) * 0.5 } else { r[2] };
+                    max(0.0, min(1.0, awareness * r[3]))
+                };
+                min(value, factor)
+            })
+        })
+        .collect::<Vec<_>>();
+    let profiles = meta
+        .profiles
+        .iter()
+        .map(|&(p, back, ext)| crate::temporal::profile(p, back, v[8], ext) * v[9])
+        .collect::<Vec<_>>();
+    let daily = &v[13 + nl * 4..base];
+    let mut total = 0.0;
+    let mut weights = Vec::with_capacity(n);
+    if integer {
+        for i in 0..n {
+            let f = if meta.factors[c.fi[i]].1.is_empty() {
+                1.0
+            } else {
+                factors[c.fi[i]]
+            };
+            let w = daily[i] * f * profiles[c.pi[i]];
+            assert!(w.is_finite() && w >= 0.0);
+            weights.push(w);
+            total += w;
+        }
+        sample_weights(&weights, total, v[6], v[7])
+    } else {
+        let mut out = vec![0.0, v[6], v[7], 0.0];
+        for i in 0..n {
+            let amount = daily[i] * profiles[c.pi[i]];
+            if amount >= 1e-12 {
+                out.extend_from_slice(&[i as f64, amount]);
+            }
+        }
+        out[3] = ((out.len() - 4) / 2) as f64;
+        out
+    }
 }

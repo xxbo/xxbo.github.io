@@ -371,7 +371,7 @@
       fi,
       pi,
       token: Core.allocateToken(),
-      input: new Float64Array(8 + factors.length + profiles.length + catalog.length)
+      input: null
     };
     catalogs.set(catalog, c);
     return c;
@@ -382,6 +382,7 @@
       nf = c.factors.length,
       np = c.profiles.length,
       load = Core.samplingToken() !== c.token;
+    if (!c.input) c.input = new Float64Array(8 + nf + np + catalog.length);
     const input = load ? new Float64Array(c.input.length + catalog.length * 2) : c.input;
     input.set([7, c.token, +load, catalog.length, nf, np, remainder, rng]);
     input.set(c.factors.map(factor), 8);
@@ -400,7 +401,66 @@
       events: out.subarray(4)
     };
   }
+
+  function timedArrivals(catalog, s, minute, dt, remainder, rng, integer = true) {
+    const c = prepare(catalog),
+      T = node ? require('./temporal-wasm') : root.RailTemporal;
+    if (!c.timed) {
+      const ids = new Map(),
+        names = [];
+      const intern = id => {
+        if (!ids.has(id)) {
+          ids.set(id, names.length);
+          names.push(id);
+        }
+        return ids.get(id);
+      };
+      const meta = [];
+      for (const j of c.factors) {
+        const ls = j.lineIds || Object.keys(j.path?.fares || {});
+        meta.push(+!!j.hub, ls.length, ...ls.map(intern));
+      }
+      for (const j of c.profiles) meta.push(T.purpose(j.purpose), +!!j.back, T.external(j
+        .externalKind));
+      c.timed = {
+        token: Core.allocateToken(),
+        names,
+        meta: new Float64Array(meta),
+        input: new Float64Array(13 + names.length * 4 + catalog.length)
+      };
+    }
+    const t = c.timed,
+      load = Core.samplingToken() !== t.token,
+      q = s.ridership;
+    const input = load ? new Float64Array(t.input.length + t.meta.length + catalog.length * 2) : t
+      .input;
+    input.set([8, t.token, +load, catalog.length, c.factors.length, c.profiles.length, remainder,
+      rng, minute, dt, +integer, q ? (q.model === 22 ? 22 : 1) : 0, t.names.length
+    ]);
+    let at = 13;
+    for (const id of t.names) {
+      const r = q?.lines[id];
+      input.set([r ? 1 : 0, r?.satisfaction ?? .7, Number(r?.awareness), Number(r?.trust)], at);
+      at += 4;
+    }
+    for (let i = 0; i < catalog.length; i++) input[at + i] = catalog[i].daily;
+    if (load) {
+      input.set(t.meta, t.input.length);
+      for (let i = 0, at = t.input.length + t.meta.length; i < catalog.length; i++) {
+        input[at + i * 2] = c.fi[i];
+        input[at + i * 2 + 1] = c.pi[i];
+      }
+    }
+    const out = call(input);
+    return {
+      total: out[0],
+      remainder: out[1],
+      rng: out[2],
+      events: out.subarray(4)
+    };
+  }
   const api = {
+    timedArrivals,
     incremental,
     dispatch,
     motion,

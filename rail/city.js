@@ -107,7 +107,8 @@
     const zones = new Map([...groups].map(([key, cs]) => [key, {
       x: cs.reduce((v, c) => v + c.x, 0) / cs.length,
       y: cs.reduce((v, c) => v + c.y, 0) / cs.length,
-      fields: Object.fromEntries(profiles.map(p => [p.field, cs.reduce((v, c) => v + c[p.field],
+      fields: Object.fromEntries(profiles.map(p => [p.field, cs.reduce((v, c) => v + c[p
+          .field],
         0)]))
     }]));
     // Fixed gravity distribution over the entire city, independent of served stations.
@@ -130,7 +131,8 @@
         };
         weights.set(key, w);
       }
-      return w.total ? origin.people * p.rate * destination[p.field] * w.targets.get(zoneFor.get(destination
+      return w.total ? origin.people * p.rate * destination[p.field] * w.targets.get(zoneFor.get(
+        destination
         .id)) / w.total : 0;
     }
     return {
@@ -192,7 +194,8 @@
     };
     for (const c of create().cells)
       if (R.distance(point, c) * DETOUR <= radius) {
-        for (const k of ['people', 'jobs', 'shops', 'industry', 'leisure', 'factory']) out[k] += c[k];
+        for (const k of ['people', 'jobs', 'shops', 'industry', 'leisure', 'factory']) out[k] +=
+          c[k];
         out.cells++;
         out.surveyArea += c.survey * c.area;
         if (c.populationValid) out.populationArea += c.area;
@@ -205,7 +208,8 @@
   }
 
   function assignLegacy(s) {
-    const served = [...new Set((s.routeModel === 9 ? X.expand(s).services : s.services).flatMap(l => l
+    const served = [...new Set((s.routeModel === 9 ? X.expand(s).services : s.services).flatMap(
+        l => l
         .callStops || l.stops))].map(id => s.nodes[id]),
       stations = Object.fromEntries(served.map(n => [n.id, {
         people: 0,
@@ -284,7 +288,8 @@
     const catchment = assign(s),
       ids = Object.keys(catchment.stations).map(Number),
       adj = R.network(s),
-      paths = s.routeModel === 9 ? {} : Object.fromEntries(ids.map(id => [id, R.paths(s, adj, id)])),
+      paths = s.routeModel === 9 ? {} : Object.fromEntries(ids.map(id => [id, R.paths(s, adj,
+        id)])),
       flows = [],
       grouped = new Map();
     const purposeTotals = {
@@ -315,7 +320,8 @@
     }
     for (const g of grouped.values()) {
       const key = g.from + ':' + g.purpose;
-      if (s.routeModel === 9 && !paths[key]) paths[key] = R.paths(s, adj, g.from, 1 / X.VOT[g.purpose]);
+      if (s.routeModel === 9 && !paths[key]) paths[key] = R.paths(s, adj, g.from, 1 / X.VOT[g
+        .purpose]);
       const path = (s.routeModel === 9 ? paths[key] : paths[g.from])?.[g.to];
       if (!path?.edges.length) continue;
       const km = R.distance(s.nodes[g.from], s.nodes[g.to]),
@@ -328,7 +334,8 @@
           walk,
           fare: path.fare,
           km
-        }).share : .93 / (1 + Math.exp(Math.max(-40, Math.min(40, (rail + path.fare * .045 - road - 8) /
+        }).share : .93 / (1 + Math.exp(Math.max(-40, Math.min(40, (rail + path.fare * .045 -
+            road - 8) /
           8)))),
         trips = g.people * share;
       if (trips < .1) continue;
@@ -354,19 +361,22 @@
       for (const e of f.path.edges)
         for (const id of e.tracks || [e.track]) trackFlow[id] = (trackFlow[id] || 0) + f.trips;
     for (const t of s.tracks) {
-      const cap = (s.routeModel === 9 ? X.expand(s).services : s.services).filter(l => l.trackIds.includes(t
-        .id)).reduce((v, l) => v + 60 / R.effectiveHeadway(s, l) * R.capacity(l), 0);
+      const cap = (s.routeModel === 9 ? X.expand(s).services : s.services).filter(l => l.trackIds
+        .includes(t
+          .id)).reduce((v, l) => v + 60 / R.effectiveHeadway(s, l) * R.capacity(l), 0);
       trackLoad[t.id] = (trackFlow[t.id] || 0) * .18 / Math.max(1, cap);
     }
     let riders = 0,
       unserved = 0;
     for (const f of flows) {
-      const ratio = Math.min(1, ...f.path.edges.map(e => 1 / Math.max(1, Math.max(...(e.tracks || [e.track])
+      const ratio = Math.min(1, ...f.path.edges.map(e => 1 / Math.max(1, Math.max(...(e.tracks ||
+          [e.track])
         .map(id => trackLoad[id] || 0)))));
       f.trips *= ratio;
       riders += f.trips;
       unserved += f.demandTrips - f.trips;
-      for (const id of new Set(f.path.edges.flatMap(e => s.routeModel === 9 ? e.parts.map(p => p.line) : [e
+      for (const id of new Set(f.path.edges.flatMap(e => s.routeModel === 9 ? e.parts.map(p => p
+          .line) : [e
           .service
         ]))) serviceFlow[id] = (serviceFlow[id] || 0) + f.trips;
     }
@@ -386,26 +396,8 @@
       jobs: create().totals.jobs
     };
   }
-  // Each profile integrates to 1 over a complete day; commute directions peak at different times.
-  function profile(purpose, back, minute, externalKind = null) {
-    const h = ((minute % 1440) + 1440) % 1440 / 60;
-    let w;
-    if (externalKind?.startsWith('staff')) return profile('work', externalKind === 'staff-homebound',
-      minute);
-    if (externalKind) {
-      const departure = externalKind === 'local-departure' || externalKind === 'visitor-return',
-        peak = departure ? (h >= 5 && h < 10) : (h >= 16 && h < 22),
-        hours = departure ? 5 : 6;
-      return (peak ? 3 : 1) / (hours * 3 + 24 - hours) / 60;
-    }
-    if (purpose === 'work') w = back ? (h >= 17 && h < 21 ? .18 : h >= 12 && h < 14 ? .06 : .008) : (h >=
-      6 && h < 10 ? .19 : h >= 10 && h < 12 ? .04 : .008);
-    else if (purpose === 'shopping') w = h >= 10 && h < 21 ? .08 : .008;
-    else w = h >= 9 && h < 22 ? .07 : .008;
-    const norm = purpose === 'work' ? (back ? 4 * .18 + 2 * .06 + 18 * .008 : 4 * .19 + 2 * .04 + 18 *
-      .008) : purpose === 'shopping' ? 11 * .08 + 13 * .008 : 13 * .07 + 11 * .008;
-    return w / norm / 60;
-  }
+  const profile = (...args) => (node ? require('./temporal-wasm') : root.RailTemporal).profile(...
+    args);
   const api = {
     world,
     create,

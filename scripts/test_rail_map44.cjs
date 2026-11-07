@@ -225,7 +225,7 @@ const saved = JSON.parse(JSON.stringify(P.snapshot(checkpoint.ra))),
   restored = P.restore(checkpoint.a, checkpoint.forecast, saved);
 assert(restored);
 assert.deepEqual(P.summary(restored), P.summary(checkpoint.ra));
-const bytes = fs.readFileSync(path.join(__dirname, '../rail/wasm/rail-core-v7.wasm'));
+const bytes = fs.readFileSync(path.join(__dirname, '../rail/wasm/rail-core-v8.wasm'));
 Core.create(bytes, {
   recycleBytes: 0
 });

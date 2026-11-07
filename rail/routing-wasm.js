@@ -22,6 +22,8 @@
     statisticsCalls = 0,
     statisticsBatches = 0,
     operationsCalls = 0,
+    temporalCalls = 0,
+    timedArrivalCalls = 0,
     nativeTokens = 0,
     recycles = 0;
   let recycleBytes = 64 * 1024 * 1024;
@@ -31,7 +33,7 @@
     peakMemoryBytes = 0;
   const recycleLimit = () => recycleBytes === 0 ? 0 : Math.max(recycleBytes,
     simulationRecycleBytes);
-  const asset = node ? null : new URL('wasm/rail-core-v7.wasm?v=47',
+  const asset = node ? null : new URL('wasm/rail-core-v8.wasm?v=48',
     root.document?.currentScript?.src || root.location.href).href;
 
   function install(module) {
@@ -262,7 +264,7 @@
   function kernel(name, values, read = null, context = null) {
     if (!['demand_ipf', 'demand_distribution', 'demand_mode', 'demand_strategy',
         'demand_capacity', 'world_run', 'world_policy', 'simulation_run', 'simulation_step',
-        'statistics_run', 'operations_run'
+        'statistics_run', 'operations_run', 'temporal_run'
       ].includes(name)) throw Error('未知需求核心操作');
     try {
       const wasm = exports();
@@ -286,9 +288,11 @@
       } else if (name === 'simulation_run') {
         simulationCalls++;
         if (values[0] === 4 || values[0] === 6) activeSimulationToken = values[1];
-        if (values[0] === 7) activeSamplingToken = values[1];
+        if (values[0] === 7 || values[0] === 8) activeSamplingToken = values[1];
+        if (values[0] === 8) timedArrivalCalls++;
       } else if (name === 'statistics_run') statisticsCalls++;
       else if (name === 'operations_run') operationsCalls++;
+      else if (name === 'temporal_run') temporalCalls++;
       else demandCalls++;
       peakMemoryBytes = Math.max(peakMemoryBytes, wasm.memory.buffer.byteLength);
       if (name === 'simulation_run' && activeQueueToken && recycleBytes >= 64 * 1024 * 1024) {
@@ -394,6 +398,9 @@
       statisticsBatches,
       statisticsAbi: 1,
       operationsAbi: 1,
+      temporalAbi: 1,
+      temporalCalls,
+      timedArrivalCalls,
       operationsCalls,
       queueAbi: 1,
       simulationAbi: 1,
@@ -418,7 +425,7 @@
     const fs = require('node:fs'),
       path = require('node:path');
     install(new WebAssembly.Module(fs.readFileSync(path.join(__dirname,
-      'wasm/rail-core-v7.wasm'))));
+      'wasm/rail-core-v8.wasm'))));
     module.exports = api;
   } else {
     root.RailRouting = api;

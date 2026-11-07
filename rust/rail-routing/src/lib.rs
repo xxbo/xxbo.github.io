@@ -6,6 +6,7 @@ mod operations;
 mod queues;
 mod simulation;
 mod statistics;
+mod temporal;
 mod world;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};

@@ -72,7 +72,7 @@ for(let i=0;i<100;i++){
  }
 }
 // Owned projections survive instance replacement and traps; retained matrices keep their cells.
-const bytes=require('node:fs').readFileSync(require('node:path').join(__dirname,'../rail/wasm/rail-core-v7.wasm'));
+const bytes=require('node:fs').readFileSync(require('node:path').join(__dirname,'../rail/wasm/rail-core-v8.wasm'));
 Core.create(bytes,{recycleBytes:0});
 const c=cityAt(edge),owned=D.distribution(c),snapshot=clean(owned),forecast=compare(edge,c),copy=clean(forecast);
 assert.throws(()=>Core.kernel('world_run',[0]),/Rust\/WASM/);
