@@ -144,3 +144,80 @@ pub extern "C" fn engine_step() -> *const f64 {
         output.as_ptr()
     })
 }
+
+/// Minute preparation preserves feedback -> sampling -> dispatch order without host round trips.
+#[no_mangle]
+pub extern "C" fn engine_prepare_abi() -> u32 {
+    1
+}
+#[no_mangle]
+pub extern "C" fn engine_prepare() -> *const f64 {
+    CORE.with(|c| {
+        let mut c = c.borrow_mut();
+        let crate::Core {
+            input,
+            output,
+            sampling_state,
+            feedback_cache,
+            ..
+        } = &mut *c;
+        assert_eq!(input[0], 1.0);
+        let nf = int(input[1]);
+        let ns = int(input[2]);
+        let nd = int(input[3]);
+        let nm = int(input[4]);
+        let at = 5 + nm;
+        assert_eq!(input.len(), at + nf + ns + nd);
+        let feedback = if nf > 0 {
+            crate::operations::run_cached(&input[at..at + nf], feedback_cache)
+        } else {
+            vec![]
+        };
+        let sampled = if ns > 0 {
+            let v = &input[at + nf..at + nf + ns];
+            assert_eq!(v[0], 9.0);
+            assert_eq!(nm, int(v[12]));
+            let mut rows = v[13..13 + nm * 4].to_vec();
+            if !feedback.is_empty() {
+                let mut offsets = vec![];
+                let mut p = 2;
+                for _ in 0..int(feedback[1]) {
+                    offsets.push(p);
+                    p += 8 + if feedback[p + 7] != 0.0 { 16 } else { 0 };
+                }
+                assert_eq!(p, feedback.len());
+                for i in 0..nm {
+                    let id = input[5 + i];
+                    if id < 0.0 {
+                        continue;
+                    }
+                    let p = offsets[int(id)];
+                    rows[i * 4 + 2] = feedback[p + 1];
+                    rows[i * 4 + 3] = feedback[p + 2];
+                    if feedback[p + 7] != 0.0 {
+                        rows[i * 4 + 1] = feedback[p + 23];
+                    }
+                }
+            }
+            crate::simulation::timed_sample_rows(v, sampling_state, Some(&rows))
+        } else {
+            assert_eq!(nm, 0);
+            vec![]
+        };
+        let dispatch = if nd > 0 {
+            crate::simulation::dispatch(&input[at + nf + ns..])
+        } else {
+            vec![]
+        };
+        *output = vec![
+            1.0,
+            feedback.len() as f64,
+            sampled.len() as f64,
+            dispatch.len() as f64,
+        ];
+        output.extend(feedback);
+        output.extend(sampled);
+        output.extend(dispatch);
+        output.as_ptr()
+    })
+}

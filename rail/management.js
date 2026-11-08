@@ -188,13 +188,62 @@
     }, 1).running;
   }
 
-  function advance(s, rt, minutes) {
-    if (!Number.isFinite(minutes) || minutes < 0 || minutes > 1440) throw Error(
+  function validInterval(minutes, limit = 1440) {
+    if (!Number.isFinite(minutes) || minutes < 0 || minutes > limit) throw Error(
       'Invalid management interval');
+  }
+
+  function advance(s, rt, minutes) {
+    validInterval(minutes);
     init(s);
+    return advanceInterval(s, rt, minutes);
+  }
+
+  // Yield between complete legacy UI quanta, preserving loan-split and callback order.
+  function advanceBudget(s, rt, minutes, options = {}) {
+    validInterval(minutes, 1e8);
+    const now = options.now || (() => performance.now()),
+      budget = options.budget ?? 6,
+      maxSteps = options.maxSteps ?? 100;
+    if (!Number.isFinite(budget) || budget < 0 || !Number.isInteger(maxSteps) ||
+      maxSteps < 1 || maxSteps > 10000) throw Error('Invalid simulation budget');
+    const start = now();
+    init(s);
+    const trackFixed = s.tracks.reduce((value, track) => value + track.km * 2200, 0);
+    let remaining = minutes,
+      steps = 0,
+      running = true,
+      reason = 'complete';
+    while (remaining > 1e-8) {
+      if (options.shouldYield?.()) {
+        reason = 'interrupted';
+        break;
+      }
+      const dt = Math.min(.1, remaining);
+      running = advanceInterval(s, rt, dt, trackFixed);
+      remaining -= dt;
+      if (!running) {
+        reason = 'blocked';
+        break;
+      }
+      steps++;
+      if (remaining <= 1e-8) break;
+      if (steps >= maxSteps) {
+        reason = 'steps';
+        break;
+      }
+      if (now() - start >= budget) {
+        reason = 'time';
+        break;
+      }
+    }
+    return {running, remaining, steps, consumed: minutes - remaining, reason};
+  }
+
+  function advanceInterval(s, rt, minutes, trackFixed = s.tracks.reduce(
+    (value, track) => value + track.km * 2200, 0)) {
     let frame = Engine.begin(s, rt, minutes);
     if (!frame.running) return false;
-    const trackFixed = s.tracks.reduce((v, t) => v + t.km * 2200, 0);
     while (frame.left > 1e-9) {
       const {
         dt,
@@ -247,6 +296,7 @@
     repay,
     settle,
     advance,
+    advanceBudget,
     signature,
     INITIAL,
     CREDIT,

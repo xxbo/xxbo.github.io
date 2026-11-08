@@ -18,11 +18,11 @@
     return map.get(id);
   }
 
-  function dispatch(rt, s, index) {
+  function dispatchFrame(rt, s, index) {
     if (!s.services.some(l => X.directions(l).some(dir => {
         const d = rt.departures[l.id + '|' + dir];
         return d && !(rt.minute + 1e-8 < d.next);
-      }))) return [];
+      }))) return null;
     const services = new Map(),
       parents = new Map(),
       records = [],
@@ -53,12 +53,19 @@
       }
     if (!context.some(({
         d
-      }) => d && !(rt.minute + 1e-8 < d.next))) return [];
+      }) => d && !(rt.minute + 1e-8 < d.next))) return null;
     const input = new Float64Array(6 + trains.length + records.length);
     input.set([3, rt.minute, services.size, parents.size, rt.trains.length, context.length]);
     input.set(trains, 6);
     input.set(records, 6 + trains.length);
-    const result = call(input);
+    return {input,context};
+  }
+  function dispatch(rt,s,index) {
+    const frame=dispatchFrame(rt,s,index);
+    return frame?projectDispatch(frame,call(frame.input)):[];
+  }
+  function projectDispatch(frame,result) {
+    const context=frame.context;
     for (let i = 0; i < context.length; i++) {
       context[i].action = result[i * 2];
       context[i].next = result[i * 2 + 1];
@@ -402,7 +409,7 @@
     };
   }
 
-  function timedArrivals(catalog, s, minute, dt, remainder, rng, integer = true) {
+  function timedFrame(catalog, s, minute, dt, remainder, rng, integer = true) {
     const c = prepare(catalog),
       T = node ? require('./temporal-wasm') : root.RailTemporal;
     if (!c.timed) {
@@ -465,7 +472,14 @@
       input[at++] = changes.length / 2;
       input.set(changes, at);
     }
-    const out = call(input);
+    return {input,context:{names:t.names}};
+  }
+  function timedArrivals(...args) {
+    const frame=timedFrame(...args);
+    return projectArrivals(call(frame.input));
+  }
+  function projectArrivals(out) {
+
     return {
       total: out[0],
       remainder: out[1],
@@ -475,6 +489,10 @@
   }
   const api = {
     timedArrivals,
+    timedFrame,
+    projectArrivals,
+    dispatchFrame,
+    projectDispatch,
     incremental,
     dispatch,
     motion,

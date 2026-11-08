@@ -12,57 +12,62 @@ fn motion(v: &[f64]) -> Vec<f64> {
     let mut blocks = v[5..5 + nb].to_vec();
     let mut out = Vec::with_capacity(n * 8);
     for t in v[5 + nb..].chunks_exact(20) {
-        let (mut action, mut progress, mut travel, mut expense) = (0.0, t[5], 0.0, 0.0);
-        let (mut at, mut ready, mut final_at, mut final_ready) = (t[2], t[8], t[2], t[8]);
-        if t[0] == 0.0 {
-            action = 1.0;
-        } else if t[1] == 1.0 {
-            progress = min(1.0, (now - t[6]) / (t[7] - t[6]));
-            travel = (progress - t[5]) * t[17];
-            expense = travel * (180.0 + t[18] * 25.0);
-            action = 2.0;
-            if progress >= 1.0 - 1e-8 {
-                at += t[3];
-                ready = now + if t[15] != 0.0 { t[14] } else { 0.0 };
-                final_at = at;
-                final_ready = ready;
-                action = 3.0;
-                if (t[3] == 1.0 && at == t[4]) || (t[3] != 1.0 && at == 0.0) {
-                    if t[9] != 0.0 && t[10] == 0.0 && t[11] != 0.0 && t[13] <= t[12] {
-                        final_at = if t[3] == 1.0 { 0.0 } else { t[4] };
-                        final_ready = now + if t[16] != 0.0 { t[14] } else { 0.0 };
-                        action = 4.0;
-                    } else {
-                        action = 5.0;
-                    }
-                }
-            }
-        } else if t[1] != 3.0 && now >= t[8] && t[19] >= 0.0 {
-            let block = int(t[19]);
-            assert!(block < nb);
-            if now < blocks[block] {
-                action = 6.0;
-            } else {
-                action = 7.0;
-                progress = 0.0;
-                ready = now + max(0.001, t[17] / 48.0 * 60.0);
-                final_ready = now + spacing;
-                blocks[block] = final_ready;
-            }
-        }
-        out.extend_from_slice(&[
-            action,
-            progress,
-            travel,
-            expense,
-            at,
-            ready,
-            final_at,
-            final_ready,
-        ]);
+        out.extend_from_slice(&move_train(now, spacing, t, &mut blocks));
     }
     out
 }
+fn move_train(now: f64, spacing: f64, t: &[f64], blocks: &mut [f64]) -> [f64; 8] {
+    assert_eq!(t.len(), 20);
+    let (mut action, mut progress, mut travel, mut expense) = (0.0, t[5], 0.0, 0.0);
+    let (mut at, mut ready, mut final_at, mut final_ready) = (t[2], t[8], t[2], t[8]);
+    if t[0] == 0.0 {
+        action = 1.0;
+    } else if t[1] == 1.0 {
+        progress = min(1.0, (now - t[6]) / (t[7] - t[6]));
+        travel = (progress - t[5]) * t[17];
+        expense = travel * (180.0 + t[18] * 25.0);
+        action = 2.0;
+        if progress >= 1.0 - 1e-8 {
+            at += t[3];
+            ready = now + if t[15] != 0.0 { t[14] } else { 0.0 };
+            final_at = at;
+            final_ready = ready;
+            action = 3.0;
+            if (t[3] == 1.0 && at == t[4]) || (t[3] != 1.0 && at == 0.0) {
+                if t[9] != 0.0 && t[10] == 0.0 && t[11] != 0.0 && t[13] <= t[12] {
+                    final_at = if t[3] == 1.0 { 0.0 } else { t[4] };
+                    final_ready = now + if t[16] != 0.0 { t[14] } else { 0.0 };
+                    action = 4.0;
+                } else {
+                    action = 5.0;
+                }
+            }
+        }
+    } else if t[1] != 3.0 && now >= t[8] && t[19] >= 0.0 {
+        let block = int(t[19]);
+        assert!(block < blocks.len());
+        if now < blocks[block] {
+            action = 6.0;
+        } else {
+            action = 7.0;
+            progress = 0.0;
+            ready = now + max(0.001, t[17] / 48.0 * 60.0);
+            final_ready = now + spacing;
+            blocks[block] = final_ready;
+        }
+    }
+    [
+        action,
+        progress,
+        travel,
+        expense,
+        at,
+        ready,
+        final_at,
+        final_ready,
+    ]
+}
+
 fn boarding(v: &[f64]) -> Vec<f64> {
     let now = v[1];
     let mut remaining = v[2] - v[3];
@@ -167,7 +172,7 @@ fn sample_weights(weights: &[f64], total: f64, carry: f64, state: f64) -> Vec<f6
     }
     out
 }
-fn dispatch(v: &[f64]) -> Vec<f64> {
+pub(super) fn dispatch(v: &[f64]) -> Vec<f64> {
     let now = v[1];
     let ns = int(v[2]);
     let np = int(v[3]);
@@ -317,8 +322,8 @@ pub(super) fn persistent(v: &[f64], cache: &mut Option<MotionState>) -> Vec<f64>
     let state = cache.as_mut().expect("simulation state not loaded");
     assert_eq!(state.token, token);
     assert_eq!(state.blocks, nb);
-    let mut input = vec![0.0, now, spacing, nb as f64, state.rows.len() as f64];
-    input.extend_from_slice(releases);
+    let mut blocks = releases.to_vec();
+    let mut out = Vec::with_capacity(state.rows.len() * 8);
     for (i, row) in state.rows.iter_mut().enumerate() {
         let ix = if row[3] == 1.0 { row[2] } else { row[2] - 1.0 };
         let edge = if ix >= 0.0 {
@@ -340,9 +345,8 @@ pub(super) fn persistent(v: &[f64], cache: &mut Option<MotionState>) -> Vec<f64>
         } else {
             0.0
         };
-        input.extend_from_slice(row);
+        out.extend_from_slice(&move_train(now, spacing, row, &mut blocks));
     }
-    let out = motion(&input);
     for (row, result) in state.rows.iter_mut().zip(out.chunks_exact(8)) {
         match result[0] as u8 {
             1 => {
@@ -463,8 +467,8 @@ fn incremental(v: &[f64], cache: &mut Option<MotionState>) -> Vec<f64> {
     for id in &s.order {
         *counts.entry(s.delta[id].group).or_insert(0.0) += 1.0;
     }
-    let mut input = vec![0.0, now, spacing, nb as f64, s.order.len() as f64];
-    input.extend_from_slice(releases);
+    let mut blocks = releases.to_vec();
+    let mut out = Vec::with_capacity(s.order.len() * 8);
     for id in &s.order {
         let t = s.delta.get_mut(id).unwrap();
         let row = &mut t.row;
@@ -489,9 +493,8 @@ fn incremental(v: &[f64], cache: &mut Option<MotionState>) -> Vec<f64> {
         } else {
             0.0
         };
-        input.extend_from_slice(row);
+        out.extend_from_slice(&move_train(now, spacing, row, &mut blocks));
     }
-    let out = motion(&input);
     for (id, r) in s.order.iter().zip(out.chunks_exact(8)) {
         let row = &mut s.delta.get_mut(id).unwrap().row;
         match r[0] as u8 {
@@ -576,6 +579,13 @@ struct TemporalSampling {
     profiles: Vec<(usize, bool, usize)>,
 }
 fn timed_sample(v: &[f64], cache: &mut Option<Sampling>) -> Vec<f64> {
+    timed_sample_rows(v, cache, None)
+}
+pub(super) fn timed_sample_rows(
+    v: &[f64],
+    cache: &mut Option<Sampling>,
+    rows: Option<&[f64]>,
+) -> Vec<f64> {
     let token = v[1];
     let load = v[2] != 0.0;
     let n = int(v[3]);
@@ -657,7 +667,8 @@ fn timed_sample(v: &[f64], cache: &mut Option<Sampling>) -> Vec<f64> {
     let meta = c.temporal.as_ref().expect("incorrect sampling protocol");
     assert_eq!(meta.factors.len(), nf);
     assert_eq!(meta.profiles.len(), np);
-    let line_rows = &v[13..13 + nl * 4];
+    let line_rows = rows.unwrap_or(&v[13..13 + nl * 4]);
+    assert_eq!(line_rows.len(), nl * 4);
     let factors = meta
         .factors
         .iter()

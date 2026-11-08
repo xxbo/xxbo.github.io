@@ -245,12 +245,12 @@
   const event = (...args) => statistics.event(...args);
   const projectEvents = (s, rt, apply) => apply();
 
-  function step(s, rt, minutes) {
+  function step(s, rt, minutes, applyFeedback=Native.feedback) {
     const q = s.ridership;
     if (!q) return;
     ensureDay(s, rt.minute);
     sync(s, rt.minute);
-    Native.feedback(s, rt, minutes, true);
+    applyFeedback(s, rt, minutes, true);
     q.lastMinute = rt.minute;
     q.hour = q.hour.filter(b => b.minute > Math.floor(rt.minute) - 60);
     statistics.invalidate(s);

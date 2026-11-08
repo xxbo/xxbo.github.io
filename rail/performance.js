@@ -51,6 +51,22 @@
       get pending() {
         return pending;
       },
+      runBudget(elapsed, speed, budget, advance, now) {
+        pending += Math.max(0, Math.min(.12, elapsed)) * speed;
+        const start = now();
+        let ok = true,
+          steps = 0;
+        if (pending > 1e-8) {
+          const result = advance(pending, {budget, maxSteps: 100, now});
+          if (!Number.isFinite(result.remaining) || result.remaining < 0 ||
+            result.remaining > pending || !Number.isInteger(result.steps) ||
+            result.steps < 0 || result.steps > 100) throw Error('Invalid simulation batch result');
+          ok = result.running;
+          steps = result.steps;
+          pending = ok ? result.remaining : 0;
+        }
+        return {ok, steps, pending, ms: now() - start};
+      },
       run(elapsed, speed, budget, advance, now) {
         pending += Math.max(0, Math.min(.12, elapsed)) * speed;
         const start = now();

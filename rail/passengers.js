@@ -10,6 +10,7 @@
   const F = node ? require('./fleet') : root.RailFleet;
   const SIM = node ? require('./simulation-wasm') : root.RailSimulation;
   const Native = node ? require('./operations-wasm') : root.RailNativeOperations;
+  const Prepare = node ? require('./preparation-wasm') : root.RailPreparation;
   const QUEUES = node ? require('./queue-runtime') : root.RailQueueRuntime;
   const key = (id, dir, station) => `${id}|${dir}|${station}`;
 
@@ -198,7 +199,7 @@
     });
   }
 
-  function generate(rt, s, interval, carry) {
+  function generate(rt, s, interval, carry, index) {
     if (rt.demandCatalog && rt.defs.length > 45000 && rt.minute - (rt.lastDefCompact ?? -
         Infinity) >= 5) {
       compactDefinitions(rt);
@@ -206,18 +207,14 @@
       rt._demandIndex = null;
     }
     rt.demandCarry = carry;
-    if (!interval) return {
-      arrivals: [],
-      gates: false
-    };
-    const dt = interval;
-    Q.step(s, rt, dt);
+    const dt=interval;
+    let feedback=null;
+    if(interval) Q.step(s,rt,dt,(...args)=>{feedback=Native.feedbackFrame(...args);});
     const incoming = [];
     const catalog = rt.demandCatalog || rt.defs,
       minute = Math.round(rt.minute * 1e6) / 1e6;
-    const open = new Set(s.services.filter(l => B.isOpen(l, minute) && (!l.fleetManaged || l
-      .fleet > 0)).map(l => l.id));
-
+    const open = interval?new Set(s.services.filter(l => B.isOpen(l, minute) && (!l.fleetManaged || l
+      .fleet > 0)).map(l => l.id)):null;
     function arrive(j, n) {
       if (n > 0) incoming.push({
         j,
@@ -226,8 +223,14 @@
       });
     }
     const integer = rt.arrivalMode === 'integer';
-    const sampled = SIM.timedArrivals(catalog, s, minute, dt, rt.arrivalRemainder || 0, rt
-      .rngState, integer);
+    // Finish metadata calls before encoding the sampling cache token: a native recycle
+    // during dispatch metadata must never invalidate an already encoded delta frame.
+    const dispatch=SIM.dispatchFrame(rt,s,index);
+    const sampling=interval?SIM.timedFrame(catalog,s,minute,dt,rt.arrivalRemainder||0,
+      rt.rngState,integer):null;
+    const result=Prepare.run(feedback,sampling,dispatch);
+    const sampled=result.sampled;
+    if(!sampled) return {arrivals:[],gates:false,dispatch:result.dispatch};
     if (integer) {
       rt.expectedGenerated = (rt.expectedGenerated || 0) + sampled.total;
       rt.arrivalRemainder = sampled.remainder;
@@ -237,7 +240,8 @@
       .events[i + 1]);
     return {
       arrivals: incoming,
-      gates: integer
+      gates: integer,
+      dispatch:result.dispatch
     };
   }
 
@@ -287,8 +291,8 @@
       refreshFleet(rt);
       rt.fleetMinute = Math.floor(rt.minute);
     }
-    const incoming = generate(rt, s, interval, carry);
     const index = planIndex(s);
+    const incoming = generate(rt, s, interval, carry, index);
     for (const {
         l,
         dir,
@@ -296,7 +300,7 @@
         action,
         next
       }
-      of SIM.dispatch(rt, s, index)) {
+      of incoming.dispatch) {
       if (action < 0) continue;
       if (action === 1) {
         const loop = l.stops[0] === l.stops.at(-1);

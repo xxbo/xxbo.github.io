@@ -13,7 +13,7 @@
   ];
   const run = a => Core.kernel('operations_run', a);
 
-  function feedback(s, rt, minutes, step, only = null) {
+  function feedbackFrame(s, rt, minutes, step, only = null) {
     const q = s.ridership,
       ls = s.baseLines || s.services;
     const U = node ? require('./urban-growth') : root.RailUrban;
@@ -60,8 +60,16 @@
     out.push(rt.trains.length);
     for (const t of rt.trains) out.push(ids.get(t.parentLine || t.service) ?? ls.length, t
       .onboard, t.capacity);
-    const data = run(out),
-      results = new Map();
+    return {input:out,context:{s,rt,ls,ids,step,only}};
+  }
+  function feedback(s,rt,minutes,step,only=null) {
+    const frame=feedbackFrame(s,rt,minutes,step,only);
+    return projectFeedback(frame,run(frame.input));
+  }
+  function projectFeedback(frame,data) {
+    const {s,rt,ls,step,only}=frame.context,q=s.ridership;
+    const results=new Map();
+
     let at = 2;
     for (const l of ls) {
       const r = q.lines[l.id];
@@ -190,6 +198,8 @@
   }
   const api = {
     feedback,
+    feedbackFrame,
+    projectFeedback,
     projectAccounts,
     ECONOMY,
     accounts,

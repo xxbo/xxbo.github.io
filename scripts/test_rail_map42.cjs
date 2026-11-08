@@ -226,7 +226,7 @@ for (let step = 0; step < 6; step++) {
   const save = LS.parse(JSON.stringify(LS.pack(state, P.snapshot(rt))));
   assert(P.restore(save.state, next, save.runtime));
 }
-const bytes = fs.readFileSync(path.join(__dirname, '../rail/wasm/rail-core-v9.wasm'));
+const bytes = fs.readFileSync(path.join(__dirname, '../rail/wasm/rail-core-v10.wasm'));
 Router.create(bytes, {
   recycleBytes: 0
 });

@@ -44,7 +44,81 @@ struct Line {
     stops: Vec<usize>,
     v: Vec<f64>,
 }
-fn feedback(r: &mut Reader<'_>) -> Vec<f64> {
+#[derive(Default)]
+pub(super) struct CoverageCache {
+    key: Vec<f64>,
+    values: Vec<(f64, f64)>,
+    pub(super) hits: u32,
+    pub(super) builds: u32,
+}
+impl CoverageCache {
+    fn prepare(&mut self, nodes: &[(f64, f64)], facilities: &[(f64, f64, f64)], lines: &[Line]) {
+        let mut key = vec![
+            nodes.len() as f64,
+            facilities.len() as f64,
+            lines.len() as f64,
+        ];
+        for &(x, y) in nodes {
+            key.extend_from_slice(&[x, y]);
+        }
+        for &(x, y, n) in facilities {
+            key.extend_from_slice(&[x, y, n]);
+        }
+        for l in lines {
+            key.extend_from_slice(&[if l.connect { 1.0 } else { 0.0 }, l.stops.len() as f64]);
+            key.extend(l.stops.iter().map(|&s| s as f64));
+        }
+        if key == self.key {
+            self.hits = self.hits.saturating_add(1);
+            return;
+        }
+        let mut values = Vec::with_capacity(lines.len());
+        for l in lines {
+            let mut reached = vec![false; nodes.len()];
+            for &id in &l.stops {
+                reached[id] = true;
+            }
+            loop {
+                let mut changed = false;
+                for other in lines {
+                    if other.connect && other.stops.iter().any(|&id| reached[id]) {
+                        for &id in &other.stops {
+                            if !reached[id] {
+                                reached[id] = true;
+                                changed = true;
+                            }
+                        }
+                    }
+                }
+                if !changed {
+                    break;
+                }
+            }
+            let distance = |id: usize, f: &(f64, f64, f64)| {
+                hypot(nodes[id].0 - f.0, nodes[id].1 - f.1) * 0.045
+            };
+            let mut total = 0.0;
+            let mut covered = 0.0;
+            for f in facilities {
+                if l.stops.iter().any(|&id| distance(id, f) <= 3.0) {
+                    total += f.2;
+                    if reached
+                        .iter()
+                        .enumerate()
+                        .any(|(id, &yes)| yes && distance(id, f) * 1.25 <= 0.8)
+                    {
+                        covered += f.2;
+                    }
+                }
+            }
+            values.push((covered, total));
+        }
+        self.key = key;
+        self.values = values;
+        self.builds = self.builds.saturating_add(1);
+    }
+}
+fn feedback(r: &mut Reader<'_>, cache: &mut CoverageCache) -> Vec<f64> {
     let now = r.f();
     let minutes = r.f();
     let step = r.f() != 0.0;
@@ -95,6 +169,9 @@ fn feedback(r: &mut Reader<'_>) -> Vec<f64> {
         if i < loads.len() {
             loads[i].push(n / cap.max(1.0));
         }
+    }
+    if modern {
+        cache.prepare(&nodes, &facilities, &lines);
     }
     let mut out = vec![1.0, lines.len() as f64];
     let m = ((now % 1440.0) + 1440.0) % 1440.0;
@@ -159,42 +236,7 @@ fn feedback(r: &mut Reader<'_>) -> Vec<f64> {
         } else {
             45.0
         });
-        let mut reached = vec![false; nodes.len()];
-        for &id in &l.stops {
-            reached[id] = true;
-        }
-        loop {
-            let mut changed = false;
-            for other in &lines {
-                if other.connect && other.stops.iter().any(|&id| reached[id]) {
-                    for &id in &other.stops {
-                        if !reached[id] {
-                            reached[id] = true;
-                            changed = true;
-                        }
-                    }
-                }
-            }
-            if !changed {
-                break;
-            }
-        }
-        let distance =
-            |id: usize, f: &(f64, f64, f64)| hypot(nodes[id].0 - f.0, nodes[id].1 - f.1) * 0.045;
-        let mut total = 0.0;
-        let mut covered = 0.0;
-        for f in &facilities {
-            if l.stops.iter().any(|&id| distance(id, f) <= 3.0) {
-                total += f.2;
-                if reached
-                    .iter()
-                    .enumerate()
-                    .any(|(id, &yes)| yes && distance(id, f) * 1.25 <= 0.8)
-                {
-                    covered += f.2;
-                }
-            }
-        }
+        let (covered, total) = cache.values[i];
         let scores = [
             clamp(1.0 - (load - 0.55).max(0.0) / 0.6 - loss * 0.65, 0.0, 1.0),
             clamp(1.0 - (wait - 2.0).max(0.0) / 18.0, 0.0, 1.0),
@@ -447,11 +489,14 @@ fn allocation(r: &mut Reader<'_>) -> Vec<f64> {
     out
 }
 pub(super) fn run(input: &[f64]) -> Vec<f64> {
+    run_cached(input, &mut CoverageCache::default())
+}
+pub(super) fn run_cached(input: &[f64], cache: &mut CoverageCache) -> Vec<f64> {
     let mut r = Reader { a: input, p: 0 };
     assert_eq!(r.f(), 1.0);
     let op = r.n();
     let out = match op {
-        0 => feedback(&mut r),
+        0 => feedback(&mut r, cache),
         1..=3 | 6 => accounts(&mut r, op),
         4 => clock(&mut r),
         5 => allocation(&mut r),
@@ -468,13 +513,49 @@ pub extern "C" fn operations_abi() -> u32 {
 pub extern "C" fn operations_run() -> *const f64 {
     CORE.with(|c| {
         let mut c = c.borrow_mut();
-        c.output = run(&c.input);
-        c.output.as_ptr()
+        let crate::Core {
+            input,
+            output,
+            feedback_cache,
+            ..
+        } = &mut *c;
+        *output = run_cached(input, feedback_cache);
+        output.as_ptr()
     })
 }
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn coverage_cache_tracks_geometry_and_active_connections() {
+        let line = |stops| Line {
+            open: 0.0,
+            close: 1440.0,
+            active: true,
+            connect: true,
+            km: 1.0,
+            direct: 1.0,
+            fare: 1.0,
+            base: 1.0,
+            stops,
+            v: vec![0.0; 10],
+        };
+        let nodes = vec![(0.0, 0.0), (10.0, 0.0), (40.0, 0.0)];
+        let mut lines = vec![line(vec![0, 1]), line(vec![1, 2])];
+        let mut cache = CoverageCache::default();
+        cache.prepare(&nodes, &[(40.0, 0.0, 100.0)], &lines);
+        assert_eq!(cache.values[0], (100.0, 100.0));
+        cache.prepare(&nodes, &[(40.0, 0.0, 100.0)], &lines);
+        assert_eq!((cache.builds, cache.hits), (1, 1));
+        lines[1].connect = false;
+        cache.prepare(&nodes, &[(40.0, 0.0, 100.0)], &lines);
+        assert_eq!(cache.values[0], (0.0, 100.0));
+        cache.prepare(&nodes, &[(40.0, 0.0, 200.0)], &lines);
+        assert_eq!(cache.values[0], (0.0, 200.0));
+        cache.prepare(&nodes, &[(100.0, 0.0, 200.0)], &lines);
+        assert_eq!(cache.values[0], (0.0, 0.0));
+        assert_eq!(cache.builds, 4);
+    }
     #[test]
     fn clock_preserves_fractional_residual() {
         let out = run(&[1.0, 4.0, 420.0, 0.25, 0.8]);
@@ -494,4 +575,13 @@ mod tests {
         assert_eq!(l[0][1], 100.0);
         assert!(p.is_empty());
     }
+}
+
+#[no_mangle]
+pub extern "C" fn feedback_cache_hits() -> u32 {
+    CORE.with(|c| c.borrow().feedback_cache.hits)
+}
+#[no_mangle]
+pub extern "C" fn feedback_cache_builds() -> u32 {
+    CORE.with(|c| c.borrow().feedback_cache.builds)
 }

@@ -169,7 +169,7 @@ assert(forecast.riders > 0);
 assert.equal(forecast.diagnostics.memory.routing, 'rust-wasm-abi1');
 assert(forecast.diagnostics.memory.wasm.searches > 0);
 // Instance recycling cannot invalidate caller-owned compact output. Invalid inputs never produce empty forecasts.
-const bytes = fs.readFileSync(path.join(__dirname, '../rail/wasm/rail-core-v9.wasm'));
+const bytes = fs.readFileSync(path.join(__dirname, '../rail/wasm/rail-core-v10.wasm'));
 Router.create(bytes, {
   recycleBytes: 0
 });

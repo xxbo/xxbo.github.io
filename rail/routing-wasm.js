@@ -19,6 +19,7 @@
     activeQueueToken = 0,
     activeEngineToken = 0,
     engineSteps = 0,
+    preparationCalls=0,
     activeSamplingToken = 0,
     queueSteps = 0,
     statisticsCalls = 0,
@@ -35,7 +36,7 @@
     peakMemoryBytes = 0;
   const recycleLimit = () => recycleBytes === 0 ? 0 : Math.max(recycleBytes,
     simulationRecycleBytes);
-  const asset = node ? null : new URL('wasm/rail-core-v9.wasm?v=49',
+  const asset = node ? null : new URL('wasm/rail-core-v10.wasm?v=50',
     root.document?.currentScript?.src || root.location.href).href;
 
   function install(module) {
@@ -48,7 +49,7 @@
     });
     if (next.exports.routing_abi() !== ABI || next.exports.demand_abi?.() !== 1 || next.exports
       .world_abi?.() !== 1 || next.exports.simulation_abi?.() !== 1 || next.exports.queue_abi?.
-      () !== 1 || next.exports.statistics_abi?.() !== 1 || next.exports.operations_abi?.() !== 1 || next.exports.engine_abi?.() !== 1)
+      () !== 1 || next.exports.statistics_abi?.() !== 1 || next.exports.operations_abi?.() !== 1 || next.exports.engine_abi?.() !== 1 || next.exports.engine_prepare_abi?.() !== 1)
       throw Error('寻路WASM接口版本不匹配');
     compiled = module;
     instance = next;
@@ -267,7 +268,7 @@
   function kernel(name, values, read = null, context = null) {
     if (!['demand_ipf', 'demand_distribution', 'demand_mode', 'demand_strategy',
         'demand_capacity', 'world_run', 'world_policy', 'simulation_run', 'simulation_step',
-        'statistics_run', 'operations_run', 'temporal_run', 'engine_step'
+        'statistics_run', 'operations_run', 'temporal_run', 'engine_step', 'engine_prepare'
       ].includes(name)) throw Error('未知需求核心操作');
     try {
       const wasm = exports();
@@ -292,6 +293,12 @@
             Math.min(192 * 1024 * 1024, Math.ceil(wasm.memory.buffer.byteLength * 1.5 / 65536) *
               65536));
         }
+      } else if(name==='engine_prepare') {
+        preparationCalls++;
+        const nf=values[1],ns=values[2],nd=values[3];
+        if(nf) operationsCalls++;
+        if(ns) {simulationCalls++;timedArrivalCalls++;activeSamplingToken=values[5+values[4]+nf+1];}
+        if(nd) simulationCalls++;
       } else if (name === 'simulation_run') {
         simulationCalls++;
         if (values[0] === 4 || values[0] === 6) activeSimulationToken = values[1];
@@ -302,7 +309,7 @@
       else if (name === 'temporal_run') temporalCalls++;
       else demandCalls++;
       peakMemoryBytes = Math.max(peakMemoryBytes, wasm.memory.buffer.byteLength);
-      if (name === 'simulation_run' && activeQueueToken && recycleBytes >= 64 * 1024 * 1024) {
+      if ((name === 'simulation_run'||name==='engine_prepare') && activeQueueToken && recycleBytes >= 64 * 1024 * 1024) {
         simulationRecycleBytes = Math.max(simulationRecycleBytes,
           Math.min(192 * 1024 * 1024, Math.ceil(wasm.memory.buffer.byteLength * 1.5 / 65536) *
             65536));
@@ -405,6 +412,10 @@
       statisticsCalls,
       statisticsBatches,
       statisticsAbi: 1,
+      preparationCalls,
+      preparationAbi:1,
+      coverageCacheHits:instance?.exports.feedback_cache_hits?.()||0,
+      coverageCacheBuilds:instance?.exports.feedback_cache_builds?.()||0,
       engineAbi: 1,
       engineSteps,
       operationsAbi: 1,
@@ -435,7 +446,7 @@
     const fs = require('node:fs'),
       path = require('node:path');
     install(new WebAssembly.Module(fs.readFileSync(path.join(__dirname,
-      'wasm/rail-core-v9.wasm'))));
+      'wasm/rail-core-v10.wasm'))));
     module.exports = api;
   } else {
     root.RailRouting = api;

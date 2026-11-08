@@ -57,7 +57,7 @@ function worker(file) {
       fetch: async () => ({
         ok: true,
         arrayBuffer: async () => {
-          const b = fs.readFileSync(path.join(__dirname, '../rail/wasm/rail-core-v9.wasm'));
+          const b = fs.readFileSync(path.join(__dirname, '../rail/wasm/rail-core-v10.wasm'));
           return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
         }
       }),

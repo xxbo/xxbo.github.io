@@ -92,6 +92,7 @@ struct Core {
     queue_state: Option<queues::Queues>,
     sampling_state: Option<simulation::Sampling>,
     settlement_state: Option<engine::Settlement>,
+    feedback_cache: operations::CoverageCache,
 }
 thread_local! { static CORE: RefCell<Core> = RefCell::new(Core::default()); }
 
