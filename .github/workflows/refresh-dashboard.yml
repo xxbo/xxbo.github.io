@@ -6,7 +6,15 @@ on:
     - cron: '5,15 7 * * 1-5'
   push:
     branches: [main]
-    paths: ['rail/**', 'rust/**', 'index.html', 'style.css', 'feed.css', 'feed.js', 'home-feed.js', 'intraday.js', 'news-media.js', 'app.js', 'live-quotes.js', 'home.js', 'brief.js', 'topics.js', 'topic-pages.js', 'calendar.js', 'calendar-pages.js', 'health-pages.js', 'events.js', 'event-pages.js', 'market-context.js', 'context-pages.js', 'reading.js', 'reading-pages.js', 'ui.js', 'desk.js', 'desk-pages.js', 'global.js', 'global-pages.js', 'pages.js', 'reader.js', 'split-reader.js', 'technical.js', 'analysis-pages.js', 'scripts/**', '.github/workflows/refresh-dashboard.yml']
+    paths:
+      - '*.html'
+      - '*.css'
+      - '*.js'
+      - 'scripts/**'
+      - '!scripts/*rail*'
+      - '!scripts/fixtures/rail-*'
+      - '.github/workflows/refresh-dashboard.yml'
+      - '.github/workflows/publish-site.yml'
 permissions:
   contents: write
 concurrency:
@@ -14,6 +22,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   refresh:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -24,33 +33,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Verify Rust core source and WASM artifact
+      - name: Verify dashboard and publication contracts
         run: |
-          rustup toolchain install 1.99.1 --profile minimal --target wasm32-unknown-unknown
-          node scripts/build_rail_wasm.cjs --check
-      - name: Verify indicator calculations
-        run: |
-          node scripts/run_rail_tests.cjs
-          node scripts/test_technical.cjs
-          node scripts/test_market_context.cjs
-          node scripts/test_reading.cjs
-          node scripts/test_brief.cjs
-          node scripts/test_topics.cjs
-          node scripts/test_event_tracking.cjs
-          node scripts/test_feed.cjs
-          node scripts/test_intraday.cjs
-          node scripts/test_live_quotes.cjs
-          node scripts/test_calendar.cjs
-          node scripts/test_dashboard.cjs
-          node scripts/test_themes.cjs
-          node scripts/test_desk.cjs
-          node scripts/test_global.cjs
+          node scripts/run_dashboard_tests.cjs
+          node scripts/test_site_publication.cjs
           python -m unittest discover -s scripts -p "test_*.py"
       - name: Collect public data
         run: |
           node scripts/archive_snapshot.cjs
           python scripts/update_data.py
           node scripts/archive_snapshot.cjs
+      - name: Stage validated dashboard snapshot
+        run: node scripts/site_artifacts.cjs dashboard . _dashboard
       - name: Commit snapshot
         run: |
           git config user.name 'github-actions[bot]'
@@ -58,24 +52,12 @@ jobs:
           git add data/dashboard.json
           if ! git diff --cached --quiet; then
             git commit -m 'Refresh dashboard data'
+            git pull --rebase origin main
             git push
           fi
-      # A GITHUB_TOKEN commit does not trigger the branch Pages build. Deploy here.
-      - name: Stage public files
-        run: |
-          mkdir -p _site/data
-          cp intraday.js news-media.js split-reader.js feed.js home-feed.js feed.css live-quotes.js global.js global-pages.js desk.js desk-pages.js ui.js reading.js reading-pages.js market-context.js context-pages.js events.js event-pages.js index.html style.css brief.js topics.js topic-pages.js calendar.js calendar-pages.js health-pages.js home.js app.js pages.js reader.js technical.js analysis-pages.js _site/
-          cp data/dashboard.json _site/data/
-          cp -R rail _site/
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
-          path: _site
-      - id: deployment
-        uses: actions/deploy-pages@v4
-    permissions:
-      contents: write
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+          name: dashboard-public
+          path: _dashboard
+          retention-days: 90
+          if-no-files-found: error
