@@ -165,7 +165,7 @@ assert.equal(Core.status().statisticsCalls, editsBefore + 1);
 exact(P.snapshot(removed.ra), OldP.snapshot(removed.rb));
 exact(removed.a, removed.b);
 check(removed, 5);
-const bytes = fs.readFileSync(path.join(__dirname, '../rail/wasm/rail-core-v15.wasm'));
+const bytes = fs.readFileSync(path.join(__dirname, '../rail/wasm/rail-core-v16.wasm'));
 Core.create(bytes, {
   recycleBytes: 0
 });

@@ -615,6 +615,7 @@
     const c=states.get(rt),job=c?.lastJob;
     if(!job?.settlement||c.plan!==s||Core.queueToken()!==c.token||s.routeModel!==9||!s.ridership||
       rt.trains.some(t=>t.retiringRun)||rt.defs.length>45000)return null;
+    if(!Q.nativeStatisticsCurrent(c,s))return null;
     if(!SIM.canCalendar(rt.demandCatalog||rt.defs))return null;
     const fin=Engine.continuation(c,rt,job.settlement,c.lastFinance);
     if(!fin||minutes<.1)return null;
@@ -647,7 +648,7 @@
         }
       }else at+=nv;
       const reply=result.subarray(at,at+nr);at+=nr;
-      if(interval)Q.step(s,rt,interval,()=>{});
+      if(interval)Q.step(s,rt,interval,()=>{},'projected');
       const frames={feedback:interval?c.calendar.feedback:null,dispatch:reply[8]&&reply[11+reply[3]+reply[4]*2+reply[5]*3+3]?c.calendar.dispatch:null};
       job.motion.templates=c.calendar.motion.templates;
       job.gates=rt.arrivalMode==='integer'&&!!interval;
@@ -662,6 +663,7 @@
     s=rt.plan||s;
     const c=states.get(rt),job=c?.lastJob;
     if(!job?.settlement||c.plan!==s||Core.queueToken()!==c.token) return null;
+    if(!Q.nativeStatisticsCurrent(c,s))return null;
     let barrier=Math.floor(rt.minute)+1;
     for(const d of Object.values(rt.departures))barrier=Math.min(barrier,d.next-1e-8);
     const world=job.settlement.world;

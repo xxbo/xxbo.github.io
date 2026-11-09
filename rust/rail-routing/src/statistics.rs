@@ -118,6 +118,7 @@ pub(super) struct Statistics {
     hour_dirty: bool,
     hour_append: bool,
     hour_remove: Vec<usize>,
+    window_commands: Vec<f64>,
     lines: Map<usize, Row<LINE_FIELDS>>,
     feedback: Map<usize, Row<5>>,
     stations: Map<usize, Row<3>>,
@@ -178,6 +179,7 @@ impl Statistics {
             hour_dirty: false,
             hour_append: false,
             hour_remove: vec![],
+            window_commands: vec![],
             lines,
             feedback,
             stations,
@@ -193,7 +195,38 @@ impl Statistics {
             .map_or([0.0; 4], |r| r.values[..4].try_into().unwrap())
     }
     pub(super) fn prune_hour(&mut self, now: f64) {
+        let expired = self
+            .hour
+            .iter()
+            .enumerate()
+            .filter_map(|(i, &(minute, _))| {
+                if minute > now.floor() - 60.0 {
+                    None
+                } else {
+                    Some(i)
+                }
+            })
+            .collect::<Vec<_>>();
+        if !expired.is_empty() {
+            for i in expired {
+                cmd(&mut self.window_commands, 41.0, &[i as f64]);
+            }
+            cmd(&mut self.window_commands, 42.0, &[]);
+        }
         self.hour.retain(|&(minute, _)| minute > now.floor() - 60.0);
+    }
+    pub(super) fn window_frame(&mut self, r: &mut Read) {
+        let minute = r.f();
+        let slot = r.f();
+        let flow = [r.f(), r.f(), r.f()];
+        if slot != self.slot {
+            assert_eq!(self.flow_dirty, 0, "flush statistics before changing slots");
+            self.slot = slot;
+            self.flow = flow;
+        }
+        if !minute.is_nan() {
+            self.prune_hour(minute);
+        }
     }
     // A forward calendar step enters a fresh, empty slot. The preceding slot's
     // assignments have already been emitted by finish(); keep all day totals,
@@ -201,13 +234,18 @@ impl Statistics {
     pub(super) fn can_advance_slot(&self, now: f64) -> bool {
         let start = 420.0 + (self.day - 1.0) * 1440.0;
         let slot = ((now - start) / 15.0).floor();
-        slot >= 0.0 && slot < 96.0 && slot >= self.slot
+        slot >= 0.0
+            && slot < 96.0
+            && slot >= self.slot
             && (slot == self.slot || self.flow_dirty == 0)
     }
     pub(super) fn advance_slot(&mut self, now: f64) {
         let start = 420.0 + (self.day - 1.0) * 1440.0;
         let slot = ((now - start) / 15.0).floor();
-        assert!(slot >= 0.0 && slot < 96.0, "day rollover requires host archive");
+        assert!(
+            slot >= 0.0 && slot < 96.0,
+            "day rollover requires host archive"
+        );
         if slot != self.slot {
             assert!(slot > self.slot, "calendar must advance monotonically");
             assert_eq!(self.flow_dirty, 0, "flush the previous slot first");
@@ -421,7 +459,7 @@ impl Statistics {
         self.record(1, or_zero(self.records[1]) + pkm);
     }
     pub(super) fn finish(&mut self) -> Vec<f64> {
-        let mut out = vec![];
+        let mut out = std::mem::take(&mut self.window_commands);
         if self.touched {
             cmd(&mut out, 40.0, &[]);
         }
@@ -597,6 +635,36 @@ mod tests {
         input.extend([3.0; 3]);
         input.extend([0.0; 4]); // hour, lines, feedback, stations
         Statistics::read(&mut Read { v: &input, at: 0 }, 420.0)
+    }
+    #[test]
+    fn minute_pruning_projects_ordered_indices_before_new_completions() {
+        let mut s = sample();
+        s.hour = vec![(419.0, 2.0), (420.0, 3.0), (480.0, 4.0), (400.0, 5.0)];
+        s.prune_hour(480.0);
+        assert_eq!(s.hour, vec![(480.0, 4.0)]);
+        s.now = 480.0;
+        s.event(5, &[], 0.0, &[], 2.0, 0.0, None, None);
+        let out = s.finish();
+        let rows = out.chunks_exact(8).collect::<Vec<_>>();
+        assert_eq!(&rows[0][..2], &[41.0, 0.0]);
+        assert_eq!(&rows[1][..2], &[41.0, 1.0]);
+        assert_eq!(&rows[2][..2], &[41.0, 3.0]);
+        assert_eq!(rows[3][0], 42.0);
+        assert_eq!(s.hour, vec![(480.0, 6.0)]);
+        assert!(rows.iter().any(|r| r[..4] == [38.0, 0.0, 480.0, 6.0]));
+        assert!(s.finish().is_empty());
+    }
+    #[test]
+    fn window_delta_keeps_loaded_slot_values_and_prunes_without_completions() {
+        let mut s = sample();
+        s.hour = vec![(420.0, 7.0), (421.0, 3.0)];
+        let v = [480.0, 4.0, 9.0, 8.0, 7.0];
+        s.window_frame(&mut Read { v: &v, at: 0 });
+        assert_eq!(s.slot, 4.0);
+        assert_eq!(s.flow, [9.0, 8.0, 7.0]);
+        assert_eq!(s.hour, vec![(421.0, 3.0)]);
+        assert_eq!(s.network, [7.0; 7]);
+        assert_eq!(s.finish().len(), 16);
     }
     #[test]
     fn slot_rollover_preserves_totals_and_resets_only_flow() {

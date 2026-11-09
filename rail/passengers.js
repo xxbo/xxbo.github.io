@@ -209,7 +209,7 @@
     rt.demandCarry = carry;
     const dt=interval;
     let feedback=null;
-    if(interval) Q.step(s,rt,dt,(...args)=>{feedback=Native.feedbackFrame(...args);});
+    if(interval) Q.step(s,rt,dt,(...args)=>{feedback=Native.feedbackFrame(...args);},true);
     const minute=Math.round(rt.minute*1e6)/1e6;
     const dispatch=SIM.dispatchFrame(rt,s,index);
     return {feedback,dispatch,interval,minute,sampling:!!interval};
