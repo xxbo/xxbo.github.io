@@ -279,7 +279,7 @@ s.ridership = {
 };
 exact(SIM.timedArrivals(catalog, s, 1020, 1, .2, 99, true), OldSIM.arrivals(catalog, j => OldQ
   .factor(s, j), j => OldC.profile(j.purpose, j.back, 1020, j.externalKind), .2, 99));
-const bytes = fs.readFileSync(path.join(__dirname, '../rail/wasm/rail-core-v13.wasm'));
+const bytes = fs.readFileSync(path.join(__dirname, '../rail/wasm/rail-core-v15.wasm'));
 Core.create(bytes, {
   recycleBytes: 64 * 1024 * 1024
 });

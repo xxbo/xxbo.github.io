@@ -6,6 +6,7 @@
     X = node ? require('./service-plan') : root.RailServicePlan;
   const BAL = node ? require('./game-balance') : root.RailBalance;
   const FLOW = node ? require('./flow-history') : root.RailFlowHistory;
+  const History = node ? require('./history-wasm') : root.RailHistory;
   const Statistics = node ? require('./statistics-wasm') : root.RailStatistics;
   const Native = node ? require('./operations-wasm') : root.RailNativeOperations;
   const statistics = Statistics.bind({
@@ -199,20 +200,12 @@
     if (!q) return null;
     const d = day(minute);
     if (q.current.number !== d) {
-      const boundary = ORIGIN + (d - 1) * DAY,
-        continuous = q.current.flow && q.current.number === d - 1 && q.current.flow.through >=
-        boundary - 1;
-      if (q.current.flow && q.current.number === d - 1) FLOW.touch(q.current, boundary);
-      q.history.push({
-        ...q.current,
-        maturity: Object.fromEntries(Object.entries(q.lines).map(([id, l]) => [id, l
-          .awareness * l
-          .trust
-        ]))
-      });
-      q.history = q.history.slice(-30);
-      q.current = emptyDay(d);
-      if (continuous) FLOW.touch(q.current, boundary);
+      const plan = History.archive(q, minute);
+      if (plan.touchPrevious) FLOW.touch(q.current, plan.boundary);
+      q.history.push({...q.current, maturity: plan.maturity});
+      q.history = q.history.slice(plan.drop);
+      q.current = emptyDay(plan.number);
+      if (plan.continuous) FLOW.touch(q.current, plan.boundary);
     }
     FLOW.touch(q.current, minute);
     return q.current;
@@ -345,21 +338,11 @@
       [2e8, '千万票款'],
       [2e9, '亿元票款']
     ]);
-    return list.map(a => ({
-      ...a,
-      displayTarget: a.category === '收入' ? a.target * .05 : a.target,
-      displayValue: a.category === '收入' ? a.value * .05 : a.value,
-      unlocked: a.value + 1e-7 >= a.target,
-      progress: Math.min(1, (a.value || 0) / a.target)
-    }));
+    return History.awards(list);
   }
 
   function mergeRecords(a = {}, b = {}) {
-    return Object.fromEntries(RECORD_FIELDS.filter((k, i) => i < 3 || Number.isFinite(a[k]) ||
-      Number
-      .isFinite(b[k])).map(k => [k, Math.max(Number.isFinite(a[k]) ? a[k] : 0, Number
-      .isFinite(b[k]) ?
-      b[k] : 0)]));
+    return History.merge(a, b, RECORD_FIELDS);
   }
 
   const travel = (...args) => statistics.travel(...args);

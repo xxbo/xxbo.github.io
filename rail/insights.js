@@ -5,17 +5,8 @@
     Q = node ? require('./ridership') : root.RailRidership,
     BAL = node ? require('./game-balance') : root.RailBalance;
 
-  function lengths(s) {
-    const tracks = new Map(s.tracks.map(t => [t.id, t.km])),
-      used = new Set(s.services.flatMap(l => l.trackIds)),
-      byLine = Object.fromEntries(s.services.map(l => [l.id, l.trackIds.reduce((n, id) => n + (tracks.get(
-        id) || 0), 0)]));
-    return {
-      byLine,
-      networkKm: [...used].reduce((n, id) => n + (tracks.get(id) || 0), 0),
-      longestKm: Math.max(0, ...Object.values(byLine))
-    };
-  }
+  const History = node ? require('./history-wasm') : root.RailHistory;
+  const lengths = s => History.lengths(s);
 
   function records(s) {
     const km = lengths(s);

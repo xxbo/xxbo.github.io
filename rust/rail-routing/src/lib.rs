@@ -4,6 +4,7 @@ mod calendar;
 mod cycle;
 mod demand;
 mod engine;
+mod history;
 mod numbers;
 mod operations;
 mod projection;

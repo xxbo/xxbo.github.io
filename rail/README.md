@@ -90,3 +90,5 @@ GitHub Pages 上的东京圈铁路经营实验。静态网页，无自己的后�
 - [MAP53：P0 原生服务日历、运行明细与按需快照](rust-wasm-map53.md)
 
 - [MAP54：P1 原生分时槽切换与空需求修复](rust-wasm-map54.md)
+
+- [MAP55：P1 日归档、分时与纪录规则](rust-wasm-map55.md)
