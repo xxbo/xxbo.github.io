@@ -45,7 +45,7 @@
     let at=0;
     return {f(){if(at>=data.length) throw Error('批量预测结果不完整');return data[at++];},
       take(n){if(at+n>data.length)throw Error('批量预测结果尺寸无效');const v=data.subarray(at,at+n);at+=n;return v;},
-      done(){if(at!==data.length)throw Error('批量预测结果含多余数据');}};
+      position(){return at;},done(){if(at!==data.length)throw Error('批量预测结果含多余数据');}};
   }
   function fields(r,keys){return Object.fromEntries(keys.map(k=>[k,r.f()]));}
   function readCatchment(r,city) {
@@ -119,23 +119,25 @@
     for(const [key,ids] of [['trackFlow',tracks],['trackLoad',tracks],['serviceFlow',graph.lines]]){
       const n=r.f();for(let i=0;i<n;i++){const id=r.f();base[key][ids[id]]=r.f();}
     }
-    const nf=r.f();
+    const nf=r.f(),flowStart=r.position();let railDemand=0;
     for(let i=0;i<nf;i++){
       const [from,to,purpose,back,trips,demandTrips,population,walk,rail,road,hub,kind,routeOptions]=r.take(13);
       const [service,dir,lastLine,fareKm,board,cost,minutes,fare,km,transfers,ne]=r.take(11);
       const edges=Array.from(r.take(ne),ix=>graph.edges[ix]),nfare=r.f(),fares={};
       for(let j=0;j<nfare;j++){const id=r.f();fares[graph.lines[id]]=r.f();}
+      railDemand+=demandTrips;if(context.compact)continue;
       const path={service:graph.services[service],dir,lastLine:graph.lines[lastLine],fareKm,board,cost,minutes,fare,km,edges,transfers,fares};
       base.flows.push({from,to,purpose:PURPOSES[purpose],back:!!back,trips,demandTrips,path,population,walk,rail,road,hub:hub<0?null:hubs[hub].id,externalKind:kind<0?null:KINDS[kind],...(effective?{routeOptions}:{})});
     }
+    if(context.compact)(node?require('./forecast-catalog'):root.RailForecastCatalog).attach(base,{count:nf,flowData:data.slice(flowStart,r.position()),graph:{services:graph.services,lines:graph.lines,edges:graph.edges},hubs:hubs.map(h=>h.id),effective});
     if(populated){
       const routeTrees=readStats(r),strategies=readStats(r);
-      Object.assign(base.diagnostics,{ipfError,ipfIterations,connectedDemand,railDemand:base.flows.reduce((v,f)=>v+f.demandTrips,0),zones,eligiblePairs,
+      Object.assign(base.diagnostics,{ipfError,ipfIterations,connectedDemand,railDemand,zones,eligiblePairs,
         calculationMs:Date.now()-started,accessSampling:16,memory:{routeTrees,strategies,routing:'rust-wasm-abi1',demand:'rust-wasm-forecast-abi1',wasm:Core.status()}});
     }
     r.done();return base;
   }
-  function evaluate(state,city){const started=Date.now(),adj=X.network(state),e=encode(state,city,adj);return Core.forecastKernel(state,adj,e.values,readForecast,{...e,started});}
+  function evaluate(state,city,options={}){const started=Date.now(),adj=X.network(state),e=encode(state,city,adj);return Core.forecastKernel(state,adj,e.values,readForecast,{...e,started,compact:!!options.compact});}
   const api={assign,local,choices,distribution,evaluate};
   if(node)module.exports=api;else root.RailDemandWorld=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

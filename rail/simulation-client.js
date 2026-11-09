@@ -11,7 +11,7 @@
     function start(){
       if(worker)return;
       if(node){const {Worker}=require('node:worker_threads');worker=new Worker(require('node:path').join(__dirname,'simulation-worker.js'));}
-      else worker=new Worker(new URL('simulation-worker.js?v=57',root.location.href));
+      else worker=new Worker(new URL('simulation-worker.js?v=59',root.location.href));
       if(options.retainRuntime)Core.recycleSimulation();
       const receive=data=>{
         if(!active||data.id!==active.id)return;
@@ -33,7 +33,7 @@
         if(request.name==='engine_cycle'&&request.input[0]===2&&request.input[25]) {
           const v=request.input;v[25]=0;let at=30+v[9]+v[7]*3;
           for(let i=0;i<v[8];i++)at+=5+v[at+4];
-          at+=v[12]+v[13]+v[10]+v[11];v[at]=2;
+          at+=v[12]+v[13]+v[10]+v[11];v[at]=v[at]===5?4:2;
         }
       }}
       if(local) {

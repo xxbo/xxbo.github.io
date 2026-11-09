@@ -14,6 +14,11 @@
   const QUEUES = node ? require('./queue-runtime') : root.RailQueueRuntime;
   const key = (id, dir, station) => `${id}|${dir}|${station}`;
 
+  const TX=node?require('./transactions-wasm'):root.RailTransactions;
+  const Routing=node?require('./routing-wasm'):root.RailRouting;
+  const migrationFields=['minute','nextRouteRevision','routeArchives','retiredTracks','trains','defs','queues','waitSince','outside','outsideSince','transfers','stationLimits','departures','cancelled','rejected','stationOccupancy','fleetMinute'];
+  const migrationState=rt=>Object.fromEntries(migrationFields.filter(k=>Object.hasOwn(rt,k)).map(k=>[k,rt[k]]));
+  function adoptMigration(rt,result){if(result.definitionOrder){result.defs=result.definitionOrder.map((id,index)=>({...rt.defs[id],id:index,daily:0}));delete result.definitionOrder;delete result.definitionCount;}const trains=new Map(rt.trains.map(t=>[t.id,t]));result.trains=result.trains.map(t=>{const old=trains.get(t.id);return old?Object.assign(old,t):t;});Object.assign(rt,result);}
   function definitions(s, m) {
     s = X.expand(s);
     return m.flows.map((f, id) => {
@@ -76,9 +81,10 @@
   }
 
   function validateCatalog(fresh) {
-    if (!Array.isArray(fresh) || fresh.some(j => !Number.isFinite(j.daily) || j.daily < 0 || !
+    const Compact=node?require('./forecast-catalog'):root.RailForecastCatalog;
+    if (!Array.isArray(fresh) || (Compact.meta(fresh)?!Compact.totals(fresh).valid:fresh.some(j => !Number.isFinite(j.daily) || j.daily < 0 || !
         Number
-        .isFinite(j.fare) || j.fare < 0 || !j.legs?.length)) throw Error('客流预测包含无效出行，已保留上次需求。');
+        .isFinite(j.fare) || j.fare < 0 || !j.legs?.length))) throw Error('客流预测包含无效出行，已保留上次需求。');
     return fresh;
   }
 
@@ -95,10 +101,11 @@
       configurable: true,
       enumerable: false
     });
+    const Compact=node?require('./forecast-catalog'):root.RailForecastCatalog,totals=Compact.meta(fresh)?Compact.totals(fresh):null;
     rt.demandStatus = {
       profiles: fresh.length,
-      daily: fresh.reduce((v, j) => v + j.daily, 0),
-      activeProfiles: fresh.reduce((n, j) => n + (j.daily > 0 ? 1 : 0), 0),
+      daily: totals?.daily ?? fresh.reduce((v, j) => v + j.daily, 0),
+      activeProfiles: totals?.activeProfiles ?? fresh.reduce((n, j) => n + (j.daily > 0 ? 1 : 0), 0),
       updatedAt: rt.minute,
       storage: 'lazy'
     };
@@ -599,7 +606,7 @@
 
   function reroute(rt, j, from) {
     if (from === j.to) return null;
-    if (!rt._routes) Object.defineProperty(rt, '_routes', {
+    if (!(rt._routes instanceof Map)) Object.defineProperty(rt, '_routes', {
       value: new Map(),
       writable: true,
       configurable: true
@@ -607,211 +614,45 @@
     const cacheKey = from + '|' + j.to + '|' + j.purpose + '|' + j.fare;
     let cached = rt._routes.get(cacheKey);
     if (cached !== undefined) return cached;
-    const pathKey = 'paths|' + from + '|' + j.purpose;
-    let paths = rt._routes.get(pathKey);
-    if (!paths) {
-      paths = R.paths(rt.plan, R.network(rt.plan), from, 1 / X.VOT[j.purpose || 'work']);
-      rt._routes.set(pathKey, paths);
-    }
-    const path = paths[j.to];
-    if (!path?.edges?.length) {
-      rt._routes.set(cacheKey, null);
-      return null;
-    }
-    const next = definitions(rt.plan, {
-      flows: [{
-        from,
-        to: j.to,
-        purpose: j.purpose,
-        back: j.back,
-        hub: j.hub,
-        externalKind: j.externalKind,
-        demandTrips: 0,
-        path
-      }]
-    })[0];
-    next.id = rt.defs.length;
-    next.fare = j.fare;
-    rt.defs.push(next);
-    rt._routes.set(cacheKey, next);
-    return next;
+    const graph=Routing.graphFrame(rt.plan,R.network(rt.plan)),result=TX.run(22,{graph,journey:j,from,id:rt.defs.length}),next=result.journey;
+    for(const [origin,purpose,data]of result.trees)rt._routes.set('paths|'+origin+'|'+purpose,Routing.pathsFromFrame(data,graph));
+    if(next)rt.defs.push(next);rt._routes.set(cacheKey,next);return next;
   }
 
   function compactDefinitions(rt) {
-    if(!QUEUES.canSnapshot(rt))throw Error('出行整理前需读取原生快照');
-    QUEUES.invalidate(rt);
-    const ids = new Set(),
-      add = token => ids.add(+token.split(':')[0]);
-    for (const q of Object.values(rt.queues)) Object.keys(q).forEach(add);
-    for (const q of Object.values(rt.outside)) Object.keys(q).forEach(add);
-    for (const t of rt.trains) Object.keys(t.passengers).forEach(add);
-    for (const x of rt.transfers) ids.add(x.journey);
-    const mapping = new Map(),
-      defs = [];
-    for (const j of rt.defs)
-      if (ids.has(j.id)) {
-        mapping.set(j.id, defs.length);
-        defs.push({
-          ...j,
-          id: defs.length,
-          daily: 0
-        });
-      } const token = t => {
-        const parts = t.split(':');
-        parts[0] = mapping.get(+parts[0]);
-        return parts.join(':');
-      },
-      remap = q => Object.fromEntries(Object.entries(q).map(([t, n]) => [token(t), n]));
-    for (const k of Object.keys(rt.queues)) rt.queues[k] = remap(rt.queues[k]);
-    for (const k of Object.keys(rt.outside)) rt.outside[k] = remap(rt.outside[k]);
-    for (const t of rt.trains) t.passengers = remap(t.passengers);
-    for (const x of rt.transfers) x.journey = mapping.get(x.journey);
-    for (const field of ['waitSince', 'outsideSince']) rt[field] = Object.fromEntries(Object
-      .entries(rt[
-        field]).filter(([k]) => mapping.has(+k.split('#')[1]?.split(':')[0])).map(([k, v]) => {
-        const [key, t] = k.split('#');
-        return [key + '#' + token(t), v];
-      }));
-    rt.defs = defs;
-    rt._routes = null;
+    if(!QUEUES.canSnapshot(rt))throw Error('出行整理前需读取原生快照');QUEUES.invalidate(rt);
+    if(Routing.status().memoryBytes>64*1024*1024)Routing.recycleSimulation();
+    const input=[1,rt.defs.length],add=t=>input.push(+t.split(':')[0]);
+    for(const q of Object.values(rt.queues))Object.keys(q).forEach(add);for(const q of Object.values(rt.outside))Object.keys(q).forEach(add);
+    for(const t of rt.trains)Object.keys(t.passengers).forEach(add);for(const x of rt.transfers)input.push(x.journey);
+    const order=Routing.kernel('compact_run',Float64Array.from(input)),mapping=new Map(Array.from(order,(old,id)=>[old,id])),defs=Array.from(order,(old,id)=>({...rt.defs[old],id,daily:0}));
+    const token=t=>{const parts=t.split(':');parts[0]=mapping.get(+parts[0]);return parts.join(':');},remap=q=>Object.fromEntries(Object.entries(q).map(([t,n])=>[token(t),n]));
+    for(const k of Object.keys(rt.queues))rt.queues[k]=remap(rt.queues[k]);for(const k of Object.keys(rt.outside))rt.outside[k]=remap(rt.outside[k]);
+    for(const t of rt.trains)t.passengers=remap(t.passengers);for(const x of rt.transfers)x.journey=mapping.get(x.journey);
+    for(const field of ['waitSince','outsideSince'])rt[field]=Object.fromEntries(Object.entries(rt[field]).filter(([k])=>mapping.has(+k.split('#')[1]?.split(':')[0])).map(([k,v])=>{const [key,t]=k.split('#');return [key+'#'+token(t),v];}));
+    rt.defs=defs;rt._routes=null;
   }
 
   function reconcile(rt, s, m = null) {
-    if(!QUEUES.canSnapshot(rt))throw Error('线网变更前需等待 materializeAsync');
-    QUEUES.invalidate(rt);
-    const prediction = m ? validateCatalog(m.preparedDefinitions || definitions(s, m)) : null,
-      fresh = prediction === rt.defs ? prediction.map(j => ({
-        ...j
-      })) : prediction;
-    const previous = rt.plan,
-      plan = X.expand(s),
-      oldRuns = new Map(previous.services.map(l => [l.id, l])),
-      runs = new Map(plan.services.map(l => [l.id, l]));
-    const archives = rt.routeArchives || {},
-      versions = new Map();
-    for (const t of rt.trains) {
-      const before = t.retiringRun || oldRuns.get(t.service),
-        after = runs.get(t.service);
-      if (!t.retiringRun && before && (!after || routeKey(before, previous) !== routeKey(after,
-          plan))) {
-        t.retiringRun = R.clone(before);
-        let k = versions.get(t.service);
-        if (!k) {
-          k = 'r' + (rt.nextRouteRevision = (rt.nextRouteRevision || 0) + 1);
-          versions.set(t.service, k);
-          archives[k] = {
-            tracks: R.clone(previous.tracks.filter(tr => before.trackIds.includes(tr.id)))
-          };
-        }
-        t.retiringKey = k;
-      }
-    }
-    rt.routeArchives = Object.fromEntries(Object.entries(archives).filter(([k]) => rt.trains.some(
-      t => t
-      .retiringKey === k)));
-    plan.routeArchives = rt.routeArchives;
-    const needed = new Set(rt.trains.filter(t => t.retiringRun).flatMap(t => t.trackIds));
-    rt.retiredTracks = previous.tracks.filter(t => needed.has(t.id) && !s.tracks.some(x => x
-      .id === t.id));
-    plan.tracks = [...s.tracks, ...rt.retiredTracks];
-    rt.plan = plan;
-    rt._routes = null;
-    // Histories and finance are references to the current live city, never a worker snapshot.
-    rt.stationLimits = Object.fromEntries([...new Set(plan.services.flatMap(l => l.callStops || l
-        .stops))]
-      .map(id => [id, Q.limits(s, id)]));
-    if (fresh) {
-      if (rt.defs.length + fresh.length > 55000) compactDefinitions(rt);
-      for (const j of rt.defs) j.daily = 0;
-      installCatalog(rt, fresh);
-    } else {
-      for (const j of rt.defs)
-        if (!j.legs.every(e => legValid(plan, e))) j.daily = 0;
-      if (rt.demandCatalog) installCatalog(rt, rt.demandCatalog.filter(j => j.legs.every(e =>
-        legValid(plan,
-          e))));
-    }
-    const rejected = [];
-    const migrate = (token, count, station, since, put) => {
-      const [id, leg] = token.split(':').map(Number), j = rt.defs[id];
-      if (j?.legs.slice(leg).every(e => legValid(plan, e))) {
-        put(j, leg, token, count, since);
-        return;
-      }
-      const next = j && reroute(rt, j, station);
-      if (next) put(next, 0, next.id + ':0:' + Math.floor(since), count, since);
-      else reject(rt, j, count, rejected);
-    };
-    const queues = {},
-      waitSince = {},
-      occupancy = {};
-    for (const [k, q] of Object.entries(rt.queues))
-      for (const [token, n] of Object.entries(q)) {
-        const station = +k.split('|')[2],
-          since = rt.waitSince[k + '#' + token] ?? rt.minute;
-        migrate(token, n, station, since, (j, leg, tok, count, at) => {
-          const e = j.legs[leg],
-            k = key(e.service, e.dir, e.from),
-            q = queues[k] || (queues[k] = {});
-          q[tok] = (q[tok] || 0) + count;
-          waitSince[k + '#' + tok] = Math.min(waitSince[k + '#' + tok] ?? at, at);
-          occupancy[station] = (occupancy[station] || 0) + count;
-        });
-      }
-    rt.queues = queues;
-    rt.waitSince = waitSince;
-    const transfers = [];
-    for (const x of rt.transfers) migrate(x.journey + ':' + x.leg, x.amount, x.station, x.ready -
-      X
-      .TRANSFER, (j, leg, tok, count) => {
-        transfers.push({
-          ...x,
-          journey: j.id,
-          leg,
-          amount: count
-        });
-        occupancy[x.station] = (occupancy[x.station] || 0) + count;
-      });
-    rt.transfers = transfers;
-    rt.stationOccupancy = occupancy;
-    for (const [id, n] of Object.entries(occupancy))
-      if (rt.stationLimits[id]) rt.stationLimits[id].capacity = Math.max(rt.stationLimits[id]
-        .capacity, n);
-    const outside = {},
-      outsideSince = {};
-    for (const [id, q] of Object.entries(rt.outside))
-      for (const [token, n] of Object.entries(q)) migrate(token, n, +id, rt.outsideSince[id +
-        '#' +
-        token] ?? rt.minute, (j, leg, tok, count, at) => {
-        const q = outside[id] || (outside[id] = {});
-        q[tok] = (q[tok] || 0) + count;
-        outsideSince[id + '#' + tok] = Math.min(outsideSince[id + '#' + tok] ?? at, at);
-      });
-    rt.outside = outside;
-    rt.outsideSince = outsideSince;
-    for (const [id, q] of Object.entries(outside))
-      if (rt.stationLimits[id]) rt.stationLimits[id].outsideCapacity = Math.max(rt.stationLimits[
-          id]
-        .outsideCapacity, Object.values(q).reduce((v, n) => v + n, 0));
-    for (const l of plan.services)
-      for (const dir of X.directions(l)) {
-        const k = l.id + '|' + dir,
-          h = R.effectiveHeadway(plan, l),
-          d = rt.departures[k];
-        if (!d) rt.departures[k] = {
-          next: rt.minute,
-          headway: h
-        };
-        else if (d.headway !== h) {
-          d.next = Number.isFinite(h) ? Math.max(rt.minute, Math.min(d.next, (d.lastRun ?? rt
-              .minute) +
-            h)) : Infinity;
-          d.headway = h;
-        }
-      }
-    rt.fleetMinute = -1;
-    Q.rejectBatch(s, rt, rejected);
-    return rt;
+    if(!QUEUES.canSnapshot(rt))throw Error('线网变更前需等待 materializeAsync');QUEUES.invalidate(rt);
+    const prediction=m?validateCatalog(m.preparedDefinitions||definitions(s,m)):null,
+      fresh=prediction===rt.defs?prediction.map(j=>({...j})):prediction,previous=rt.plan,plan=X.expand(s);
+    if(fresh&&rt.defs.length+fresh.length>55000)compactDefinitions(rt);
+    const limits=Object.fromEntries([...new Set(plan.services.flatMap(l=>l.callStops||l.stops))].map(id=>[id,Q.limits(s,id)])),
+      directions=Object.fromEntries(plan.services.map(l=>[l.id,X.directions(l)])),headways={};
+    for(const l of plan.services)for(const dir of X.directions(l))headways[l.id+'|'+dir]=R.effectiveHeadway(plan,l);
+    let validCatalog=null;
+    if(!fresh&&rt.demandCatalog){const catalog=rt.demandCatalog,ids=[];for(let at=0;at<catalog.length;at+=512){const journeys=[];for(let i=at;i<Math.min(at+512,catalog.length);i++)journeys.push((node?require('./forecast-catalog'):root.RailForecastCatalog).meta(catalog)?(node?require('./forecast-catalog'):root.RailForecastCatalog).legs(catalog,i):catalog[i].legs);const flags=TX.run(23,{plan:{services:plan.services},directions,journeys});for(let i=0;i<flags.length;i++)if(flags[i])ids.push(at+i);}validCatalog=(node?require('./forecast-catalog'):root.RailForecastCatalog).select(catalog,ids);}
+    const graph=Routing.revisionGraph(plan);
+    if(Routing.status().memoryBytes>64*1024*1024)Routing.recycleSimulation();
+    const result=TX.run(21,{runtime:migrationState(rt),previous:{services:previous.services,tracks:previous.tracks},plan:{services:plan.services,tracks:s.tracks},
+      oldSignatures:Object.fromEntries(previous.services.map(l=>[l.id,routeKey(l,previous)])),newSignatures:Object.fromEntries(plan.services.map(l=>[l.id,routeKey(l,plan)])),
+      limits,directions,headways,catalog:!!fresh,graph});
+    Object.defineProperty(rt,'_nativeRoutingGraph',{value:graph,writable:true,configurable:true});Object.defineProperty(rt,'_nativeRouteTrees',{value:result.trees,writable:true,configurable:true});
+    adoptMigration(rt,result.runtime);rt.plan=plan;plan.routeArchives=rt.routeArchives;plan.tracks=[...s.tracks,...rt.retiredTracks];
+    rt._routes=result.routeCache.length?new Map(result.routeCache.map(([from,to,purpose,fare,id])=>[from+'|'+to+'|'+purpose+'|'+fare,id===null?null:rt.defs[id]])):null;
+    for(const [origin,purpose,data]of result.trees)rt._routes.set('paths|'+origin+'|'+purpose,Routing.pathsFromFrame(data,graph));
+    if(fresh||validCatalog)installCatalog(rt,fresh||validCatalog);Q.rejectBatch(s,rt,result.rejected);return rt;
   }
 
   function rebase(rt, s, m) {

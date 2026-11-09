@@ -82,7 +82,16 @@ struct Leg {
     to: usize,
     valid: bool,
 }
+#[derive(Clone)]
+struct Contract {
+    from: f64,
+    to: f64,
+    back: bool,
+    hub: Option<usize>,
+    kind: Option<usize>,
+}
 struct Journey {
+    contract: Option<Contract>,
     fare: f64,
     purpose: usize,
     byline: Rc<[(usize, u64)]>,
@@ -145,6 +154,10 @@ impl<'a> Read<'a> {
 pub(super) struct Queues {
     token: f64,
     stats_protocol: bool,
+    native_routes: bool,
+    routing: Option<crate::journey::Context>,
+    new_keys: Vec<(Rc<str>, usize)>,
+    reroutes: usize,
     sparse: bool,
     stats: Option<crate::statistics::Statistics>,
     arrival_ids: Vec<Vec<usize>>,
@@ -175,6 +188,140 @@ pub(super) struct Queues {
     purpose_delta: Ordered<usize, f64>,
 }
 impl Queues {
+    pub(super) fn protocol(&self) -> f64 {
+        if self.native_routes {
+            if self.sparse {
+                5.0
+            } else {
+                4.0
+            }
+        } else if self.sparse {
+            3.0
+        } else {
+            2.0
+        }
+    }
+    pub(super) fn native_routes(&self) -> bool {
+        self.native_routes
+    }
+    pub(super) fn refresh_routes(&mut self, rows: &[(usize, f64, f64)]) {
+        if let Some(ctx) = self.routing.as_mut() {
+            ctx.refresh(rows);
+        }
+    }
+    pub(super) fn definition_count(&self) -> usize {
+        self.defs.len()
+    }
+    pub(super) fn take_keys(&mut self) -> Vec<(Rc<str>, usize)> {
+        std::mem::take(&mut self.new_keys)
+    }
+    fn install_view(&mut self, j: &crate::value::Value, ctx: &crate::journey::Context) {
+        let id = j.num("id") as usize;
+        let byline = intern(
+            &mut self.share_pool,
+            j.get("byLine")
+                .entries()
+                .iter()
+                .map(|(k, v)| (ctx.ids[k], v.n().to_bits()))
+                .collect(),
+        );
+        let line_ids = intern(
+            &mut self.line_pool,
+            j.get("lineIds")
+                .array()
+                .iter()
+                .map(|v| ctx.ids[v.text()])
+                .collect(),
+        );
+        let legs = intern(
+            &mut self.leg_pool,
+            j.get("legs")
+                .array()
+                .iter()
+                .map(|e| Leg {
+                    service: ctx.ids[e.get("service").text()],
+                    dir: e.num("dir") as i32,
+                    from: e.num("from") as usize,
+                    to: e.num("to") as usize,
+                    valid: true,
+                })
+                .collect(),
+        );
+        let name = |v: &crate::value::Value| {
+            if v.truth() {
+                Some(ctx.ids[v.text()])
+            } else {
+                None
+            }
+        };
+        let contract = Some(Contract {
+            from: j.num("from"),
+            to: j.num("to"),
+            back: j.get("back").truth(),
+            hub: name(j.get("hub")),
+            kind: name(j.get("externalKind")),
+        });
+        self.defs.insert(
+            id,
+            Journey {
+                contract,
+                fare: j.num("fare"),
+                purpose: ctx
+                    .purposes
+                    .iter()
+                    .position(|p| p == j.get("purpose").text())
+                    .unwrap(),
+                byline,
+                line_ids,
+                legs,
+            },
+        );
+    }
+    fn native_reroute(&mut self, old: usize, station: usize, amount: f64) -> bool {
+        use crate::value::{object, Value as V};
+        if !self.native_routes || self.routing.is_none() {
+            return false;
+        }
+        let j = &self.defs[&old];
+        let Some(contract) = j.contract.clone() else {
+            return false;
+        };
+        self.reroutes += 1;
+        let mut ctx = self.routing.take().unwrap();
+        let name = |id: Option<usize>| id.map_or(V::Null, |id| V::String(ctx.names[id].clone()));
+        let source = object([
+            ("from", V::Number(contract.from)),
+            ("to", V::Number(contract.to)),
+            ("back", V::Bool(contract.back)),
+            ("hub", name(contract.hub)),
+            ("externalKind", name(contract.kind)),
+            ("purpose", V::String(ctx.purposes[j.purpose].clone())),
+            ("fare", V::Number(j.fare)),
+        ]);
+        let (next, payload) = ctx.resolve(&source, station, self.defs.len());
+        if let Some(next) = &next {
+            let id = next.num("id") as usize;
+            if id == self.defs.len() {
+                self.install_view(next, &ctx);
+                self.new_keys.push((crate::journey::key(next), id));
+            }
+        }
+        let wire = crate::value::write(&payload);
+        for chunk in wire.chunks(6) {
+            let mut row = vec![chunk.len() as f64];
+            row.extend(chunk);
+            self.cmd(46.0, &row);
+        }
+        self.cmd(47.0, &[]);
+        self.routing = Some(ctx);
+        if let Some(next) = next {
+            self.admit(next.num("id") as usize, 0, amount, true);
+        } else {
+            self.reject(old, amount);
+        }
+        true
+    }
+
     pub(super) fn counter(&self, index: usize) -> f64 {
         self.counters[index]
     }
@@ -304,6 +451,10 @@ impl Queues {
         Self {
             token,
             stats_protocol: false,
+            native_routes: false,
+            routing: None,
+            new_keys: vec![],
+            reroutes: 0,
             sparse: false,
             stats: None,
             arrival_ids: vec![],
@@ -799,9 +950,30 @@ impl Queues {
                 })
                 .collect::<Vec<_>>();
             let legs = intern(&mut self.leg_pool, legs);
+            let contract = if self.native_routes {
+                let from = r.f();
+                let to = r.f();
+                let back = r.f() != 0.0;
+                let hub = r.f();
+                let kind = r.f();
+                Some(Contract {
+                    from,
+                    to,
+                    back,
+                    hub: if hub < 0.0 { None } else { Some(hub as usize) },
+                    kind: if kind < 0.0 {
+                        None
+                    } else {
+                        Some(kind as usize)
+                    },
+                })
+            } else {
+                None
+            };
             self.defs.insert(
                 id,
                 Journey {
+                    contract,
                     fare,
                     purpose,
                     byline,
@@ -1024,7 +1196,7 @@ fn execute(
 ) -> Vec<f64> {
     let mut r = Read { v: input, at: 0 };
     let protocol = r.f();
-    assert!(protocol == 1.0 || protocol == 2.0 || protocol == 3.0);
+    assert!((1.0..=5.0).contains(&protocol));
     let token = r.f();
     let phase = r.u();
     let load = r.u() != 0;
@@ -1047,7 +1219,8 @@ fn execute(
     assert_eq!(q.token, token);
     q.now = now;
     q.stats_protocol = protocol >= 2.0;
-    q.sparse = protocol == 3.0;
+    q.sparse = protocol == 3.0 || protocol == 5.0;
+    q.native_routes = protocol >= 4.0;
     q.modern = modern;
     q.integer = integer;
     q.transfer = transfer;
@@ -1116,6 +1289,17 @@ fn execute(
                 .as_mut()
                 .expect("statistics state missing")
                 .frame(&mut r, now);
+        }
+    }
+    if q.native_routes {
+        let mode = r.u();
+        if mode > 0 {
+            let value = crate::value::read(&mut r);
+            if mode == 2 {
+                q.routing = Some(crate::journey::Context::new(value));
+            } else {
+                q.routing.as_mut().unwrap().update(&value);
+            }
         }
     }
     q.roll_day(now);
@@ -1193,6 +1377,9 @@ fn execute(
             }
             1 => {
                 if let Some(p) = q.unload(id, int(op[2])) {
+                    if q.native_reroute(p.0, p.1, p.2) {
+                        continue;
+                    }
                     request = Some(p);
                     break;
                 }
@@ -1301,4 +1488,9 @@ mod tests {
         assert_eq!(q.get(159), None);
         assert!(q.rows.len() <= q.index.len() * 2 + 64);
     }
+}
+
+#[no_mangle]
+pub extern "C" fn native_reroute_count() -> usize {
+    CORE.with(|c| c.borrow().queue_state.as_ref().map_or(0, |q| q.reroutes))
 }

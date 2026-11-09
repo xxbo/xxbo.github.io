@@ -7,6 +7,7 @@
   const R = node ? require('./engine') : root.RailSim;
   const B = node ? require('./operations') : root.RailOperations;
   const F = node ? require('./fleet') : root.RailFleet;
+  const Compact=node?require('./forecast-catalog'):root.RailForecastCatalog;
   const catalogs = new WeakMap();
   // Owned runtime catalogs use explicit revisions. Compatibility callers keep scans;
   // avoid per-profile accessors/proxies, which cost more heap than their saved work.
@@ -15,6 +16,7 @@
     if(!Number.isInteger(index)||index<0||index>=catalog.length||!Number.isFinite(value)||value<0)
       throw Error('Invalid demand update');
     if(Object.is(catalog[index].daily,value))return;
+    if(Compact.meta(catalog)){prepare(catalog);catalog[index].daily=value;return;}
     catalog[index].daily=value;
     const c=prepare(catalog);c.revision=(c.revision||0)+1;
     if(c.timed){c.timed.dirty.add(index);c.timed.revision=c.revision;}
@@ -382,6 +384,7 @@
   function prepare(catalog) {
     let c = catalogs.get(catalog);
     if (c && c.length === catalog.length) return c;
+    const compact=Compact.meta(catalog);
     const factors = [],
       profiles = [],
       fm = new Map(),
@@ -389,7 +392,7 @@
       fi = new Uint32Array(catalog.length),
       pi = new Uint32Array(catalog.length);
     for (let i = 0; i < catalog.length; i++) {
-      const j = catalog[i],
+      const j = compact?Compact.profile(catalog,i):catalog[i],
         ids = j.lineIds || Object.keys(j.path?.fares || {}),
         fk = JSON.stringify([ids, !!j.hub]),
         pk = JSON.stringify([j.purpose, j.back, j.externalKind || null]);
@@ -406,7 +409,7 @@
     }
     c = {
       length: catalog.length,
-      custom:catalog.some(j=>!!Object.getOwnPropertyDescriptor(j,'daily')?.get),
+      custom:!compact&&catalog.some(j=>!!Object.getOwnPropertyDescriptor(j,'daily')?.get),
       factors,
       profiles,
       fi,
@@ -414,6 +417,7 @@
       token: Core.allocateToken(),
       input: null
     };
+    if(compact){c.managed=true;compact.onDaily=i=>{c.revision=(c.revision||0)+1;if(c.timed){c.timed.dirty.add(i);c.timed.revision=c.revision;}};}
     catalogs.set(catalog, c);
     return c;
   }
@@ -428,7 +432,7 @@
     input.set([7, c.token, +load, catalog.length, nf, np, remainder, rng]);
     input.set(c.factors.map(factor), 8);
     input.set(c.profiles.map(profile), 8 + nf);
-    for (let i = 0; i < catalog.length; i++) input[8 + nf + np + i] = catalog[i].daily;
+    for (let i = 0; i < catalog.length; i++) input[8 + nf + np + i] = (Compact.meta(catalog)?Compact.daily(catalog,i):catalog[i].daily);
     if (load)
       for (let i = 0; i < catalog.length; i++) {
         input[c.input.length + i * 2] = c.fi[i];
@@ -471,9 +475,9 @@
         input: new Float64Array(13 + names.length * 4),
         dirty:new Set(), untracked:[], revision:c.revision||0, reads:0, sent:0
       };
-      for(let i=0;i<catalog.length;i++) {
+      for(let i=0;!Compact.meta(catalog)&&i<catalog.length;i++) {
         const d=Object.getOwnPropertyDescriptor(catalog[i],'daily');
-        if(d?.get)c.timed.untracked.push(i);
+        if(d?.get&&!Compact.meta(catalog))c.timed.untracked.push(i);
       }
     }
     const t = c.timed,
@@ -482,7 +486,7 @@
     const changes = [];
     const indices=load||!c.managed?catalog.keys():new Set([...t.dirty,...t.untracked]);
     for (const i of indices) {
-      const daily = catalog[i].daily;
+      const daily = (Compact.meta(catalog)?Compact.daily(catalog,i):catalog[i].daily);
       t.reads++;
       if (load || !Object.is(t.daily[i], daily)) {
         if (!load) changes.push(i, daily);

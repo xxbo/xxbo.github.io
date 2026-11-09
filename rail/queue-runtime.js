@@ -55,7 +55,7 @@
       };
       states.set(rt, c);
     }
-    c.sparse=nativeViews.has(rt);
+    c.sparse=nativeViews.has(rt);c.nativeRoutes=c.sparse&&s.routeModel===9;
     return c;
   }
 
@@ -96,6 +96,7 @@
         out.push(named(c, e.service), e.dir, e.from, e.to, +valid[k]);
         c.limitIds.add(e.from);
       });
+      if(c.nativeRoutes)out.push(j.from,j.to,+!!j.back,j.hub?named(c,j.hub):-1,j.externalKind?named(c,j.externalKind):-1);
   }
   function defs(c,rt,s,out) {
     out.push(rt.defs.length-c.sent);
@@ -140,7 +141,9 @@
 
   function parts(c, rt, s, job, resume) {
     const full = Core.queueToken() !== c.token;
+    if(c.nativeRoutes){c.routingGraph=rt._nativeRoutingGraph||c.routingGraph||Core.revisionGraph(s);for(const id of [...c.routingGraph.services,...c.routingGraph.lines])named(c,id);const H=node?require('./hubs'):root.RailHubs;for(const h of H.forRegion(s.region))named(c,h.id);for(const kind of ['visitor-arrival','visitor-return','staff-outbound','staff-homebound','local-departure','local-return'])named(c,kind);}
     if (full) {
+      c.routingLoaded=false;c.routingNames=0;c.routingMinute=-1;
       c.sent = 0;
       c.seen = new WeakSet();
     }
@@ -176,7 +179,7 @@
     const motion = resume ? new Float64Array(0) : job.motion.input;
     const ops = resume?.ops || [],
       arrivals = resume ? [] : job.arrivals;
-    const header = [c.sparse?3:2, c.token, resume ? 1 : 0, +full, rt.minute, s.routeModel === 9 ? 1 : 0, rt
+    const header = [c.nativeRoutes?(c.sparse?5:4):(c.sparse?3:2), c.token, resume ? 1 : 0, +full, rt.minute, s.routeModel === 9 ? 1 : 0, rt
       .arrivalMode === 'integer' ? 1 : 0, X.TRANSFER, resume ? 0 : +job.gates, resume?.cursor ||
       0, resume?.original ?? -1, resume?.next ?? -1, resume?.amount || 0, motion.length
     ];
@@ -187,9 +190,11 @@
       const ids = a.j.lineIds || [];
       tail.push(a.id, i, a.n, ids.length, ...ids.map(id => named(c, id)));
     });
-    const statistics = Q.nativeStatisticsFrame(c, s, rt, full);
+    let statistics = Q.nativeStatisticsFrame(c, s, rt, full);
+    if(c.nativeRoutes){const mode=full||!c.routingLoaded?2:c.routingNames!==c.names.length||c.routingMinute!==Math.floor(rt.minute)?1:0,extra=[mode];if(mode){const routes=[],paths=[];if(mode===2)for(const [key,j]of rt._routes instanceof Map?rt._routes:[]){const a=key.split('|');if(a[0]==='paths')paths.push([+a[1],a[2]]);else routes.push([+a[0],+a[1],a[2],+a[3],j]);}const value={names:c.names,purposes:c.purposes,weights:s.services.map(l=>[l.id,X.headway(s,l),X.loopDwell(s,l)]),...(mode===2?{graph:c.routingGraph,routes,paths,trees:rt._nativeRouteTrees||[]}:{})};for(const v of Wire.encode(value))extra.push(v);c.routingLoaded=true;c.routingNames=c.names.length;c.routingMinute=Math.floor(rt.minute);}const frame=new Float64Array(statistics.length+extra.length);frame.set(statistics);frame.set(extra,statistics.length);statistics=frame;}
+
     const finance = job.settlement ? Engine.encode(c, rt, job.settlement, named, full) : null;
-    return {parts:[header,motion,definition,limits,trainData,snapshot,tail,statistics],finance};
+    return {parts:[header,motion,definition,limits,trainData,snapshot,tail,statistics],finance,namedCount:c.names.length};
   }
   function packetFrame(c,rt,s,job,resume) {
     const frame=parts(c,rt,s,job,resume),finance=frame.finance;
@@ -284,6 +289,7 @@
       rt.transfers.length = kept;
       transferDeletes.length = 0;
     };
+    let structured=[];
     let lastToken = '',
       tj = -1,
       tl = -1,
@@ -323,11 +329,14 @@
         f = data[at + 5],
         g = data[at + 6],
         h = data[at + 7];
-      if (op >= 32 && op < 48) {
+      if (op >= 32 && op <=45) {
         statistics(data, at);
         continue;
       }
       switch (op) {
+        case 46:for(let i=0;i<a;i++)structured.push(data[at+2+i]);break;
+        case 47:{const decoded=Wire.decode(structured);if(decoded.at!==structured.length)throw Error('原生改签元数据长度错误');structured=[];const value=decoded.value,j=value.journey;if(j){if(j.id===rt.defs.length)rt.defs.push(j);else if(j.id>rt.defs.length)throw Error('原生改签编号不连续');}if(!(rt._routes instanceof Map))Object.defineProperty(rt,'_routes',{value:new Map(),writable:true,configurable:true});for(const [origin,purpose,raw,weights]of value.trees){if(!rt._nativeRouteTrees)Object.defineProperty(rt,'_nativeRouteTrees',{value:[],writable:true,configurable:true});const saved=rt._nativeRouteTrees.findIndex(t=>t[0]===origin&&t[1]===purpose),tree=[origin,purpose,raw];if(saved<0)rt._nativeRouteTrees.push(tree);else rt._nativeRouteTrees[saved]=tree;const graph=weights?{...c.routingGraph,edges:c.routingGraph.edges.map((e,i)=>({...e,headway:weights[i*2],minutes:weights[i*2+1]}))}:c.routingGraph;rt._routes.set('paths|'+origin+'|'+purpose,Core.pathsFromFrame(raw,graph));}rt._routes.set(value.cacheKey.join('|'),j?rt.defs[j.id]:null);c.sent=rt.defs.length;if(c.keySent)c.keySent=rt.defs.length;break;}
+
         case 54: {
           const t=c.trains.get(a)?.t;if(!t)break;
           t.status=['dwell','moving','signal','finished'][b];t.index=d;t.progress=e;t.ready=h;
@@ -513,6 +522,7 @@
       const rules=[frames.sampling?s.services.length:0];
       for(const l of frames.sampling?s.services:[]) rules.push(named(c,l.id),l.open??0,l.close??1440,+!!l.fleetManaged,l.fleet);
       const feedbackIds=(frames.feedback?.context.ls||[]).map(l=>named(c,l.id));
+      if(stableFrame&&stableFrame.namedCount!==c.names.length)stableFrame=null;
       const frame=stableFrame||(stableFrame=parts(c,rt,s,job,null)),fin=frame.finance||[];
       const sections=[feedbackIds,keyRows,profiles,templates,rules,prep,fin,...frame.parts];
       const input=new Float64Array(30+sections.reduce((n,p)=>n+p.length,0));
@@ -615,13 +625,13 @@
     s=rt.plan||s;
     const c=states.get(rt),job=c?.lastJob;
     if(!job?.settlement||c.plan!==s||Core.queueToken()!==c.token||s.routeModel!==9||!s.ridership||
-      rt.trains.some(t=>t.retiringRun)||rt.defs.length>45000)return null;
+      rt.defs.length>45000)return null;
     if(!Q.nativeStatisticsCurrent(c,s))return null;
     if(!SIM.canCalendar(rt.demandCatalog||rt.defs))return null;
     const fin=Engine.continuation(c,rt,job.settlement,c.lastFinance);
     if(!fin||minutes<.1)return null;
     const world=job.settlement.world;
-    // Rust advances the 15-minute windows; day archiving remains a host transaction.
+    // Statistics and day history advance natively; city/review edits remain cold transactions.
     let barrier=Infinity;
     if(world.urban)barrier=Math.min(barrier,world.urban.lastMinute+360-1e-7);
     if(world.operationsReview)barrier=Math.min(barrier,world.operationsReview.nextAt-1e-7);
@@ -651,6 +661,7 @@
       const reply=result.subarray(at,at+nr);at+=nr;
       if(interval)Q.step(s,rt,interval,()=>{},'projected');
       const frames={feedback:interval?c.calendar.feedback:null,dispatch:reply[8]&&reply[11+reply[3]+reply[4]*2+reply[5]*3+3]?c.calendar.dispatch:null};
+      job.settlement={...job.settlement,dt:.1,left:.1,beforeRevenue:rt.revenue,beforeExpense:rt.vehicleExpense};
       job.motion.templates=c.calendar.motion.templates;
       job.gates=rt.arrivalMode==='integer'&&!!interval;
       yield* applyCycle(c,rt,s,job,reply,frames,rt.demandCatalog||rt.defs,c.journeyKey,options.reroute);

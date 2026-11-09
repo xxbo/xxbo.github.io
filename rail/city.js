@@ -252,8 +252,8 @@
     };
   }
 
-  function evaluate(s) {
-    if (s.routeModel === 9) return D.evaluate(s, world(s));
+  function evaluate(s,options={}) {
+    if (s.routeModel === 9) return D.evaluate(s, world(s),options);
     return evaluateLegacy(s);
   }
 

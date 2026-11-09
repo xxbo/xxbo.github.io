@@ -30,3 +30,7 @@ node --expose-gc scripts/benchmark_rail_worker56.cjs 7
 ```
 
 计时基准按需运行，不进入 CI 的性能阈值判定；精确状态回归继续作为 CI 门槛。MAP56 的当前结果、限制与后续工作见 [实施报告](rust-wasm-map56.md)。
+
+## MAP59 / P1 四单元验收
+
+新增 `benchmark_rail_p1.cjs` 同时比较固定纯JS、MAP57 Worker、本版同步与Worker；不同模式只加载各自的预测表示。`benchmark_rail_p1_cold.cjs` 分别比较结构迁移、城市tick和完整预测。大预测每进程使用一次冷构建，传入 `RAIL_FORECAST_SAMPLES=1`，避免连续多份大预测的峰值干扰。完整参数、正负结果及数据见 [MAP59](rust-wasm-map59.md)。

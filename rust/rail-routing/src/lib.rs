@@ -1,10 +1,16 @@
 //! Deterministic metro routing and demand kernels with versioned f64-array ABIs.
 //! Heap tie order, tolerances and arithmetic order intentionally match the frozen JS oracle.
 mod calendar;
+mod catalog;
+mod connections;
 mod cycle;
+mod daily;
 mod demand;
 mod engine;
 mod history;
+mod journey;
+mod lifecycle;
+mod migration;
 mod numbers;
 mod operations;
 mod projection;
@@ -12,10 +18,10 @@ mod queues;
 mod simulation;
 mod statistics;
 mod temporal;
-mod world;
+mod transactions;
+mod urban;
 mod value;
-mod lifecycle;
-mod daily;
+mod world;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
@@ -91,6 +97,7 @@ impl State {
 #[derive(Default)]
 struct Core {
     input: Vec<f64>,
+    catalog_view: Option<catalog::View>,
     output: Vec<f64>,
     graph: Option<Graph>,
     searches: u32,
@@ -251,6 +258,9 @@ fn search(graph: &Graph, origin: usize, value: f64, first_group: u32) -> Vec<f64
         }
         for &edge_ix in &graph.adj[cur.node] {
             let e = &graph.edges[edge_ix];
+            if !e.headway.is_finite() {
+                continue;
+            }
             if !graph.legacy
                 && (cur.depth > 120
                     || (cur.depth == 0 && first_group != u32::MAX && e.group != first_group))

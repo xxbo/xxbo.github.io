@@ -347,6 +347,7 @@ impl Calendar {
             .runs
             .iter()
             .map(|l| l.id.max(l.parent) + 1)
+            .chain(trains.iter().map(|t| t.1.max(t.2) + 1))
             .max()
             .unwrap_or(0);
         let mut out = vec![
@@ -475,6 +476,14 @@ pub extern "C" fn engine_loop() -> *const f64 {
             let view = cal.refresh(next);
             let (motion, order) = crate::simulation::continuation(simulation_state, next);
             let q = queue_state.as_mut().expect("queue missing");
+            if !view.is_empty() {
+                q.refresh_routes(
+                    &cal.runs
+                        .iter()
+                        .map(|l| (l.id, l.h(), l.dwell()))
+                        .collect::<Vec<_>>(),
+                );
+            }
             if let Some(stats) = q.finance_stats() {
                 stats.advance_slot(next);
             }
@@ -575,7 +584,7 @@ pub extern "C" fn engine_loop() -> *const f64 {
                 })
                 .sum();
             let header = vec![
-                if cal.sparse { 3.0 } else { 2.0 },
+                q.protocol(),
                 cal.token,
                 0.0,
                 0.0,
@@ -602,7 +611,11 @@ pub extern "C" fn engine_loop() -> *const f64 {
             } else {
                 cal.ids.iter().map(|&id| id as f64).collect::<Vec<_>>()
             };
-            let statistics = vec![0.0, 0.0];
+            let statistics = if q.native_routes() {
+                vec![0.0, 0.0, 0.0]
+            } else {
+                vec![0.0, 0.0]
+            };
             let zero = vec![0.0];
             let parts: [&[f64]; 8] = [
                 &header,
@@ -618,7 +631,11 @@ pub extern "C" fn engine_loop() -> *const f64 {
                 1.0,
                 cal.token,
                 cal.catalog,
-                cycle_state.as_ref().unwrap().count() as f64,
+                cycle_state
+                    .as_ref()
+                    .unwrap()
+                    .count()
+                    .max(q.definition_count()) as f64,
                 cal.serial as f64,
                 cal.next as f64,
                 0.0,

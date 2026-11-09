@@ -19,7 +19,9 @@
     let journeys = 0;
     let passengerKm = 0;
     let transferTrips = 0;
-    for (const flow of f.flows || []) {
+    const Compact=typeof module!=='undefined'&&module.exports?require('./forecast-catalog'):root.RailForecastCatalog,totals=Compact?.summary(f,s);
+    if(totals){journeys=totals.journeys;passengerKm=totals.passengerKm;transferTrips=totals.transferTrips;}
+    for (const flow of totals?[]:f.flows || []) {
       const trips = flow.trips * Q.factor(s, flow);
       journeys += trips;
       passengerKm += trips * flow.path.km;

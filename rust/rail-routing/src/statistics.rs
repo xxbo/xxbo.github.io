@@ -221,12 +221,22 @@ impl Statistics {
     }
     pub(super) fn install_lifecycle(&mut self, r: &mut Read) {
         self.lifecycle = Some(Box::new(crate::lifecycle::Life::read(r)));
-        self.daily_operating=self.lifecycle.as_ref().unwrap().data.get("current").num("operating");
+        self.daily_operating = self
+            .lifecycle
+            .as_ref()
+            .unwrap()
+            .data
+            .get("current")
+            .num("operating");
     }
     fn sync_history(&mut self) {
-        if let Some(v)=self.lifecycle.as_mut(){
-            v.operating(None,self.daily_operating);
-            for(&id,row)in &self.lines {if row.present&(1<<8)!=0 {v.operating(Some(id),row.values[8]);}}
+        if let Some(v) = self.lifecycle.as_mut() {
+            v.operating(None, self.daily_operating);
+            for (&id, row) in &self.lines {
+                if row.present & (1 << 8) != 0 {
+                    v.operating(Some(id), row.values[8]);
+                }
+            }
             v.touch(self.now);
         }
     }
@@ -242,11 +252,13 @@ impl Statistics {
         }
     }
     pub(super) fn day_operating(&mut self, value: f64) {
-        self.daily_operating=value;
+        self.daily_operating = value;
     }
     pub(super) fn roll_day(&mut self, now: f64) -> bool {
         let day = crate::history::day(now);
-        if self.day==day{return false;}
+        if self.day == day {
+            return false;
+        }
         self.sync_history();
         let Some(life) = self.lifecycle.as_mut() else {
             return false;
@@ -256,7 +268,7 @@ impl Statistics {
         }
         self.window_commands.extend(life.archive(day, now));
         self.day = day;
-        self.daily_operating=0.0;
+        self.daily_operating = 0.0;
         self.network = [0.0; 7];
         self.network_dirty = 0;
         self.lines.clear();
@@ -314,11 +326,15 @@ impl Statistics {
     }
     pub(super) fn set_operating(&mut self, id: usize, value: f64) {
         let row = self.lines.entry(id).or_insert_with(Row::line);
-        let first=row.present&(1<<8)==0;
+        let first = row.present & (1 << 8) == 0;
         let dirty = row.dirty;
         row.set(8, value);
         row.dirty = dirty;
-        if first {if let Some(v) = self.lifecycle.as_mut() {v.operating(Some(id), value);}}
+        if first {
+            if let Some(v) = self.lifecycle.as_mut() {
+                v.operating(Some(id), value);
+            }
+        }
     }
     pub(super) fn set_feedback(&mut self, id: usize, values: &[f64]) {
         if let Some(row) = self.feedback.get_mut(&id) {

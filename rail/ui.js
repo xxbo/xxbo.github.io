@@ -299,7 +299,7 @@
     updatedAt: null
   };
   const demandClient = RailWorkerClient.create({
-    createWorker: () => typeof Worker === 'function' ? new Worker('demand-worker.js?v=57') : null,
+    createWorker: () => typeof Worker === 'function' ? new Worker('demand-worker.js?v=58') : null,
     timeout: 45000,
     timeoutMessage: '后台需求计算超过45秒，已回收计算线程；旧需求继续运行。',
     errorMessage: '客流后台计算失败',
@@ -310,16 +310,16 @@
     fallback: ({
       state
     }) => ({
-      result: C.evaluate(state)
+      result: C.evaluate(state,{compact:true})
     })
   });
 
   function calculate(state) {
     return demandClient.request({
       state: RailDemandSnapshot.capture(state)
-    }).then(message => message.result);
+    }).then(message => RailForecastCatalog.hydrate(message.result));
   }
-  let forecast = await calculate(s).catch(() => C.evaluate(s)),
+  let forecast = await calculate(s).catch(() => C.evaluate(s,{compact:true})),
     traffic = savedRuntime && O.restore(s, forecast, savedRuntime) || O.create(s, forecast, s.economy
       .minute, s.economy.minute === 420);
   demandState.status = 'ready';
@@ -2806,7 +2806,7 @@
     }
     try {
       if (!centerWorker) {
-        centerWorker = new Worker('operations-worker.js?v=57');
+        centerWorker = new Worker('operations-worker.js?v=58');
         centerForecastSent = null;
       }
       centerWorker.onerror = e => fail(e.message || '后台诊断不可用');
@@ -2847,7 +2847,7 @@
         runtime,
         ...(changed ? {
           forecast: {
-            flows: forecast.flows,
+            ...RailForecastCatalog.transport(forecast),
             population: forecast.population,
             catchment: {
               covered: forecast.catchment?.covered || 0
@@ -3028,8 +3028,8 @@
     const hour = Math.floor(traffic.minute / 60);
     if (!stationForecastCache || stationForecastCache.forecast !== forecast || stationForecastCache
       .hour !== hour) {
-      const entries = {};
-      for (const f of forecast.flows) {
+      const compact=RailForecastCatalog.summary(forecast,s),entries=compact?.entries||{};
+      for (const f of compact?[]:forecast.flows) {
         const n = f.trips * Q.factor(s, f);
         for (const [station, key] of [
             [f.from, 'entry'],
@@ -3189,7 +3189,7 @@
 
   function demandAudit() {
     const d = forecast.diagnostics || {},
-      expected = forecast.flows.reduce((v, f) => v + (f.demandTrips ?? f.trips) * Q.factor(s, f), 0);
+      expected = RailForecastCatalog.summary(forecast,s)?.expected ?? forecast.flows.reduce((v, f) => v + (f.demandTrips ?? f.trips) * Q.factor(s, f), 0);
     return `<details class="demand-audit"><summary>客流核算</summary><p id="audit-status">${playing?'正在运营':'已暂停 · 点击右上角开始运营'}</p><div class="detail-row"><span>有轨道路径的候选出行</span><b>${num(d.connectedDemand||0)} 人次/日</b></div><div class="detail-row"><span>满意度调整后的日需求</span><b>${num(expected)} 人次/日</b></div><div class="detail-row"><span>基础日客流预测</span><b>${num(forecast.riders)} 人次/日</b></div><div class="detail-row"><span>本局实际到站</span><b id="audit-generated">${num(traffic.generated)}</b></div><div class="detail-row"><span>本局累计上车 · 含换乘</span><b id="audit-boarded">${num(traffic.boarded)}</b></div><div class="detail-row"><span>本局完成出行</span><b id="audit-completed">${num(traffic.completed)}</b></div><p class="station-note">日预测与当前候车人数不同；到站后可能已经上车或抵达。实际运营使用整数乘客，小概率 OD 在全网累积后抽取，不逐条舍入。</p></details>`;
   }
 
