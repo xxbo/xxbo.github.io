@@ -52,6 +52,6 @@ const options = {budget: 1e6, maxSteps: 10000, now: () => 0};
     } finally {P.dispose(rt);}
   }
   assert(spans.some(s => s.steps > 150 && Math.floor((s.start - 420) / 15) !== Math.floor((s.end - 420) / 15)), 'one native request must cross a statistics slot');
-  assert(spans.every(s => Math.floor((s.start - 420 + 1e-7) / 1440) === Math.floor((s.end - 420 + 1e-7) / 1440)), 'day archive must remain a host barrier');
+  assert(spans.some(s => Math.floor((s.start - 420 + 1e-7) / 1440) !== Math.floor((s.end - 420 + 1e-7) / 1440)), 'native lifecycle must now cross the former day barrier');
   console.log(`MAP54 windows: ${checks} exact worlds/saves, empty and populated windows, partial starts, 07:00 rollover, 30-day history cap; native loop crosses slots in one request.`);
 })().catch(error => {console.error(error); process.exitCode = 1;}).finally(() => {threads.Worker = Base;});

@@ -839,7 +839,8 @@
     summary,
     station,
     snapshot,
-    snapshotAsync:async rt=>snapshot(await QUEUES.queryAsync(rt)),
+    snapshotAsync:async rt=>{await QUEUES.historyAsync(rt);return snapshot(await QUEUES.queryAsync(rt));},
+    historyAsync:QUEUES.historyAsync,
     detailsAsync:async(rt,kind,id)=>{
       if(kind==='station')return station(await QUEUES.queryAsync(rt,3,id),id);
       const temp=await QUEUES.queryAsync(rt,4,id);return temp.trains.find(t=>t.id===id)?.passengers||{};

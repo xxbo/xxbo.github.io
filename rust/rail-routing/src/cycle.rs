@@ -380,9 +380,11 @@ pub(super) fn run(
         packet.extend_from_slice(p);
     }
     let mut patch = vec![];
+    let mut maturity = vec![];
     if nf > 0 {
         let mut p = 2;
         for &id in &ids {
+            maturity.push((id, feedback[p + 1], feedback[p + 2]));
             patch.push((
                 id,
                 [
@@ -400,6 +402,11 @@ pub(super) fn run(
         crate::engine::read(finance, settlement_state);
     }
     let mut queue = crate::queues::run_compact(&packet, simulation_state, queue_state, &patch);
+    if let Some(stats) = queue_state.as_mut().unwrap().finance_stats() {
+        for (id, a, t) in maturity {
+            stats.maturity(id, a, t);
+        }
+    }
     let account = if queue[1] == 0.0 && !finance.is_empty() {
         crate::engine::settle(
             finance,

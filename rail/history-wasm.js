@@ -3,6 +3,7 @@
   'use strict';
   const node = typeof module !== 'undefined' && module.exports;
   const Core = node ? require('./routing-wasm') : root.RailRouting;
+  const Wire = node ? require('./value-wire') : root.RailValueWire;
   const run = values => Core.kernel('history_run', new Float64Array(values));
   function archive(q, minute) {
     const lines = Object.entries(q.lines), input = [1,0,minute,q.current.number,+!!q.current.flow,
@@ -51,6 +52,11 @@
     return list.map((a,i)=>({...a,displayTarget:values[i*4],displayValue:values[i*4+1],
       unlocked:!!values[i*4+2],progress:values[i*4+3]}));
   }
-  const api = {archive,merge,lengths,view,awards};
+  function daily(s,rt,grant) {
+    const values=Wire.encode({state:{tracks:s.tracks,services:s.services.map(l=>({id:l.id,trackIds:l.trackIds})),ridership:{current:s.ridership?.current}},runtime:{minute:rt.minute,trains:rt.trains.map(t=>({parentLine:t.parentLine,service:t.service,onboard:t.onboard,capacity:t.capacity}))},grant});
+    const input=[1,5];for(const v of values)input.push(v);
+    return Wire.decode(run(input)).value;
+  }
+  const api = {archive,merge,lengths,view,awards,daily};
   if(node) module.exports = api; else root.RailHistory = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

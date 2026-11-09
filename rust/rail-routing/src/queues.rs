@@ -181,6 +181,9 @@ impl Queues {
     pub(super) fn finance_stats(&mut self) -> Option<&mut crate::statistics::Statistics> {
         self.stats.as_mut()
     }
+    pub(super) fn roll_day(&mut self, now: f64) -> bool {
+        self.stats.as_mut().is_some_and(|s| s.roll_day(now))
+    }
 
     pub(super) fn train_rows(&self, order: &[usize]) -> Vec<(usize, usize, usize, i32, f64, f64)> {
         order
@@ -924,10 +927,19 @@ pub extern "C" fn runtime_query() -> *const f64 {
             settlement_state,
             ..
         } = &mut *c;
-        let q = queue_state.as_ref().expect("runtime missing");
+        let q = queue_state.as_mut().expect("runtime missing");
         assert_eq!(q.token, input[0]);
         let kind = int(input[1]);
-        assert!((1..=4).contains(&kind));
+        assert!((1..=5).contains(&kind));
+        if kind == 5 {
+            *output = crate::value::write(
+                &q.stats
+                    .as_mut()
+                    .expect("statistics missing")
+                    .history_snapshot(),
+            );
+            return output.as_ptr();
+        }
         *output = if kind == 2 {
             q.view()
         } else {
@@ -1079,9 +1091,16 @@ fn execute(
         let mode = r.f();
         if mode < 0.0 {
             q.stats = None;
-        } else if mode == 1.0 || mode == 3.0 {
-            let prune = if mode == 3.0 { r.f() } else { f64::NAN };
+        } else if mode == 1.0 || mode == 3.0 || mode == 6.0 {
+            let prune = if mode == 3.0 || mode == 6.0 {
+                r.f()
+            } else {
+                f64::NAN
+            };
             q.stats = Some(crate::statistics::Statistics::read(&mut r, now));
+            if mode == 6.0 {
+                q.stats.as_mut().unwrap().install_lifecycle(&mut r);
+            }
             if !prune.is_nan() {
                 q.stats.as_mut().unwrap().prune_hour(prune);
             }
@@ -1099,6 +1118,7 @@ fn execute(
                 .frame(&mut r, now);
         }
     }
+    q.roll_day(now);
     if let Some(stats) = q.stats.as_mut() {
         for (id, values) in feedback {
             stats.set_feedback(*id, values);

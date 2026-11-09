@@ -9,6 +9,7 @@
   const Prepare = node ? require('./preparation-wasm') : root.RailPreparation;
   const R = node ? require('./engine') : root.RailSim;
   const Q = node ? require('./ridership') : root.RailRidership;
+  const Wire = node ? require('./value-wire') : root.RailValueWire;
   const X = node ? require('./service-plan') : root.RailServicePlan;
   const counters = ['generated', 'boarded', 'alighted', 'completed', 'cancelled', 'rejected',
     'revenue', 'vehicleExpense'
@@ -621,7 +622,7 @@
     if(!fin||minutes<.1)return null;
     const world=job.settlement.world;
     // Rust advances the 15-minute windows; day archiving remains a host transaction.
-    let barrier=420+Q.day(rt.minute)*1440;
+    let barrier=Infinity;
     if(world.urban)barrier=Math.min(barrier,world.urban.lastMinute+360-1e-7);
     if(world.operationsReview)barrier=Math.min(barrier,world.operationsReview.nextAt-1e-7);
     if(rt.minute+.1>=barrier-1e-8)return null;
@@ -722,6 +723,15 @@
     });
   }
   const clients=new WeakMap();
+  function* history(rt, adopt=true) {
+    const c=states.get(rt);
+    if(!c||c.rebasePending||c.plan!==rt.plan||!rt.plan.ridership||Core.queueToken()!==c.token||!Q.nativeStatisticsCurrent(c,rt.plan))return null;
+    const result=yield {name:'runtime_query',input:new Float64Array([c.token,5,-1])};
+    const {value,at}=Wire.decode(result);if(at!==result.length)throw Error('原生历史数据长度无效');
+    if(value&&adopt){const q=rt.plan.ridership;q.current=value.current;q.history=value.history;
+      if(c.statsContext){c.statsContext.day=q.current;c.statsContext.flow=q.current.flow;c.statsContext.number=q.current.number;c.statsContext.slot=Math.floor((rt.minute-420-(q.current.number-1)*1440)/15);}}
+    return value;
+  }
   function client(rt) {
     if(!clients.has(rt)) {
       const W=node?require('./simulation-client'):root.RailSimulationClient;
@@ -738,6 +748,7 @@
     canSnapshot:rt=>!nativeViews.has(rt)||materialized.has(rt)||!views.has(rt),
     nativeViews:(rt,value=true)=>{if(value){nativeViews.add(rt);SIM.trackCatalog(rt.demandCatalog||rt.defs);}else nativeViews.delete(rt);if(states.has(rt))states.get(rt).sparse=value;},
     queryAsync:(...args)=>client(args[0]).run(()=>query(...args)),
+    historyAsync:(...args)=>clients.has(args[0])?client(args[0]).run(()=>history(...args)):Promise.resolve(sync(history(...args))),
     materializeAsync:async rt=>{
       const temp=await client(rt).run(()=>query(rt));
       if(temp!==rt){for(const k of ['queues','waitSince','outside','outsideSince','transfers'])rt[k]=temp[k];

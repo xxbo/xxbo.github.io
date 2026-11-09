@@ -119,6 +119,8 @@ pub(super) struct Statistics {
     hour_append: bool,
     hour_remove: Vec<usize>,
     window_commands: Vec<f64>,
+    lifecycle: Option<Box<crate::lifecycle::Life>>,
+    daily_operating: f64,
     lines: Map<usize, Row<LINE_FIELDS>>,
     feedback: Map<usize, Row<5>>,
     stations: Map<usize, Row<3>>,
@@ -180,6 +182,8 @@ impl Statistics {
             hour_append: false,
             hour_remove: vec![],
             window_commands: vec![],
+            lifecycle: None,
+            daily_operating: 0.0,
             lines,
             feedback,
             stations,
@@ -214,6 +218,58 @@ impl Statistics {
             cmd(&mut self.window_commands, 42.0, &[]);
         }
         self.hour.retain(|&(minute, _)| minute > now.floor() - 60.0);
+    }
+    pub(super) fn install_lifecycle(&mut self, r: &mut Read) {
+        self.lifecycle = Some(Box::new(crate::lifecycle::Life::read(r)));
+        self.daily_operating=self.lifecycle.as_ref().unwrap().data.get("current").num("operating");
+    }
+    fn sync_history(&mut self) {
+        if let Some(v)=self.lifecycle.as_mut(){
+            v.operating(None,self.daily_operating);
+            for(&id,row)in &self.lines {if row.present&(1<<8)!=0 {v.operating(Some(id),row.values[8]);}}
+            v.touch(self.now);
+        }
+    }
+    pub(super) fn history_snapshot(&mut self) -> crate::value::Value {
+        self.sync_history();
+        self.lifecycle
+            .as_ref()
+            .map_or(crate::value::Value::Missing, |v| v.snapshot())
+    }
+    pub(super) fn maturity(&mut self, id: usize, a: f64, t: f64) {
+        if let Some(v) = self.lifecycle.as_mut() {
+            v.maturity(id, a, t);
+        }
+    }
+    pub(super) fn day_operating(&mut self, value: f64) {
+        self.daily_operating=value;
+    }
+    pub(super) fn roll_day(&mut self, now: f64) -> bool {
+        let day = crate::history::day(now);
+        if self.day==day{return false;}
+        self.sync_history();
+        let Some(life) = self.lifecycle.as_mut() else {
+            return false;
+        };
+        if self.day == day {
+            return false;
+        }
+        self.window_commands.extend(life.archive(day, now));
+        self.day = day;
+        self.daily_operating=0.0;
+        self.network = [0.0; 7];
+        self.network_dirty = 0;
+        self.lines.clear();
+        self.stations.clear();
+        self.dirty_lines.clear();
+        self.dirty_stations.clear();
+        self.slot = ((now - 420.0 - (day - 1.0) * 1440.0) / 15.0).floor();
+        if self.slot < 0.0 || self.slot >= 96.0 {
+            self.slot = -1.0;
+        }
+        self.flow = [0.0; 3];
+        self.flow_dirty = 0;
+        true
     }
     pub(super) fn window_frame(&mut self, r: &mut Read) {
         let minute = r.f();
@@ -258,9 +314,11 @@ impl Statistics {
     }
     pub(super) fn set_operating(&mut self, id: usize, value: f64) {
         let row = self.lines.entry(id).or_insert_with(Row::line);
+        let first=row.present&(1<<8)==0;
         let dirty = row.dirty;
         row.set(8, value);
         row.dirty = dirty;
+        if first {if let Some(v) = self.lifecycle.as_mut() {v.operating(Some(id), value);}}
     }
     pub(super) fn set_feedback(&mut self, id: usize, values: &[f64]) {
         if let Some(row) = self.feedback.get_mut(&id) {
@@ -549,6 +607,9 @@ impl Statistics {
         self.dirty_lines.clear();
         self.dirty_feedback.clear();
         self.dirty_stations.clear();
+        if let Some(v) = self.lifecycle.as_mut() {
+            v.apply(&out, self.now);
+        }
         out
     }
 }
