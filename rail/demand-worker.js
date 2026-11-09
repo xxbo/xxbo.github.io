@@ -1,9 +1,9 @@
 /* Demand never blocks map input. Worker caches the fixed city-wide OD distribution. */
 importScripts('game-balance.js?v=17', 'fleet.js?v=48', 'regions.js?v=16', 'gba-data.js?v=16',
-  'routing-wasm.js?v=50', 'temporal-wasm.js?v=48', 'service-plan.js?v=41', 'engine.js?v=41', 'tokyo-data.js?v=9', 'hubs.js?v=43', 'connection-model.js?v=43',
+  'routing-wasm.js?v=55', 'temporal-wasm.js?v=48', 'service-plan.js?v=41', 'engine.js?v=41', 'tokyo-data.js?v=9', 'hubs.js?v=43', 'connection-model.js?v=43',
   'bounded-cache.js?v=40', 'demand-kernels.js?v=43', 'demand-world.js?v=43', 'demand-model.js?v=43', 'city-development.js?v=35', 'urban-growth.js?v=36',
   'city.js?v=48',
-  'flow-history.js?v=32', 'statistics-wasm.js?v=46', 'operations-wasm.js?v=50', 'ridership.js?v=50', 'operations.js?v=30', 'demand-rates.js?v=31',
+  'history-wasm.js?v=55', 'flow-history.js?v=55', 'statistics-wasm.js?v=46', 'operations-wasm.js?v=50', 'ridership.js?v=55', 'operations.js?v=30', 'demand-rates.js?v=31',
   'simulation-wasm.js?v=50', 'engine-wasm.js?v=49', 'preparation-wasm.js?v=50', 'queue-runtime.js?v=49', 'passengers.js?v=50');
 onmessage = async ({
   data: m

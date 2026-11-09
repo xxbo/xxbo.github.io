@@ -1,6 +1,7 @@
 /* Bounded, actual passenger counts per operating day. Missing history stays missing. */
 (function(root) {
   'use strict';
+  const History = typeof module !== 'undefined' && module.exports ? require('./history-wasm') : root.RailHistory;
   const STEP = 15,
     SLOTS = 96,
     ORIGIN = 420,
@@ -36,37 +37,7 @@
   function view(d, field = 'entered', interval = 15) {
     if (!FIELDS.includes(field)) field = 'entered';
     if (![15, 30, 60].includes(interval)) interval = 15;
-    const base = start(d),
-      f = d.flow,
-      valid = f?.version === 1 && Array.isArray(f[field]) && f[field].length === SLOTS,
-      points = [];
-    for (let offset = 0; offset < DAY; offset += interval) {
-      const a = base + offset,
-        b = a + interval,
-        known = valid && a <= f.through && b > f.since;
-      let value = null;
-      if (known) {
-        value = 0;
-        for (let i = offset / STEP; i < (offset + interval) / STEP; i++) value += f[field][i] || 0;
-      }
-      points.push({
-        start: a,
-        end: b,
-        value,
-        partial: !!known && (a < f.since || b > f.through)
-      });
-    }
-    const observed = points.filter(p => p.value !== null),
-      peak = observed.length ? observed.reduce((a, b) => b.value > a.value ? b : a) : null;
-    return {
-      points,
-      total: observed.reduce((n, p) => n + p.value, 0),
-      peak,
-      available: !!valid,
-      since: valid ? f.since : null,
-      through: valid ? f.through : null,
-      partial: !valid || f.since > base
-    };
+    return History.view(d, field, interval);
   }
   const api = {
     STEP,
