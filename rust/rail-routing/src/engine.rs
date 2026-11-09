@@ -328,12 +328,9 @@ pub extern "C" fn engine_continue() -> *const f64 {
             fin[6] = carry;
             fin[7] = q.counter(6);
             fin[8] = q.counter(7);
+            let native_routes = q.native_routes();
             let mut packet = vec![
-                if input.get(26) == Some(&1.0) {
-                    3.0
-                } else {
-                    2.0
-                },
+                q.protocol(),
                 input[0],
                 0.0,
                 0.0,
@@ -361,6 +358,9 @@ pub extern "C" fn engine_continue() -> *const f64 {
                 packet.extend_from_slice(&[0.0, 0.0]);
             } else {
                 packet.push(-1.0);
+            }
+            if native_routes {
+                packet.push(0.0);
             }
             let queue = crate::queues::run_compact(&packet, simulation_state, queue_state, &[]);
             let account = if queue[1] == 0.0 {

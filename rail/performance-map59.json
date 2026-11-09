@@ -1,0 +1,1798 @@
+{
+  "release": "MAP59 / P1 completion",
+  "baselineCommit": "498c5cd2af607e60dd1c75a8ba5863c08ac5d4fa",
+  "previous": "MAP57 source 193325b plus documentation 73dd13f",
+  "wasm": {
+    "path": "rail/wasm/rail-core-v19.wasm",
+    "bytes": 895100,
+    "sha256": "4ccc5a6b337c4069b68fed299b14bf56c31c0fd3f3bf75b18ab39a4718c1c680"
+  },
+  "validation": {
+    "javascriptSuites": 78,
+    "rustTests": 29,
+    "nativeReroutes": 22,
+    "mainThreadReroutes": 0,
+    "crossPeakCheckpoints": 20
+  },
+  "notes": [
+    "Runtime processes load only the forecast representation used by that mode; exact complete world/runtime parity.",
+    "Forecast small: three predictions per child, two reversed-order rounds. Forecast large: one cold prediction per child, two reversed-order rounds. An exploratory three-prediction large child exceeded its resource/time envelope; the one-prediction workload completed in every mode.",
+    "Cold forecast equivalence covers all specified flow/path/contract/track/service/line-connection fields; timings and implementation telemetry are separate.",
+    "Node event-loop probes are not browser FPS; heap, ArrayBuffer, WASM and peak RSS are distinct measurements."
+  ],
+  "reports": {
+    "runtime-small": {
+      "baselineCommit": "498c5cd2af607e60dd1c75a8ba5863c08ac5d4fa",
+      "scope": "Continuous operating core only: shared serialized world/forecast; 30 warmup + 5 x 30 game minutes; unchanged .1-minute quantum; current uses compact DTO; previous/JS receive equivalent full flows; excludes forecast, routing benchmarks, construction, DOM/map rendering and FPS",
+      "method": "Eight independent processes; each loads only its own forecast representation; reversed order in round 2; exact complete state comparison, no excluded fields; forced GC outside timed batches",
+      "lines": 10,
+      "stations": 25,
+      "summary": [
+        {
+          "mode": "javascript",
+          "medianMs": 50.50610300000005,
+          "medianCpuMs": 74.8495,
+          "retainedHeapMiB": 18.577926635742188,
+          "eventLoopMaxMs": 72.93254000000002,
+          "peakRssMiB": 105.10546875,
+          "wasmMiB": 0,
+          "requests": 0,
+          "inputBytes": 0,
+          "outputBytes": 0,
+          "checksum": "a0f04535ad5a214ede16d50169f3516165e13e08044865287eb1cf6a60411b66"
+        },
+        {
+          "mode": "previous-worker",
+          "medianMs": 73.87976649999999,
+          "medianCpuMs": 96.8265,
+          "retainedHeapMiB": 19.740863800048828,
+          "eventLoopMaxMs": 1.5524319999999534,
+          "peakRssMiB": 164.0703125,
+          "wasmMiB": 6.625,
+          "requests": 583,
+          "inputBytes": 11542780,
+          "outputBytes": 11235168,
+          "checksum": "a0f04535ad5a214ede16d50169f3516165e13e08044865287eb1cf6a60411b66"
+        },
+        {
+          "mode": "rust-sync",
+          "medianMs": 78.5124745,
+          "medianCpuMs": 117.277,
+          "retainedHeapMiB": 16.729473114013672,
+          "eventLoopMaxMs": 113.21342800000002,
+          "peakRssMiB": 138.203125,
+          "wasmMiB": 5.9375,
+          "requests": 0,
+          "inputBytes": 0,
+          "outputBytes": 0,
+          "checksum": "a0f04535ad5a214ede16d50169f3516165e13e08044865287eb1cf6a60411b66"
+        },
+        {
+          "mode": "rust-worker",
+          "medianMs": 79.75520499999999,
+          "medianCpuMs": 102.3225,
+          "retainedHeapMiB": 17.33873748779297,
+          "eventLoopMaxMs": 1.3344939999999497,
+          "peakRssMiB": 160.7265625,
+          "wasmMiB": 8,
+          "requests": 583,
+          "inputBytes": 12837524,
+          "outputBytes": 11235168,
+          "checksum": "a0f04535ad5a214ede16d50169f3516165e13e08044865287eb1cf6a60411b66"
+        }
+      ],
+      "results": [
+        {
+          "mode": "javascript",
+          "lines": 10,
+          "stations": 25,
+          "samplesMs": [
+            73.66566799999998,
+            45.710553000000004,
+            61.66064499999999,
+            49.15626000000009,
+            27.401530999999977
+          ],
+          "medianMs": 49.15626000000009,
+          "cpuMicros": [
+            165443,
+            91939,
+            73743,
+            63973,
+            59375
+          ],
+          "heapMiB": [
+            18.502029418945312,
+            18.576438903808594,
+            18.57941436767578,
+            18.66771697998047,
+            18.730003356933594
+          ],
+          "eventLoopMaxMs": [
+            72.93254000000002,
+            45.51792899999998,
+            60.831762000000026,
+            48.27183500000001,
+            26.519348000000036
+          ],
+          "peakRssMiB": 105.10546875,
+          "wasmMiB": 0,
+          "requests": 0,
+          "inputBytes": 0,
+          "outputBytes": 0,
+          "generated": 7542,
+          "completed": 7300,
+          "checksum": "a0f04535ad5a214ede16d50169f3516165e13e08044865287eb1cf6a60411b66",
+          "round": 0
+        },
+        {
+          "mode": "previous-worker",
+          "lines": 10,
+          "stations": 25,
+          "samplesMs": [
+            74.96149299999996,
+            70.56663199999991,
+            71.40405300000009,
+            83.17315000000008,
+            73.41670299999998
+          ],
+          "medianMs": 73.41670299999998,
+          "cpuMicros": [
+            122716,
+            91848,
+            97558,
+            96404,
+            97249
+          ],
+          "heapMiB": [
+            19.57842254638672,
+            19.63445281982422,
+            19.741195678710938,
+            19.75139617919922,
+            19.85614776611328
+          ],
+          "eventLoopMaxMs": [
+            0.9934299999999894,
+            0.7999899999999798,
+            1.5524319999999534,
+            0.9570159999999532,
+            0.7992990000000191
+          ],
+          "peakRssMiB": 148.98828125,
+          "wasmMiB": 6.625,
+          "requests": 583,
+          "inputBytes": 11542780,
+          "outputBytes": 11235168,
+          "generated": 7542,
+          "completed": 7300,
+          "checksum": "a0f04535ad5a214ede16d50169f3516165e13e08044865287eb1cf6a60411b66",
+          "round": 0
+        },
+        {
+          "mode": "rust-sync",
+          "lines": 10,
+          "stations": 25,
+          "samplesMs": [
+            114.012225,
+            81.33607800000004,
+            75.68887099999995,
+            65.72889899999996,
+            59.60929699999997
+          ],
+          "medianMs": 75.68887099999995,
+          "cpuMicros": [
+            208168,
+            138059,
+            116268,
+            95365,
+            81311
+          ],
+          "heapMiB": [
+            16.748336791992188,
+            16.74822235107422,
+            16.72491455078125,
+            16.716285705566406,
+            16.73614501953125
+          ],
+          "eventLoopMaxMs": [
+            113.21342800000002,
+            80.46414099999993,
+            74.83696400000008,
+            64.84969000000001,
+            58.70920699999999
+          ],
+          "peakRssMiB": 131.765625,
+          "wasmMiB": 5.9375,
+          "requests": 0,
+          "inputBytes": 0,
+          "outputBytes": 0,
+          "generated": 7542,
+          "completed": 7300,
+          "checksum": "a0f04535ad5a214ede16d50169f3516165e13e08044865287eb1cf6a60411b66",
+          "round": 0
+        },
+        {
+          "mode": "rust-worker",
+          "lines": 10,
+          "stations": 25,
+          "samplesMs": [
+            82.691732,
+            84.73037099999993,
+            76.39198899999997,
+            79.74383999999998,
+            71.27406999999994
+          ],
+          "medianMs": 79.74383999999998,
+          "cpuMicros": [
+            142586,
+            110539,
+            99915,
+            98984,
+            95512
+          ],
+          "heapMiB": [
+            17.319320678710938,
+            17.33873748779297,
+            17.34465789794922,
+            17.33873748779297,
+            17.426422119140625
+          ],
+          "eventLoopMaxMs": [
+            1.0821640000000343,
+            1.18114300000002,
+            1.1088250000000244,
+            0.7210209999999506,
+            1.2376529999999093
+          ],
+          "peakRssMiB": 160.7265625,
+          "wasmMiB": 8,
+          "requests": 583,
+          "inputBytes": 12837524,
+          "outputBytes": 11235168,
+          "generated": 7542,
+          "completed": 7300,
+          "checksum": "a0f04535ad5a214ede16d50169f3516165e13e08044865287eb1cf6a60411b66",
+          "round": 0
+        },
+        {
+          "mode": "rust-worker",
+          "lines": 10,
+          "stations": 25,
+          "samplesMs": [
+            90.179082,
+            85.32525099999998,
+            78.91302900000005,
+            76.06782099999998,
+            79.76657
+          ],
+          "medianMs": 79.76657,
+          "cpuMicros": [
+            147103,
+            111258,
+            102236,
+            94314,
+            102409
+          ],
+          "heapMiB": [
+            17.317787170410156,
+            17.337203979492188,
+            17.341384887695312,
+            17.329849243164062,
+            17.41119384765625
+          ],
+          "eventLoopMaxMs": [
+            1.3344939999999497,
+            0.9004410000000007,
+            1.024658000000045,
+            0.8774670000000242,
+            0.7259780000000546
+          ],
+          "peakRssMiB": 153.23046875,
+          "wasmMiB": 8,
+          "requests": 583,
+          "inputBytes": 12837524,
+          "outputBytes": 11235168,
+          "generated": 7542,
+          "completed": 7300,
+          "checksum": "a0f04535ad5a214ede16d50169f3516165e13e08044865287eb1cf6a60411b66",
+          "round": 1
+        },
+        {
+          "mode": "rust-sync",
+          "lines": 10,
+          "stations": 25,
+          "samplesMs": [
+            92.12716600000005,
+            87.22470599999997,
+            86.32691499999999,
+            69.8905739999999,
+            63.187944000000016
+          ],
+          "medianMs": 86.32691499999999,
+          "cpuMicros": [
+            171895,
+            142017,
+            118286,
+            105936,
+            86534
+          ],
+          "heapMiB": [
+            16.726722717285156,
+            16.673965454101562,
+            16.732955932617188,
+            16.724220275878906,
+            16.732223510742188
+          ],
+          "eventLoopMaxMs": [
+            91.34047600000002,
+            86.35693500000002,
+            85.51156200000003,
+            69.02362400000004,
+            62.651792
+          ],
+          "peakRssMiB": 138.203125,
+          "wasmMiB": 5.9375,
+          "requests": 0,
+          "inputBytes": 0,
+          "outputBytes": 0,
+          "generated": 7542,
+          "completed": 7300,
+          "checksum": "a0f04535ad5a214ede16d50169f3516165e13e08044865287eb1cf6a60411b66",
+          "round": 1
+        },
+        {
+          "mode": "previous-worker",
+          "lines": 10,
+          "stations": 25,
+          "samplesMs": [
+            78.867141,
+            74.34282999999999,
+            72.42335600000001,
+            77.02305000000001,
+            72.93377499999997
+          ],
+          "medianMs": 74.34282999999999,
+          "cpuMicros": [
+            133105,
+            94664,
+            97789,
+            88294,
+            94917
+          ],
+          "heapMiB": [
+            19.579238891601562,
+            19.635162353515625,
+            19.74053192138672,
+            19.74364471435547,
+            19.854461669921875
+          ],
+          "eventLoopMaxMs": [
+            1.0856999999999744,
+            0.9390190000000302,
+            0.8952419999999393,
+            1.0313879999999926,
+            0.9866410000000769
+          ],
+          "peakRssMiB": 164.0703125,
+          "wasmMiB": 6.625,
+          "requests": 583,
+          "inputBytes": 11542780,
+          "outputBytes": 11235168,
+          "generated": 7542,
+          "completed": 7300,
+          "checksum": "a0f04535ad5a214ede16d50169f3516165e13e08044865287eb1cf6a60411b66",
+          "round": 1
+        },
+        {
+          "mode": "javascript",
+          "lines": 10,
+          "stations": 25,
+          "samplesMs": [
+            52.03141099999996,
+            51.85594600000002,
+            60.981884000000036,
+            41.766610000000014,
+            32.95875100000001
+          ],
+          "medianMs": 51.85594600000002,
+          "cpuMicros": [
+            139425,
+            87296,
+            75956,
+            56772,
+            70868
+          ],
+          "heapMiB": [
+            18.499778747558594,
+            18.574874877929688,
+            18.56922149658203,
+            18.66796112060547,
+            18.712646484375
+          ],
+          "eventLoopMaxMs": [
+            51.241817000000026,
+            51.44499300000001,
+            60.157929000000024,
+            40.86722100000003,
+            32.05850099999998
+          ],
+          "peakRssMiB": 104.83984375,
+          "wasmMiB": 0,
+          "requests": 0,
+          "inputBytes": 0,
+          "outputBytes": 0,
+          "generated": 7542,
+          "completed": 7300,
+          "checksum": "a0f04535ad5a214ede16d50169f3516165e13e08044865287eb1cf6a60411b66",
+          "round": 1
+        }
+      ]
+    },
+    "runtime-large": {
+      "baselineCommit": "498c5cd2af607e60dd1c75a8ba5863c08ac5d4fa",
+      "scope": "Continuous operating core only: shared serialized world/forecast; 30 warmup + 5 x 30 game minutes; unchanged .1-minute quantum; current uses compact DTO; previous/JS receive equivalent full flows; excludes forecast, routing benchmarks, construction, DOM/map rendering and FPS",
+      "method": "Eight independent processes; each loads only its own forecast representation; reversed order in round 2; exact complete state comparison, no excluded fields; forced GC outside timed batches",
+      "lines": 14,
+      "stations": 49,
+      "summary": [
+        {
+          "mode": "javascript",
+          "medianMs": 138.414779,
+          "medianCpuMs": 177.261,
+          "retainedHeapMiB": 49.30314636230469,
+          "eventLoopMaxMs": 166.14113199999997,
+          "peakRssMiB": 176.6015625,
+          "wasmMiB": 0,
+          "requests": 0,
+          "inputBytes": 0,
+          "outputBytes": 0,
+          "checksum": "dd0638f9375ab921d091d0ee124da809121b3c825540713d8896c4f51ce69d18"
+        },
+        {
+          "mode": "previous-worker",
+          "medianMs": 124.8792785,
+          "medianCpuMs": 160.6455,
+          "retainedHeapMiB": 49.39639663696289,
+          "eventLoopMaxMs": 2.9943530000000464,
+          "peakRssMiB": 267.125,
+          "wasmMiB": 18,
+          "requests": 591,
+          "inputBytes": 19525362,
+          "outputBytes": 19655568,
+          "checksum": "dd0638f9375ab921d091d0ee124da809121b3c825540713d8896c4f51ce69d18"
+        },
+        {
+          "mode": "rust-sync",
+          "medianMs": 132.64026099999995,
+          "medianCpuMs": 186.5295,
+          "retainedHeapMiB": 36.81329345703125,
+          "eventLoopMaxMs": 153.41162099999997,
+          "peakRssMiB": 326.51953125,
+          "wasmMiB": 19.75,
+          "requests": 0,
+          "inputBytes": 0,
+          "outputBytes": 0,
+          "checksum": "dd0638f9375ab921d091d0ee124da809121b3c825540713d8896c4f51ce69d18"
+        },
+        {
+          "mode": "rust-worker",
+          "medianMs": 138.46000749999996,
+          "medianCpuMs": 169.5515,
+          "retainedHeapMiB": 37.09653091430664,
+          "eventLoopMaxMs": 1.8039409999998952,
+          "peakRssMiB": 322.640625,
+          "wasmMiB": 24.6875,
+          "requests": 591,
+          "inputBytes": 21088274,
+          "outputBytes": 19655568,
+          "checksum": "dd0638f9375ab921d091d0ee124da809121b3c825540713d8896c4f51ce69d18"
+        }
+      ],
+      "results": [
+        {
+          "mode": "javascript",
+          "lines": 14,
+          "stations": 49,
+          "samplesMs": [
+            166.92627900000002,
+            139.244911,
+            151.93008599999996,
+            104.04779699999995,
+            79.85250399999995
+          ],
+          "medianMs": 139.244911,
+          "cpuMicros": [
+            273059,
+            199345,
+            212365,
+            136787,
+            89287
+          ],
+          "heapMiB": [
+            49.036094665527344,
+            49.17485046386719,
+            49.313568115234375,
+            49.30302429199219,
+            49.47168731689453
+          ],
+          "eventLoopMaxMs": [
+            166.14113199999997,
+            138.38273800000002,
+            151.09160899999995,
+            103.19194399999992,
+            78.97544999999991
+          ],
+          "peakRssMiB": 176.6015625,
+          "wasmMiB": 0,
+          "requests": 0,
+          "inputBytes": 0,
+          "outputBytes": 0,
+          "generated": 22974,
+          "completed": 22028,
+          "checksum": "dd0638f9375ab921d091d0ee124da809121b3c825540713d8896c4f51ce69d18",
+          "round": 0
+        },
+        {
+          "mode": "previous-worker",
+          "lines": 14,
+          "stations": 49,
+          "samplesMs": [
+            134.05968500000006,
+            115.45156299999996,
+            117.79297700000006,
+            111.51691499999993,
+            111.96397300000012
+          ],
+          "medianMs": 115.45156299999996,
+          "cpuMicros": [
+            185056,
+            140971,
+            144292,
+            136857,
+            156829
+          ],
+          "heapMiB": [
+            49.156349182128906,
+            49.347801208496094,
+            49.394073486328125,
+            49.5789794921875,
+            49.77006530761719
+          ],
+          "eventLoopMaxMs": [
+            1.4829220000000305,
+            1.0260200000000168,
+            0.9306659999999738,
+            0.913379999999961,
+            1.1300660000001699
+          ],
+          "peakRssMiB": 262.80078125,
+          "wasmMiB": 18,
+          "requests": 591,
+          "inputBytes": 19525362,
+          "outputBytes": 19655568,
+          "generated": 22974,
+          "completed": 22028,
+          "checksum": "dd0638f9375ab921d091d0ee124da809121b3c825540713d8896c4f51ce69d18",
+          "round": 0
+        },
+        {
+          "mode": "rust-sync",
+          "lines": 14,
+          "stations": 49,
+          "samplesMs": [
+            152.33877100000007,
+            130.71466999999996,
+            122.03235900000004,
+            135.73828200000003,
+            103.1803809999999
+          ],
+          "medianMs": 130.71466999999996,
+          "cpuMicros": [
+            245985,
+            200268,
+            178626,
+            150651,
+            128216
+          ],
+          "heapMiB": [
+            36.812347412109375,
+            36.814239501953125,
+            36.91815948486328,
+            36.693939208984375,
+            36.699974060058594
+          ],
+          "eventLoopMaxMs": [
+            153.41162099999997,
+            131.26011500000004,
+            122.48892300000011,
+            136.1656599999999,
+            102.58836499999984
+          ],
+          "peakRssMiB": 325.95703125,
+          "wasmMiB": 19.75,
+          "requests": 0,
+          "inputBytes": 0,
+          "outputBytes": 0,
+          "generated": 22974,
+          "completed": 22028,
+          "checksum": "dd0638f9375ab921d091d0ee124da809121b3c825540713d8896c4f51ce69d18",
+          "round": 0
+        },
+        {
+          "mode": "rust-worker",
+          "lines": 14,
+          "stations": 49,
+          "samplesMs": [
+            140.480821,
+            137.14712100000008,
+            137.80081599999994,
+            138.23327700000004,
+            127.338031
+          ],
+          "medianMs": 137.80081599999994,
+          "cpuMicros": [
+            199630,
+            165712,
+            176495,
+            168903,
+            160198
+          ],
+          "heapMiB": [
+            36.989654541015625,
+            37.02483367919922,
+            37.09912109375,
+            37.13371276855469,
+            37.211585998535156
+          ],
+          "eventLoopMaxMs": [
+            1.8039409999998952,
+            1.7378510000000915,
+            1.328695999999809,
+            1.5804440000001705,
+            1.3421100000000479
+          ],
+          "peakRssMiB": 322.640625,
+          "wasmMiB": 24.6875,
+          "requests": 591,
+          "inputBytes": 21088274,
+          "outputBytes": 19655568,
+          "generated": 22974,
+          "completed": 22028,
+          "checksum": "dd0638f9375ab921d091d0ee124da809121b3c825540713d8896c4f51ce69d18",
+          "round": 0
+        },
+        {
+          "mode": "rust-worker",
+          "lines": 14,
+          "stations": 49,
+          "samplesMs": [
+            153.937813,
+            143.71661299999994,
+            149.55342199999996,
+            138.68673799999988,
+            121.5821390000001
+          ],
+          "medianMs": 143.71661299999994,
+          "cpuMicros": [
+            219935,
+            170200,
+            183763,
+            168643,
+            156969
+          ],
+          "heapMiB": [
+            36.985206604003906,
+            37.02239227294922,
+            37.09394073486328,
+            37.129554748535156,
+            37.207069396972656
+          ],
+          "eventLoopMaxMs": [
+            1.7970599999999877,
+            1.399974000000043,
+            1.6063650000000962,
+            1.4412560000000667,
+            1.04438899999991
+          ],
+          "peakRssMiB": 312.82421875,
+          "wasmMiB": 24.6875,
+          "requests": 591,
+          "inputBytes": 21088274,
+          "outputBytes": 19655568,
+          "generated": 22974,
+          "completed": 22028,
+          "checksum": "dd0638f9375ab921d091d0ee124da809121b3c825540713d8896c4f51ce69d18",
+          "round": 1
+        },
+        {
+          "mode": "rust-sync",
+          "lines": 14,
+          "stations": 49,
+          "samplesMs": [
+            140.05998499999998,
+            134.56585199999995,
+            147.98796400000003,
+            115.67294199999992,
+            109.63075300000014
+          ],
+          "medianMs": 134.56585199999995,
+          "cpuMicros": [
+            229912,
+            194433,
+            196969,
+            130630,
+            129911
+          ],
+          "heapMiB": [
+            36.8145751953125,
+            36.81487274169922,
+            36.94556427001953,
+            36.680320739746094,
+            36.6939697265625
+          ],
+          "eventLoopMaxMs": [
+            140.79137300000002,
+            134.96097299999997,
+            148.360731,
+            117.30931099999998,
+            110.9450069999998
+          ],
+          "peakRssMiB": 326.51953125,
+          "wasmMiB": 19.75,
+          "requests": 0,
+          "inputBytes": 0,
+          "outputBytes": 0,
+          "generated": 22974,
+          "completed": 22028,
+          "checksum": "dd0638f9375ab921d091d0ee124da809121b3c825540713d8896c4f51ce69d18",
+          "round": 1
+        },
+        {
+          "mode": "previous-worker",
+          "lines": 14,
+          "stations": 49,
+          "samplesMs": [
+            124.32378800000004,
+            141.5732999999999,
+            146.19917099999998,
+            125.43476899999996,
+            127.4681720000001
+          ],
+          "medianMs": 127.4681720000001,
+          "cpuMicros": [
+            177434,
+            164462,
+            171544,
+            149668,
+            248109
+          ],
+          "heapMiB": [
+            49.15766143798828,
+            49.348602294921875,
+            49.398719787597656,
+            49.579620361328125,
+            49.781341552734375
+          ],
+          "eventLoopMaxMs": [
+            1.30174599999998,
+            2.8324119999999766,
+            1.280864000000065,
+            1.7987140000000181,
+            2.9943530000000464
+          ],
+          "peakRssMiB": 267.125,
+          "wasmMiB": 18,
+          "requests": 591,
+          "inputBytes": 19525362,
+          "outputBytes": 19655568,
+          "generated": 22974,
+          "completed": 22028,
+          "checksum": "dd0638f9375ab921d091d0ee124da809121b3c825540713d8896c4f51ce69d18",
+          "round": 1
+        },
+        {
+          "mode": "javascript",
+          "lines": 14,
+          "stations": 49,
+          "samplesMs": [
+            144.39054100000004,
+            137.58464700000002,
+            139.784083,
+            99.64427400000011,
+            77.48007099999995
+          ],
+          "medianMs": 137.58464700000002,
+          "cpuMicros": [
+            270295,
+            220735,
+            155177,
+            118575,
+            86621
+          ],
+          "heapMiB": [
+            49.03234100341797,
+            49.17981719970703,
+            49.313262939453125,
+            49.30326843261719,
+            49.47095489501953
+          ],
+          "eventLoopMaxMs": [
+            143.60993199999996,
+            136.72380499999997,
+            139.795295,
+            98.80027000000007,
+            76.60366699999986
+          ],
+          "peakRssMiB": 176.6015625,
+          "wasmMiB": 0,
+          "requests": 0,
+          "inputBytes": 0,
+          "outputBytes": 0,
+          "generated": 22974,
+          "completed": 22028,
+          "checksum": "dd0638f9375ab921d091d0ee124da809121b3c825540713d8896c4f51ce69d18",
+          "round": 1
+        }
+      ]
+    },
+    "migration": {
+      "kind": "migration",
+      "size": "small",
+      "baselineCommit": "498c5cd2af607e60dd1c75a8ba5863c08ac5d4fa",
+      "method": "independent sources/processes, reversed second round; exact complete cold state or specified complete forecast fields; GC outside measurements",
+      "summary": [
+        {
+          "mode": "javascript",
+          "medianMs": 2.836715499999997,
+          "medianCpuMs": 5.9704999999999995,
+          "retainedHeapMiB": 10.257919311523438,
+          "peakRssMiB": 76.66015625,
+          "arrayBuffersMiB": 0.13997173309326172,
+          "wasmMiB": 0
+        },
+        {
+          "mode": "previous",
+          "medianMs": 2.345726500000012,
+          "medianCpuMs": 6.3105,
+          "retainedHeapMiB": 11.447975158691406,
+          "peakRssMiB": 112.91015625,
+          "arrayBuffersMiB": 0.1605367660522461,
+          "wasmMiB": 1.75
+        },
+        {
+          "mode": "current",
+          "medianMs": 16.808707000000055,
+          "medianCpuMs": 34.856,
+          "retainedHeapMiB": 11.99886703491211,
+          "peakRssMiB": 136.99609375,
+          "arrayBuffersMiB": 0.15762996673583984,
+          "wasmMiB": 4.6875
+        }
+      ],
+      "results": [
+        {
+          "mode": "javascript",
+          "kind": "migration",
+          "samplesMs": [
+            5.245997000000017,
+            2.3863420000000133,
+            2.6355170000000214,
+            2.562466999999998,
+            3.0092500000000086,
+            2.3866729999999734
+          ],
+          "cpuMs": [
+            9.195,
+            4.764,
+            6.056,
+            5.885,
+            12.342,
+            4.439
+          ],
+          "retainedHeapMiB": 10.273857116699219,
+          "arrayBuffersMiB": 0.13997173309326172,
+          "peakRssMiB": 74.36328125,
+          "wasmMiB": 0,
+          "round": 0
+        },
+        {
+          "mode": "previous",
+          "kind": "migration",
+          "samplesMs": [
+            6.362277000000006,
+            2.8159689999999955,
+            2.3964880000000335,
+            2.2949649999999906,
+            1.9016529999999534,
+            2.467875000000049
+          ],
+          "cpuMs": [
+            10.253,
+            5.371,
+            7.185,
+            9.176,
+            4.317,
+            7.607
+          ],
+          "retainedHeapMiB": 11.449806213378906,
+          "arrayBuffersMiB": 0.1605367660522461,
+          "peakRssMiB": 100.02734375,
+          "wasmMiB": 1.75,
+          "round": 0
+        },
+        {
+          "mode": "current",
+          "kind": "migration",
+          "samplesMs": [
+            27.068566000000004,
+            15.875667000000021,
+            19.22259600000001,
+            17.07359100000002,
+            14.915613000000008,
+            14.829022000000009
+          ],
+          "cpuMs": [
+            76.01,
+            32.966,
+            36.746,
+            56.047,
+            26.682,
+            26.107
+          ],
+          "retainedHeapMiB": 11.963699340820312,
+          "arrayBuffersMiB": 0.15762996673583984,
+          "peakRssMiB": 136.99609375,
+          "wasmMiB": 4.6875,
+          "round": 0
+        },
+        {
+          "mode": "current",
+          "kind": "migration",
+          "samplesMs": [
+            29.341667,
+            15.287622999999996,
+            21.207022999999992,
+            19.015052999999966,
+            14.109027999999967,
+            16.54382300000009
+          ],
+          "cpuMs": [
+            77.592,
+            30.277,
+            38.199,
+            61.264,
+            26.186,
+            29.405
+          ],
+          "retainedHeapMiB": 12.034034729003906,
+          "arrayBuffersMiB": 0.15762996673583984,
+          "peakRssMiB": 118.328125,
+          "wasmMiB": 4.6875,
+          "round": 1
+        },
+        {
+          "mode": "previous",
+          "kind": "migration",
+          "samplesMs": [
+            6.50372999999999,
+            2.6617769999999723,
+            2.150346000000013,
+            1.7561830000000214,
+            1.7963040000000206,
+            1.9931600000000458
+          ],
+          "cpuMs": [
+            10.921,
+            5.228,
+            5.522,
+            7.099,
+            4.077,
+            4.735
+          ],
+          "retainedHeapMiB": 11.446144104003906,
+          "arrayBuffersMiB": 0.1605367660522461,
+          "peakRssMiB": 112.91015625,
+          "wasmMiB": 1.75,
+          "round": 1
+        },
+        {
+          "mode": "javascript",
+          "kind": "migration",
+          "samplesMs": [
+            5.276782999999995,
+            2.4163269999999955,
+            3.372877000000017,
+            2.975099,
+            3.286486999999994,
+            2.6983319999999935
+          ],
+          "cpuMs": [
+            8.514,
+            4.712,
+            7.495,
+            5.713,
+            6.599,
+            5.325
+          ],
+          "retainedHeapMiB": 10.241981506347656,
+          "arrayBuffersMiB": 0.13997173309326172,
+          "peakRssMiB": 76.66015625,
+          "wasmMiB": 0,
+          "round": 1
+        }
+      ]
+    },
+    "urban-small": {
+      "kind": "urban",
+      "size": "small",
+      "baselineCommit": "498c5cd2af607e60dd1c75a8ba5863c08ac5d4fa",
+      "method": "independent sources/processes, reversed second round; exact complete cold state or specified complete forecast fields; GC outside measurements",
+      "summary": [
+        {
+          "mode": "javascript",
+          "medianMs": 2.701352000000014,
+          "medianCpuMs": 10.441500000000001,
+          "retainedHeapMiB": 28.07504653930664,
+          "peakRssMiB": 137.07421875,
+          "arrayBuffersMiB": 0.13997173309326172,
+          "wasmMiB": 0
+        },
+        {
+          "mode": "previous",
+          "medianMs": 2.8213030000000003,
+          "medianCpuMs": 9.957,
+          "retainedHeapMiB": 28.188491821289062,
+          "peakRssMiB": 141.67578125,
+          "arrayBuffersMiB": 0.14095211029052734,
+          "wasmMiB": 1.0625
+        },
+        {
+          "mode": "current",
+          "medianMs": 4.033908500000024,
+          "medianCpuMs": 13.166,
+          "retainedHeapMiB": 28.166305541992188,
+          "peakRssMiB": 153.64453125,
+          "arrayBuffersMiB": 0.16516780853271484,
+          "wasmMiB": 1.5
+        }
+      ],
+      "results": [
+        {
+          "mode": "javascript",
+          "kind": "urban",
+          "samplesMs": [
+            3.5306750000000306,
+            3.89169899999996,
+            3.3001090000000204,
+            3.2434540000000425,
+            2.9818089999999984,
+            2.284940000000006,
+            2.6501200000000154,
+            2.298090000000002
+          ],
+          "cpuMs": [
+            10.71,
+            13.666,
+            13.255,
+            10.909,
+            10.173,
+            8.982,
+            7.472,
+            11.417
+          ],
+          "retainedHeapMiB": 28.08818817138672,
+          "arrayBuffersMiB": 0.13997173309326172,
+          "peakRssMiB": 137.07421875,
+          "wasmMiB": 0,
+          "round": 0
+        },
+        {
+          "mode": "previous",
+          "kind": "urban",
+          "samplesMs": [
+            3.489944000000037,
+            3.4894939999999792,
+            3.2440030000000206,
+            3.093416999999988,
+            3.100238000000047,
+            3.1620399999999904,
+            3.0629200000000196,
+            2.312561999999957
+          ],
+          "cpuMs": [
+            12.11,
+            12.875,
+            13.221,
+            10.901,
+            9.34,
+            11.852,
+            10.009,
+            9.309
+          ],
+          "retainedHeapMiB": 28.183975219726562,
+          "arrayBuffersMiB": 0.14095211029052734,
+          "peakRssMiB": 138.96484375,
+          "wasmMiB": 1.0625,
+          "round": 0
+        },
+        {
+          "mode": "current",
+          "kind": "urban",
+          "samplesMs": [
+            3.94296700000001,
+            4.025831000000039,
+            3.896226000000013,
+            3.953901999999971,
+            3.399128000000019,
+            3.7044670000000224,
+            3.499409000000014,
+            3.5374250000000416
+          ],
+          "cpuMs": [
+            13.08,
+            11.967,
+            15.542,
+            15.304,
+            11.93,
+            13.252,
+            10.644,
+            11.882
+          ],
+          "retainedHeapMiB": 28.172584533691406,
+          "arrayBuffersMiB": 0.18938350677490234,
+          "peakRssMiB": 150.31640625,
+          "wasmMiB": 1.5,
+          "round": 0
+        },
+        {
+          "mode": "current",
+          "kind": "urban",
+          "samplesMs": [
+            4.0419860000000085,
+            4.8575120000000425,
+            5.73182799999995,
+            5.42343500000004,
+            4.284660000000031,
+            4.283869999999979,
+            4.250799000000029,
+            4.295556999999974
+          ],
+          "cpuMs": [
+            10.731,
+            11.822,
+            17.981,
+            25.603,
+            11.825,
+            13.582,
+            13.529,
+            13.4
+          ],
+          "retainedHeapMiB": 28.16002655029297,
+          "arrayBuffersMiB": 0.14095211029052734,
+          "peakRssMiB": 153.64453125,
+          "wasmMiB": 1.5,
+          "round": 1
+        },
+        {
+          "mode": "previous",
+          "kind": "urban",
+          "samplesMs": [
+            2.535907000000009,
+            2.8929660000000013,
+            2.2631769999999847,
+            2.7496399999999994,
+            2.318038999999999,
+            2.3036480000000097,
+            2.3312700000000177,
+            2.2973390000000222
+          ],
+          "cpuMs": [
+            6.607,
+            13.151,
+            4.614,
+            12.292,
+            9.905,
+            9.526,
+            9.088,
+            6.904
+          ],
+          "retainedHeapMiB": 28.193008422851562,
+          "arrayBuffersMiB": 0.14095211029052734,
+          "peakRssMiB": 141.67578125,
+          "wasmMiB": 1.0625,
+          "round": 1
+        },
+        {
+          "mode": "javascript",
+          "kind": "urban",
+          "samplesMs": [
+            2.575937999999951,
+            2.4572390000000155,
+            2.3572489999999675,
+            2.8586930000000166,
+            2.752584000000013,
+            3.427139000000011,
+            2.3238080000000423,
+            2.3204430000000116
+          ],
+          "cpuMs": [
+            10.062,
+            9.812,
+            8.477,
+            13.258,
+            10.901,
+            11.069,
+            9.849,
+            9.374
+          ],
+          "retainedHeapMiB": 28.061904907226562,
+          "arrayBuffersMiB": 0.13997173309326172,
+          "peakRssMiB": 134.42578125,
+          "wasmMiB": 0,
+          "round": 1
+        }
+      ]
+    },
+    "urban-large": {
+      "kind": "urban",
+      "size": "large",
+      "baselineCommit": "498c5cd2af607e60dd1c75a8ba5863c08ac5d4fa",
+      "method": "independent sources/processes, reversed second round; exact complete cold state or specified complete forecast fields; GC outside measurements",
+      "summary": [
+        {
+          "mode": "javascript",
+          "medianMs": 14.516263500000008,
+          "medianCpuMs": 31.6435,
+          "retainedHeapMiB": 28.216163635253906,
+          "peakRssMiB": 139.1875,
+          "arrayBuffersMiB": 0.13997173309326172,
+          "wasmMiB": 0
+        },
+        {
+          "mode": "previous",
+          "medianMs": 13.690440999999993,
+          "medianCpuMs": 32.2605,
+          "retainedHeapMiB": 28.320602416992188,
+          "peakRssMiB": 143.890625,
+          "arrayBuffersMiB": 0.14095211029052734,
+          "wasmMiB": 1.0625
+        },
+        {
+          "mode": "current",
+          "medianMs": 20.437669,
+          "medianCpuMs": 31.9495,
+          "retainedHeapMiB": 28.17330551147461,
+          "peakRssMiB": 149.90234375,
+          "arrayBuffersMiB": 0.14095211029052734,
+          "wasmMiB": 1.9375
+        }
+      ],
+      "results": [
+        {
+          "mode": "javascript",
+          "kind": "urban",
+          "samplesMs": [
+            17.10710499999999,
+            14.136883999999952,
+            14.649715000000015,
+            16.48279500000001,
+            12.56930299999999,
+            11.825322999999969,
+            18.326620999999932,
+            18.620391999999924
+          ],
+          "cpuMs": [
+            48.181,
+            27.058,
+            34.198,
+            40.484,
+            21.059,
+            21.159,
+            28.77,
+            38.747
+          ],
+          "retainedHeapMiB": 28.21484375,
+          "arrayBuffersMiB": 0.13997173309326172,
+          "peakRssMiB": 139.1875,
+          "wasmMiB": 0,
+          "round": 0
+        },
+        {
+          "mode": "previous",
+          "kind": "urban",
+          "samplesMs": [
+            21.252815999999996,
+            13.350178999999969,
+            14.838708999999994,
+            12.85328000000004,
+            11.311980000000005,
+            11.750630000000001,
+            17.619526000000008,
+            17.670753999999988
+          ],
+          "cpuMs": [
+            52.402,
+            25.921,
+            33.31,
+            32.064,
+            19.929,
+            21.359,
+            30.608,
+            40.73
+          ],
+          "retainedHeapMiB": 28.320816040039062,
+          "arrayBuffersMiB": 0.14095211029052734,
+          "peakRssMiB": 139.60546875,
+          "wasmMiB": 1.0625,
+          "round": 0
+        },
+        {
+          "mode": "current",
+          "kind": "urban",
+          "samplesMs": [
+            15.336488999999972,
+            16.98035299999998,
+            14.270183999999972,
+            14.393159000000026,
+            18.596768000000054,
+            23.140348000000017,
+            22.88114799999994,
+            22.64141600000005
+          ],
+          "cpuMs": [
+            31.582,
+            39.386,
+            26.379,
+            23.15,
+            30.134,
+            32.734,
+            32.183,
+            34.33
+          ],
+          "retainedHeapMiB": 28.172988891601562,
+          "arrayBuffersMiB": 0.14095211029052734,
+          "peakRssMiB": 149.90234375,
+          "wasmMiB": 1.9375,
+          "round": 0
+        },
+        {
+          "mode": "current",
+          "kind": "urban",
+          "samplesMs": [
+            24.836962000000028,
+            24.040362000000016,
+            23.346727999999985,
+            22.538121000000046,
+            22.278569999999945,
+            16.858010000000036,
+            14.74708099999998,
+            16.10194100000001
+          ],
+          "cpuMs": [
+            41.072,
+            51.118,
+            35.351,
+            31.89,
+            32.009,
+            26.745,
+            23.102,
+            26.512
+          ],
+          "retainedHeapMiB": 28.173622131347656,
+          "arrayBuffersMiB": 0.14095211029052734,
+          "peakRssMiB": 149.7890625,
+          "wasmMiB": 1.9375,
+          "round": 1
+        },
+        {
+          "mode": "previous",
+          "kind": "urban",
+          "samplesMs": [
+            17.33531800000003,
+            14.013557999999989,
+            13.367323999999996,
+            12.84286499999996,
+            11.002724,
+            11.779363999999987,
+            21.877736999999968,
+            17.866948000000036
+          ],
+          "cpuMs": [
+            46.034,
+            26.746,
+            32.457,
+            33.434,
+            19.302,
+            21.501,
+            35.49,
+            35.817
+          ],
+          "retainedHeapMiB": 28.320388793945312,
+          "arrayBuffersMiB": 0.14095211029052734,
+          "peakRssMiB": 143.890625,
+          "wasmMiB": 1.0625,
+          "round": 1
+        },
+        {
+          "mode": "javascript",
+          "kind": "urban",
+          "samplesMs": [
+            14.973552999999981,
+            14.382812000000001,
+            13.46751599999999,
+            13.189407000000017,
+            11.212820000000022,
+            11.252771000000052,
+            18.906672999999955,
+            17.43322599999999
+          ],
+          "cpuMs": [
+            42.625,
+            28.187,
+            30.174,
+            33.58,
+            19.679,
+            20.037,
+            33.113,
+            37.15
+          ],
+          "retainedHeapMiB": 28.217483520507812,
+          "arrayBuffersMiB": 0.13997173309326172,
+          "peakRssMiB": 138.47265625,
+          "wasmMiB": 0,
+          "round": 1
+        }
+      ]
+    },
+    "forecast-small": {
+      "kind": "forecast",
+      "size": "small",
+      "baselineCommit": "498c5cd2af607e60dd1c75a8ba5863c08ac5d4fa",
+      "method": "independent sources/processes, reversed second round; exact complete cold state or specified complete forecast fields; GC outside measurements",
+      "summary": [
+        {
+          "mode": "javascript",
+          "medianMs": 2662.1893800000007,
+          "medianCpuMs": 2882.8095000000003,
+          "retainedHeapMiB": 15.62701416015625,
+          "peakRssMiB": 257.2890625,
+          "arrayBuffersMiB": 0.14182567596435547,
+          "wasmMiB": 0,
+          "catalog": null,
+          "profiles": 6000
+        },
+        {
+          "mode": "previous",
+          "medianMs": 521.557609,
+          "medianCpuMs": 552.694,
+          "retainedHeapMiB": 12.60006332397461,
+          "peakRssMiB": 118.99609375,
+          "arrayBuffersMiB": 0.16112422943115234,
+          "wasmMiB": 13.4375,
+          "catalog": null,
+          "profiles": 6000
+        },
+        {
+          "mode": "current",
+          "medianMs": 540.844281,
+          "medianCpuMs": 586.9525,
+          "retainedHeapMiB": 8.571063995361328,
+          "peakRssMiB": 130.5859375,
+          "arrayBuffersMiB": 2.88956356048584,
+          "wasmMiB": 13.4375,
+          "catalog": {
+            "count": 6000,
+            "bytes": 2822408,
+            "retainedFlowViews": 0,
+            "retainedContractViews": 0,
+            "limit": 256
+          },
+          "profiles": 6000
+        }
+      ],
+      "results": [
+        {
+          "mode": "javascript",
+          "kind": "forecast",
+          "samplesMs": [
+            2680.3448270000004,
+            2867.0210249999996,
+            2644.0339330000006
+          ],
+          "cpuMs": [
+            2960.234,
+            3103.975,
+            2805.385
+          ],
+          "retainedHeapMiB": 15.615180969238281,
+          "arrayBuffersMiB": 0.14182567596435547,
+          "peakRssMiB": 255.0234375,
+          "wasmMiB": 0,
+          "catalog": null,
+          "profiles": 6000,
+          "round": 0
+        },
+        {
+          "mode": "previous",
+          "kind": "forecast",
+          "samplesMs": [
+            559.199327,
+            505.70963599999993,
+            524.0159549999998
+          ],
+          "cpuMs": [
+            699.625,
+            538.958,
+            557.92
+          ],
+          "retainedHeapMiB": 12.592338562011719,
+          "arrayBuffersMiB": 0.1701192855834961,
+          "peakRssMiB": 114.4609375,
+          "wasmMiB": 13.4375,
+          "catalog": null,
+          "profiles": 6000,
+          "round": 0
+        },
+        {
+          "mode": "current",
+          "kind": "forecast",
+          "samplesMs": [
+            563.5757040000001,
+            498.08801300000005,
+            553.2675899999999
+          ],
+          "cpuMs": [
+            704.331,
+            560.163,
+            582.744
+          ],
+          "retainedHeapMiB": 8.570938110351562,
+          "arrayBuffersMiB": 2.88956356048584,
+          "peakRssMiB": 130.5859375,
+          "wasmMiB": 13.4375,
+          "catalog": {
+            "count": 6000,
+            "bytes": 2822408,
+            "retainedFlowViews": 0,
+            "retainedContractViews": 0,
+            "limit": 256
+          },
+          "profiles": 6000,
+          "round": 0
+        },
+        {
+          "mode": "current",
+          "kind": "forecast",
+          "samplesMs": [
+            602.473915,
+            528.4209720000001,
+            509.245672
+          ],
+          "cpuMs": [
+            776.585,
+            591.161,
+            538.683
+          ],
+          "retainedHeapMiB": 8.571189880371094,
+          "arrayBuffersMiB": 2.88956356048584,
+          "peakRssMiB": 125.40625,
+          "wasmMiB": 13.4375,
+          "catalog": {
+            "count": 6000,
+            "bytes": 2822408,
+            "retainedFlowViews": 0,
+            "retainedContractViews": 0,
+            "limit": 256
+          },
+          "profiles": 6000,
+          "round": 1
+        },
+        {
+          "mode": "previous",
+          "kind": "forecast",
+          "samplesMs": [
+            563.694789,
+            519.099263,
+            492.70738700000015
+          ],
+          "cpuMs": [
+            695.276,
+            547.468,
+            542.627
+          ],
+          "retainedHeapMiB": 12.6077880859375,
+          "arrayBuffersMiB": 0.1521291732788086,
+          "peakRssMiB": 118.99609375,
+          "wasmMiB": 13.4375,
+          "catalog": null,
+          "profiles": 6000,
+          "round": 1
+        },
+        {
+          "mode": "javascript",
+          "kind": "forecast",
+          "samplesMs": [
+            2725.927947,
+            2573.5681120000004,
+            2530.1177560000006
+          ],
+          "cpuMs": [
+            3016.883,
+            2799.396,
+            2693.92
+          ],
+          "retainedHeapMiB": 15.638847351074219,
+          "arrayBuffersMiB": 0.14182567596435547,
+          "peakRssMiB": 257.2890625,
+          "wasmMiB": 0,
+          "catalog": null,
+          "profiles": 6000,
+          "round": 1
+        }
+      ]
+    },
+    "forecast-large": {
+      "kind": "forecast",
+      "size": "large",
+      "baselineCommit": "498c5cd2af607e60dd1c75a8ba5863c08ac5d4fa",
+      "method": "independent sources/processes, reversed second round; exact complete cold state or specified complete forecast fields; GC outside measurements",
+      "summary": [
+        {
+          "mode": "javascript",
+          "medianMs": 88917.6225275,
+          "medianCpuMs": 91841.648,
+          "retainedHeapMiB": 37.91121292114258,
+          "peakRssMiB": 350.71484375,
+          "arrayBuffersMiB": 0.14912700653076172,
+          "wasmMiB": 0,
+          "catalog": null,
+          "profiles": 24696
+        },
+        {
+          "mode": "previous",
+          "medianMs": 15440.831481000001,
+          "medianCpuMs": 15685.253,
+          "retainedHeapMiB": 26.502674102783203,
+          "peakRssMiB": 238.84765625,
+          "arrayBuffersMiB": 0.1637258529663086,
+          "wasmMiB": 46.25,
+          "catalog": null,
+          "profiles": 24696
+        },
+        {
+          "mode": "current",
+          "medianMs": 15520.3952365,
+          "medianCpuMs": 15764.5085,
+          "retainedHeapMiB": 8.824020385742188,
+          "peakRssMiB": 299.56640625,
+          "arrayBuffersMiB": 11.78269100189209,
+          "wasmMiB": 46.25,
+          "catalog": {
+            "count": 24696,
+            "bytes": 11985800,
+            "retainedFlowViews": 0,
+            "retainedContractViews": 0,
+            "limit": 256
+          },
+          "profiles": 24696
+        }
+      ],
+      "results": [
+        {
+          "mode": "javascript",
+          "kind": "forecast",
+          "samplesMs": [
+            89847.574487
+          ],
+          "cpuMs": [
+            92768.906
+          ],
+          "retainedHeapMiB": 37.920127868652344,
+          "arrayBuffersMiB": 0.14912700653076172,
+          "peakRssMiB": 346.51171875,
+          "wasmMiB": 0,
+          "catalog": null,
+          "profiles": 24696,
+          "round": 0
+        },
+        {
+          "mode": "previous",
+          "kind": "forecast",
+          "samplesMs": [
+            14781.78159
+          ],
+          "cpuMs": [
+            14988.172
+          ],
+          "retainedHeapMiB": 26.56316375732422,
+          "arrayBuffersMiB": 0.1637258529663086,
+          "peakRssMiB": 237.8671875,
+          "wasmMiB": 46.25,
+          "catalog": null,
+          "profiles": 24696,
+          "round": 0
+        },
+        {
+          "mode": "current",
+          "kind": "forecast",
+          "samplesMs": [
+            14978.640245
+          ],
+          "cpuMs": [
+            15210.705
+          ],
+          "retainedHeapMiB": 8.824302673339844,
+          "arrayBuffersMiB": 11.78269100189209,
+          "peakRssMiB": 294.7109375,
+          "wasmMiB": 46.25,
+          "catalog": {
+            "count": 24696,
+            "bytes": 11985800,
+            "retainedFlowViews": 0,
+            "retainedContractViews": 0,
+            "limit": 256
+          },
+          "profiles": 24696,
+          "round": 0
+        },
+        {
+          "mode": "current",
+          "kind": "forecast",
+          "samplesMs": [
+            16062.150227999999
+          ],
+          "cpuMs": [
+            16318.312
+          ],
+          "retainedHeapMiB": 8.823738098144531,
+          "arrayBuffersMiB": 11.78269100189209,
+          "peakRssMiB": 299.56640625,
+          "wasmMiB": 46.25,
+          "catalog": {
+            "count": 24696,
+            "bytes": 11985800,
+            "retainedFlowViews": 0,
+            "retainedContractViews": 0,
+            "limit": 256
+          },
+          "profiles": 24696,
+          "round": 1
+        },
+        {
+          "mode": "previous",
+          "kind": "forecast",
+          "samplesMs": [
+            16099.881372
+          ],
+          "cpuMs": [
+            16382.334
+          ],
+          "retainedHeapMiB": 26.442184448242188,
+          "arrayBuffersMiB": 0.1637258529663086,
+          "peakRssMiB": 238.84765625,
+          "wasmMiB": 46.25,
+          "catalog": null,
+          "profiles": 24696,
+          "round": 1
+        },
+        {
+          "mode": "javascript",
+          "kind": "forecast",
+          "samplesMs": [
+            87987.670568
+          ],
+          "cpuMs": [
+            90914.39
+          ],
+          "retainedHeapMiB": 37.90229797363281,
+          "arrayBuffersMiB": 0.14912700653076172,
+          "peakRssMiB": 350.71484375,
+          "wasmMiB": 0,
+          "catalog": null,
+          "profiles": 24696,
+          "round": 1
+        }
+      ]
+    }
+  }
+}

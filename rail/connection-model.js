@@ -25,65 +25,15 @@
   const reserveExternal = (allocations,zones,reachable) => kernels().reserveExternal(allocations,zones,reachable);
 
   function summarize(s, model) {
-    const stations = model.catchment.stations,
-      rows = Object.fromEntries(s.services.map(l => {
-        const stopIds = [...new Set(l.stops)],
-          local = {
-            people: 0,
-            jobs: 0,
-            shops: 0,
-            leisure: 0
-          };
-        for (const id of stopIds) {
-          const st = stations[id];
-          if (st)
-            for (const k of Object.keys(local)) local[k] += st[k] || 0;
-        }
-        return [l.id, {
-          ...local,
-          purposes: {
-            work: 0,
-            shopping: 0,
-            leisure: 0
-          },
-          demand: 0,
-          hub: 0,
-          transfers: 0,
-          shared: 0,
-          travel: 0,
-          homes: new Set(),
-          destinations: new Set()
-        }];
-      }));
-    for (const flow of model.flows) {
-      const amount = flow.demandTrips ?? flow.trips,
-        ids = new Set(flow.path.edges.flatMap(e => (e.parts || []).map(p => p.line)));
-      for (const id of ids) {
-        const row = rows[id];
-        if (!row) continue;
-        row.demand += amount;
-        row.purposes[flow.purpose] = (row.purposes[flow.purpose] || 0) + amount;
-        row.travel += amount * (flow.path.minutes + flow.walk);
-        if (flow.hub) row.hub += amount;
-        if (flow.path.transfers) row.transfers += amount;
-        if (flow.routeOptions > 1) row.shared += amount;
-        row.homes.add(flow.back ? flow.to : flow.from);
-        if (flow.purpose === 'work' && !flow.externalKind?.startsWith('staff')) row.destinations.add(flow
-          .back ? flow.from : flow.to);
-      }
-    }
-    for (const row of Object.values(rows)) {
-      row.reachableJobs = [...row.destinations].reduce((v, id) => v + (stations[id]?.jobs || 0), 0);
-      row.reachableHomes = [...row.homes].reduce((v, id) => v + (stations[id]?.people || 0), 0);
-      row.minutes = row.demand ? row.travel / row.demand : 0;
-      row.sharedShare = row.demand ? row.shared / row.demand : 0;
-      row.transferShare = row.demand ? row.transfers / row.demand : 0;
-      delete row.homes;
-      delete row.destinations;
-      delete row.travel;
-    }
-    return rows;
+    const node=typeof module!=='undefined'&&module.exports,Compact=node?require('./forecast-catalog'):root.RailForecastCatalog,
+      TX=node?require('./transactions-wasm'):root.RailTransactions,dto=Compact.source(model),flows=[];
+    if(dto){let at=0;const d=dto.flowData,purposes=['work','shopping','leisure'],kinds=['visitor-arrival','visitor-return','staff-outbound','staff-homebound','local-departure','local-return'];
+      for(let i=0;i<dto.count;i++){const h=d.subarray(at,at+24);at+=24;const lines=[];for(let n=0;n<h[23];n++)for(const p of dto.graph.edges[d[at++]].parts||[])lines.push(p.line);
+        flows.push([h[0],h[1],purposes[h[2]],!!h[3],h[5],h[19]+h[7],h[10]<0?null:dto.hubs[h[10]],h[22],h[12],h[11]<0?null:kinds[h[11]],lines]);at+=1+d[at]*2;}
+    }else for(const f of model.flows)flows.push([f.from,f.to,f.purpose,f.back,f.demandTrips??f.trips,f.path.minutes+f.walk,f.hub,f.path.transfers,f.routeOptions,f.externalKind,f.path.edges.flatMap(e=>(e.parts||[]).map(p=>p.line))]);
+    return TX.run(30,{services:s.services.map(l=>({id:l.id,stops:l.stops})),stations:model.catchment.stations,flows});
   }
+
   const api = {
     VERSION,
     CAPACITY,

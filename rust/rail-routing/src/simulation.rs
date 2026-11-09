@@ -425,6 +425,20 @@ pub(super) fn snapshot(state: &Option<MotionState>, entity: Option<usize>) -> Ve
     }
     out
 }
+pub(super) fn catalog_factor(model: f64, hub: bool, row: &[f64]) -> f64 {
+    if model == 0.0 || row[0] == 0.0 {
+        1.0
+    } else if model == 22.0 {
+        0.25 + 0.75 * max(0.0, min(1.0, row[1]))
+    } else {
+        let awareness = if hub {
+            1.0 - (1.0 - row[2]) * 0.5
+        } else {
+            row[2]
+        };
+        max(0.0, min(1.0, awareness * row[3]))
+    }
+}
 pub(super) fn calendar_params(
     state: &mut Option<MotionState>,
     blocks: usize,
@@ -435,6 +449,9 @@ pub(super) fn calendar_params(
     s.blocks = blocks;
     for &(uid, open, fleet, dwell) in values {
         if let Some(t) = s.delta.get_mut(&uid) {
+            if t.row[10] != 0.0 {
+                continue;
+            }
             t.row[11] = open;
             t.row[12] = fleet;
             t.row[14] = dwell;
@@ -785,14 +802,7 @@ pub(super) fn timed_sample_rows(
             }
             ids.iter().fold(f64::INFINITY, |value, &id| {
                 let r = &line_rows[id * 4..id * 4 + 4];
-                let factor = if r[0] == 0.0 {
-                    1.0
-                } else if model == 22.0 {
-                    0.25 + 0.75 * max(0.0, min(1.0, r[1]))
-                } else {
-                    let awareness = if *hub { 1.0 - (1.0 - r[2]) * 0.5 } else { r[2] };
-                    max(0.0, min(1.0, awareness * r[3]))
-                };
+                let factor = catalog_factor(model, *hub, r);
                 min(value, factor)
             })
         })

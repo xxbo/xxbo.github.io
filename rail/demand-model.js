@@ -37,8 +37,8 @@
     nestScale: .7
   });
 
-  function evaluate(state,city) {
-    const result=W.evaluate(state,city);
+  function evaluate(state,city,options={}) {
+    const result=W.evaluate(state,city,options);
     if(city.metadata?.effectiveConnections)result.lineConnections=K.summarize(state,result);
     return result;
   }

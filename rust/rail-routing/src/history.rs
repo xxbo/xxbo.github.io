@@ -185,7 +185,10 @@ fn run(input: &[f64]) -> Vec<f64> {
                 ]);
             }
         }
-        5 => {let value=crate::value::read(&mut r);out=crate::value::write(&crate::daily::query(&value));}
+        5 => {
+            let value = crate::value::read(&mut r);
+            out = crate::value::write(&crate::daily::query(&value));
+        }
         _ => panic!("unknown history operation"),
     }
     assert_eq!(r.at, input.len());

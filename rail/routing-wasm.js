@@ -28,6 +28,7 @@
     operationsCalls = 0,
     temporalCalls = 0,
     historyCalls = 0,
+    coldCalls=0,catalogCalls=0,
     timedArrivalCalls = 0,
     nativeTokens = 0,
     recycles = 0;
@@ -43,21 +44,23 @@
     peakMemoryBytes = 0;
   const recycleLimit = () => recycleBytes === 0 ? 0 : Math.max(recycleBytes,
     simulationRecycleBytes);
-  const asset = node ? null : new URL('wasm/rail-core-v17.wasm?v=57',
+  const asset = node ? null : new URL('wasm/rail-core-v19.wasm?v=59',
     root.document?.currentScript?.src || root.location.href).href;
 
   function install(module) {
     const next = new WebAssembly.Instance(module, {
+      rail_host:{json_utf8:(pointer,length,target,capacity)=>{const Wire=node?require('./value-wire'):root.RailValueWire,value=Wire.decode(new Float64Array(instance.exports.memory.buffer,pointer,length)).value,bytes=new TextEncoder().encode(JSON.stringify(value));if(capacity){if(capacity<bytes.length)throw Error('JSON codec buffer is too small');new Uint8Array(instance.exports.memory.buffer,target,bytes.length).set(bytes);}return bytes.length;}},
       rail_math: {
         exp: Math.exp,
         log: Math.log,
         hypot: Math.hypot,
+        sin:Math.sin,log1p:Math.log1p,pow:Math.pow,
         now:()=>kernelNow()
       }
     });
     if (next.exports.routing_abi() !== ABI || next.exports.demand_abi?.() !== 1 || next.exports
       .world_abi?.() !== 1 || next.exports.simulation_abi?.() !== 1 || next.exports.queue_abi?.
-      () !== 1 || next.exports.statistics_abi?.() !== 1 || next.exports.operations_abi?.() !== 1 || next.exports.engine_abi?.() !== 1 || next.exports.engine_prepare_abi?.() !== 1 || next.exports.cycle_abi?.() !== 1 || next.exports.engine_continue_abi?.() !== 1 || next.exports.projection_abi?.() !== 1 || next.exports.calendar_abi?.() !== 1 || next.exports.runtime_query_abi?.() !== 1 || next.exports.history_abi?.() !== 1)
+      () !== 1 || next.exports.statistics_abi?.() !== 1 || next.exports.operations_abi?.() !== 1 || next.exports.engine_abi?.() !== 1 || next.exports.engine_prepare_abi?.() !== 1 || next.exports.cycle_abi?.() !== 1 || next.exports.engine_continue_abi?.() !== 1 || next.exports.projection_abi?.() !== 1 || next.exports.calendar_abi?.() !== 1 || next.exports.runtime_query_abi?.() !== 1 || next.exports.history_abi?.() !== 1 || next.exports.transaction_abi?.()!==1 || next.exports.catalog_abi?.()!==1)
       throw Error('寻路WASM接口版本不匹配');
     compiled = module;
     instance = next;
@@ -277,7 +280,7 @@
   function kernel(name, values, read = null, context = null, bytes = null) {
     if (!['demand_ipf', 'demand_distribution', 'demand_mode', 'demand_strategy',
         'demand_capacity', 'world_run', 'world_policy', 'simulation_run', 'simulation_step',
-        'statistics_run', 'history_run', 'operations_run', 'temporal_run', 'engine_step', 'engine_prepare', 'engine_cycle', 'engine_continue', 'engine_loop', 'runtime_query'
+        'catalog_summary', 'compact_run', 'catalog_run', 'transaction_run', 'statistics_run', 'history_run', 'operations_run', 'temporal_run', 'engine_step', 'engine_prepare', 'engine_cycle', 'engine_continue', 'engine_loop', 'runtime_query'
       ].includes(name)) throw Error('未知需求核心操作');
     try {
       const wasm = exports();
@@ -304,7 +307,7 @@
           values=values.subarray(2,2+values[0]);
         }
         queueSteps++;
-        if (values[0] === 2) statisticsBatches++;
+        if (values[0] >= 2) statisticsBatches++;
         simulationCalls++;
         activeQueueToken = values[1];
         if (values[13] > 0) activeSimulationToken = values[15];
@@ -328,6 +331,8 @@
       else if (name === 'operations_run') operationsCalls++;
       else if (name === 'temporal_run') temporalCalls++;
       else if (name === 'history_run') historyCalls++;
+      else if(name==='transaction_run'||name==='compact_run')coldCalls++;
+      else if(name==='catalog_run'||name==='catalog_summary')catalogCalls++;
       else demandCalls++;
       peakMemoryBytes = Math.max(peakMemoryBytes, wasm.memory.buffer.byteLength);
       if ((name === 'simulation_run'||name==='engine_prepare') && activeQueueToken && recycleBytes >= 64 * 1024 * 1024) {
@@ -405,6 +410,11 @@
     }
   }
   const api = {
+    revisionGraph:plan=>{const X=node?require('./service-plan'):root.RailServicePlan,all={...plan,operatingPlan:true,services:plan.services.map(l=>({...l,dispatchCompiled:true,fleet:Math.max(1,l.fleet)}))},adj=X.network(all),g=GRAPH.get(adj)||prepare(all,adj),weights=plan.services.map(l=>[l.id,X.headway(plan,l),X.loopDwell(plan,l)]),byId=new Map(weights.map(row=>[row[0],row]));return {data:Array.from(g.data),prices:Array.from(prices(plan,g)),services:g.services,lines:g.lines,edges:g.edges.map(e=>({...e,headway:byId.get(e.service)[1],minutes:e.km/48*60+byId.get(e.service)[2]})),weights};},
+
+    catalogViewToken:()=>exports().catalog_view_token(),
+    pathsFromFrame:(values,graph)=>{const data=Float64Array.from(values),tree=new Array(data[1]);for(let i=0;i<tree.length;i++)if(data[8+i*STRIDE]!==-1)tree[i]=i;Object.defineProperty(tree,'routingData',{value:{data,graph}});return tree.map((_,id)=>pathAt(tree,id));},
+    graphFrame:(state,adj)=>{const g=GRAPH.get(adj)||prepare(state,adj);return {data:Array.from(g.data),prices:Array.from(prices(state,g)),services:g.services,lines:g.lines,edges:g.edges};},
     init,
     pinRuntime:value=>{runtimePinned=!!value;},
     reportWorkerStatus:value=>{workerStatus=value;},
@@ -438,7 +448,7 @@
     pathAt,
     paths,
     status: () => ({
-      backend: 'Rust/WASM',
+      backend: 'Rust/WASM',nativeReroutes:instance?.exports.native_reroute_count?.()||0,
       projectionAbi:1,projectionFullValues:instance?.exports.projection_full_values?.()||0,
       projectionSentValues:instance?.exports.projection_sent_values?.()||0,
       arrivalValuesOmitted:instance?.exports.projection_omitted_samples?.()||0,
@@ -460,7 +470,7 @@
       operationsAbi: 1,
       temporalAbi: 1,
       temporalCalls,
-      historyCalls,
+      historyCalls,coldCalls,catalogCalls,
       timedArrivalCalls,
       operationsCalls,
       queueAbi: 1,
@@ -488,7 +498,7 @@
     const fs = require('node:fs'),
       path = require('node:path');
     install(new WebAssembly.Module(fs.readFileSync(path.join(__dirname,
-      'wasm/rail-core-v17.wasm'))));
+      'wasm/rail-core-v19.wasm'))));
     module.exports = api;
   } else {
     root.RailRouting = api;

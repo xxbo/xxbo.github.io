@@ -52,42 +52,9 @@
     tokyo: ['新宿', '渋谷', '池袋', '横浜', '大宮', '千葉', '立川', '町田', '川崎', '柏', '八王子', '船橋']
   };
 
+  const native=(op,s,extra={})=>(typeof module!=='undefined'&&module.exports?require('./transactions-wasm'):root.RailTransactions).run(op,{state:{urban:{lastMinute:s.urban.lastMinute,development:s.urban.development,totals:s.urban.totals}},...extra});
   function enable(s, base, places, hubs, buildable) {
-    const u = s.urban;
-    if (!u || u.development) return false;
-    const rank = new Map((preferred[s.region] || []).map((name, i) => [name, i])),
-      source = places.filter(p => buildable(p) && !hubs.some(h => distance(h, p) < .8)).map((p, i) => ({
-        ...p,
-        order: i
-      })).sort((a, b) => (rank.get(a.name) ?? 999) - (rank.get(b.name) ?? 999) || a.order - b.order),
-      chosen = [];
-    for (const p of source) {
-      if (chosen.length === 12) break;
-      if (chosen.some(x => distance(x, p) < 3.2)) continue;
-      chosen.push(p);
-    }
-    const kinds = Object.keys(KINDS),
-      projects = chosen.map((p, i) => {
-        const kind = /科技|天河|渋谷|新宿|江北/.test(p.name) ? 'business' : /松山湖|南沙|川崎|千葉/.test(p.name) ?
-          'industry' : i % 2 ? 'mixed' : 'residential';
-        return {
-          id: 'dev' + i,
-          name: p.name,
-          kind,
-          x: p.x,
-          y: p.y,
-          radius: 2.4 + (i % 3) * .45,
-          startDay: Math.max(0, Math.floor((i - 1) / 3)) * 4
-        };
-      });
-    u.development = {
-      version: VERSION,
-      started: u.lastMinute,
-      projects,
-      last: null
-    };
-    u.revision++;
-    return true;
+    if(!s.urban||s.urban.development)return false;s.urban.development=native(10,s,{region:s.region,places:places.filter(buildable),hubs});s.urban.revision++;return true;
   }
 
   function valid(s) {
@@ -105,138 +72,24 @@
   }
 
   function phase(s, p) {
-    const d = s.urban.development,
-      day = Math.max(0, (s.urban.lastMinute - d.started) / 1440),
-      age = day - p.startDay;
-    return {
-      day,
-      age,
-      release: age < 0 ? 0 : clamp(.25 + .75 * age / 12),
-      label: age < 0 ? '筹备中' : age < 6 ? '启动建设' : age < 18 ? '持续建设' : '成熟片区',
-      until: Math.max(0, Math.ceil(-age))
-    };
+    const v=native(5,s,{point:p});return {day:v.day,age:v.age,release:v.release,label:v.age<0?'筹备中':v.age<6?'启动建设':v.age<18?'持续建设':'成熟片区',until:v.until};
   }
   const potentialCache = new WeakMap();
 
   function potential(s, p) {
-    const u = s.urban;
-    let cached = potentialCache.get(u);
-    if (!cached || cached.revision !== u.revision || cached.minute !== u.lastMinute) {
-      const bins = new Map();
-      for (const project of u.development?.projects || []) {
-        const release = phase(s, project).release;
-        if (!release) continue;
-        const point = {
-            ...project,
-            release,
-            mix: KINDS[project.kind].mix
-          },
-          r = project.radius * 2 / .045;
-        for (let x = Math.floor((project.x - r) / 120); x <= Math.floor((project.x + r) / 120); x++)
-          for (let y = Math.floor((project.y - r) / 120); y <= Math.floor((project.y + r) / 120); y++) {
-            const key = x + ':' + y;
-            if (!bins.has(key)) bins.set(key, []);
-            bins.get(key).push(point);
-          }
-      }
-      cached = {
-        revision: u.revision,
-        minute: u.lastMinute,
-        bins
-      };
-      potentialCache.set(u, cached);
-    }
-    const values = {
-      r: .08,
-      c: .06,
-      i: .08
-    };
-    for (const project of cached.bins.get(Math.floor(p.x / 120) + ':' + Math.floor(p.y / 120)) || []) {
-      const km = distance(project, p);
-      if (km > project.radius * 2) continue;
-      const weight = Math.exp(-2 * (km / project.radius) ** 2) * project.release;
-      for (const k of USES) values[k] = Math.max(values[k], project.mix[k] * weight);
-    }
-    return values;
+    return native(6,s,{point:p});
   }
 
   function score(s, p, v) {
-    if (!s.urban.development) return v;
-    const land = potential(s, p);
-    return {
-      ...v,
-      residential: clamp(v.residential * .55 + land.r * .42),
-      commercial: clamp(v.commercial * .56 + land.c * .44),
-      industrial: clamp(v.industrial * .58 + land.i * .42),
-      marketResidential: land.r,
-      marketCommercial: land.c,
-      marketIndustrial: land.i
-    };
+    return native(7,s,{point:p,scores:v});
   }
 
   function budgets(s) {
-    const t = s.urban.totals || {},
-      people = t.people || 0,
-      jobs = t.jobs || 0;
-    return {
-      r: Math.min(30000, 2500 + Math.sqrt(people + 1) * 9 + Math.sqrt(jobs + 1) * 6) * clamp((jobs + 6000) /
-        (people * .42 + 1), .1, 1),
-      c: Math.min(15000, 1200 + Math.sqrt(people + 1) * 5) * clamp((people * .38 + 5000) / (jobs + 1), .15,
-        1),
-      i: Math.min(8000, 500 + Math.sqrt(people + 1) * 3) * clamp((people * .3 + 5000) / (jobs + 1), .15, 1)
-    };
+    return native(8,s);
   }
 
   function allocate(s, before, updates) {
-    const daily = budgets(s),
-      added = {
-        r: 0,
-        c: 0,
-        i: 0
-      };
-    for (const k of USES) {
-      const field = {
-          r: 'residential',
-          c: 'commercial',
-          i: 'industrial'
-        } [k],
-        market = {
-          r: 'marketResidential',
-          c: 'marketCommercial',
-          i: 'marketIndustrial'
-        } [k],
-        items = [];
-      for (const [key, c] of Object.entries(updates)) {
-        const old = before[key]?.[k] || 0,
-          want = Math.max(0, c[k] - old);
-        c[k] = old;
-        if (want > 0) items.push({
-          c,
-          left: want,
-          weight: want * Math.max(.005, (c.scores[field] || 0) ** 3) * (.2 + (c.scores[market] || 0))
-        });
-      }
-      let budget = daily[k] / 4;
-      for (let pass = 0; pass < 5 && budget > 1e-7; pass++) {
-        const active = items.filter(x => x.left > 1e-8),
-          sum = active.reduce((a, x) => a + x.weight, 0);
-        if (!sum) break;
-        const available = budget;
-        for (const x of active) {
-          const value = Math.min(x.left, available * x.weight / sum);
-          x.c[k] += value;
-          x.left -= value;
-          budget -= value;
-          added[k] += value;
-        }
-      }
-    }
-    s.urban.development.last = {
-      minute: s.urban.lastMinute + 360,
-      daily,
-      added
-    };
-    return added;
+    const v=native(9,s,{before,updates});for(const [key,c]of Object.entries(v.updates))Object.assign(updates[key],c);s.urban.development.last=v.last;return v.added;
   }
   const summaryCache = new WeakMap();
 

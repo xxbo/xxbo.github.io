@@ -167,6 +167,12 @@ pub(super) fn run(
         });
     }
     let state = cycle_state.as_mut().unwrap();
+    if let Some(q) = queue_state.as_mut() {
+        for (key, id) in q.take_keys() {
+            state.keys.insert(key, id);
+            state.count = state.count.max(id + 1);
+        }
+    }
     assert!(count >= state.count);
     state.count = count;
     let sparse = input[0] == 2.0 && input[25] != 0.0;
@@ -221,7 +227,7 @@ pub(super) fn run(
         r.at += n;
     }
     assert_eq!(r.at, input.len());
-    assert!(parts[0][0] == 2.0 || parts[0][0] == 3.0);
+    assert!((2.0..=5.0).contains(&parts[0][0]));
     assert_eq!(parts[0][2], 0.0);
     let (prepared, minute) = if let Some(pending) = state.pending.take() {
         pending
