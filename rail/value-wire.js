@@ -1,0 +1,8 @@
+/* Cold structured transaction transport. This codec contains no simulation rules. */
+(function(root){'use strict';
+ function encode(value){const strings=[],ids=new Map(),body=[];const id=s=>{if(!ids.has(s)){ids.set(s,strings.length);strings.push(s);}return ids.get(s);};
+ function walk(v){if(v===undefined)body.push(0);else if(v===null)body.push(1);else if(typeof v==='boolean')body.push(v?3:2);else if(typeof v==='number')body.push(4,v);else if(typeof v==='string')body.push(5,id(v));else if(Array.isArray(v)){body.push(6,v.length);for(const x of v)walk(x);}else {const rows=Object.entries(v);body.push(7,rows.length);for(const[k,x]of rows){body.push(id(k));walk(x);}}}
+ walk(value);const out=[strings.length];for(const s of strings){out.push(s.length);for(let i=0;i<s.length;i++)out.push(s.charCodeAt(i));}for(const v of body)out.push(v);return out;}
+ function decode(data,start=0){let at=start;const strings=[];for(let n=data[at++];n>0;n--){let s='';for(let m=data[at++];m>0;m--)s+=String.fromCharCode(data[at++]);strings.push(s);}function read(){switch(data[at++]){case 0:return undefined;case 1:return null;case 2:return false;case 3:return true;case 4:return data[at++];case 5:return strings[data[at++]];case 6:{const a=[];for(let n=data[at++];n>0;n--)a.push(read());return a;}case 7:{const a={};for(let n=data[at++];n>0;n--){const k=strings[data[at++]];Object.defineProperty(a,k,{value:read(),writable:true,enumerable:true,configurable:true});}return a;}default:throw Error('无效的原生结构数据');}}const value=read();return {value,at};}
+ const api={encode,decode};if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.RailValueWire=api;
+})(typeof globalThis!=='undefined'?globalThis:this);

@@ -457,10 +457,17 @@ pub extern "C" fn engine_loop() -> *const f64 {
                 break;
             }
             let next = time + 0.1;
+            if queue_state.as_mut().unwrap().roll_day(next) {
+                fin[15] = 0.0;
+            }
             // Day archiving can precede the next sampling gate. Let the host
             // reload its new statistics day before any native state is changed.
-            if queue_state.as_mut().unwrap().finance_stats()
-                .map_or(false, |stats| !stats.can_advance_slot(next)) {
+            if queue_state
+                .as_mut()
+                .unwrap()
+                .finance_stats()
+                .map_or(false, |stats| !stats.can_advance_slot(next))
+            {
                 reason = 1.0;
                 break;
             }

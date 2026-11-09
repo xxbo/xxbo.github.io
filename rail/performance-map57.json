@@ -1,0 +1,832 @@
+{
+  "worker57-small": {
+    "workload": "Independent processes, alternating order; real worker; 30 warmup + 5 x 30 game minutes, same .1-minute steps",
+    "summary": [
+      {
+        "version": "map56",
+        "medianMs": 64.16546149999999,
+        "inputBytes": 11542780,
+        "outputBytes": 11235168,
+        "requests": 583,
+        "checksum": "577a48badf49bfbb6c23d5e14fe525965c6679a05e39846a96c3b4d68dea2b11"
+      },
+      {
+        "version": "map57",
+        "medianMs": 76.6925614999999,
+        "inputBytes": 11542780,
+        "outputBytes": 11235168,
+        "requests": 583,
+        "checksum": "577a48badf49bfbb6c23d5e14fe525965c6679a05e39846a96c3b4d68dea2b11"
+      }
+    ],
+    "results": [
+      {
+        "version": "map56",
+        "samplesMs": [
+          67.52271000000007,
+          62.18303200000014,
+          63.56263899999999,
+          59.13800900000001,
+          64.19183999999996
+        ],
+        "retainedHeapMiB": 22.35057830810547,
+        "lines": 10,
+        "stations": 25,
+        "inputBytes": 11542780,
+        "outputBytes": 11235168,
+        "requests": 583,
+        "statistics": null,
+        "checksum": "577a48badf49bfbb6c23d5e14fe525965c6679a05e39846a96c3b4d68dea2b11",
+        "round": 0
+      },
+      {
+        "version": "map57",
+        "samplesMs": [
+          98.40268300000002,
+          84.11052199999995,
+          62.74273599999992,
+          61.85002099999997,
+          65.04339500000015
+        ],
+        "retainedHeapMiB": 21.697952270507812,
+        "lines": 10,
+        "stations": 25,
+        "inputBytes": 11542780,
+        "outputBytes": 11235168,
+        "requests": 583,
+        "statistics": {
+          "fullFrames": 1,
+          "deltaFrames": 177,
+          "encodedValues": 2889
+        },
+        "checksum": "577a48badf49bfbb6c23d5e14fe525965c6679a05e39846a96c3b4d68dea2b11",
+        "round": 0
+      },
+      {
+        "version": "map57",
+        "samplesMs": [
+          82.4331689999999,
+          82.46470599999998,
+          75.01855099999989,
+          68.46167600000012,
+          78.3665719999999
+        ],
+        "retainedHeapMiB": 21.661331176757812,
+        "lines": 10,
+        "stations": 25,
+        "inputBytes": 11542780,
+        "outputBytes": 11235168,
+        "requests": 583,
+        "statistics": {
+          "fullFrames": 1,
+          "deltaFrames": 177,
+          "encodedValues": 2889
+        },
+        "checksum": "577a48badf49bfbb6c23d5e14fe525965c6679a05e39846a96c3b4d68dea2b11",
+        "round": 1
+      },
+      {
+        "version": "map56",
+        "samplesMs": [
+          75.4623590000001,
+          70.4081000000001,
+          66.769182,
+          64.13908300000003,
+          62.1709350000001
+        ],
+        "retainedHeapMiB": 22.349853515625,
+        "lines": 10,
+        "stations": 25,
+        "inputBytes": 11542780,
+        "outputBytes": 11235168,
+        "requests": 583,
+        "statistics": null,
+        "checksum": "577a48badf49bfbb6c23d5e14fe525965c6679a05e39846a96c3b4d68dea2b11",
+        "round": 1
+      }
+    ]
+  },
+  "worker57-large": {
+    "workload": "Independent processes, alternating order; real worker; 30 warmup + 5 x 30 game minutes, same .1-minute steps",
+    "summary": [
+      {
+        "version": "map56",
+        "medianMs": 120.41623450000043,
+        "inputBytes": 19525362,
+        "outputBytes": 19655568,
+        "requests": 591,
+        "checksum": "6800e6dfc46a41ec1c200df9ed0445280e8c8f14e00ab2b17c329ba866a07502"
+      },
+      {
+        "version": "map57",
+        "medianMs": 127.35641699999996,
+        "inputBytes": 19525362,
+        "outputBytes": 19655568,
+        "requests": 591,
+        "checksum": "6800e6dfc46a41ec1c200df9ed0445280e8c8f14e00ab2b17c329ba866a07502"
+      }
+    ],
+    "results": [
+      {
+        "version": "map56",
+        "samplesMs": [
+          141.13653599999998,
+          133.607344,
+          132.55415600000015,
+          106.67627999999968,
+          111.9371740000006
+        ],
+        "retainedHeapMiB": 56.035484313964844,
+        "lines": 14,
+        "stations": 49,
+        "inputBytes": 19525362,
+        "outputBytes": 19655568,
+        "requests": 591,
+        "statistics": null,
+        "checksum": "6800e6dfc46a41ec1c200df9ed0445280e8c8f14e00ab2b17c329ba866a07502",
+        "round": 0
+      },
+      {
+        "version": "map57",
+        "samplesMs": [
+          135.21464000000014,
+          127.6248169999999,
+          111.63002500000039,
+          102.70123699999749,
+          95.67033599999922
+        ],
+        "retainedHeapMiB": 55.42285919189453,
+        "lines": 14,
+        "stations": 49,
+        "inputBytes": 19525362,
+        "outputBytes": 19655568,
+        "requests": 591,
+        "statistics": {
+          "fullFrames": 1,
+          "deltaFrames": 179,
+          "encodedValues": 3131
+        },
+        "checksum": "6800e6dfc46a41ec1c200df9ed0445280e8c8f14e00ab2b17c329ba866a07502",
+        "round": 0
+      },
+      {
+        "version": "map57",
+        "samplesMs": [
+          164.07036899999912,
+          135.51916299999903,
+          144.29821599999923,
+          127.08801700000004,
+          109.13633199999822
+        ],
+        "retainedHeapMiB": 55.339256286621094,
+        "lines": 14,
+        "stations": 49,
+        "inputBytes": 19525362,
+        "outputBytes": 19655568,
+        "requests": 591,
+        "statistics": {
+          "fullFrames": 1,
+          "deltaFrames": 179,
+          "encodedValues": 3131
+        },
+        "checksum": "6800e6dfc46a41ec1c200df9ed0445280e8c8f14e00ab2b17c329ba866a07502",
+        "round": 1
+      },
+      {
+        "version": "map56",
+        "samplesMs": [
+          129.0912279999975,
+          124.75795700000162,
+          116.07451199999923,
+          110.05986900000062,
+          97.20323899999858
+        ],
+        "retainedHeapMiB": 56.186309814453125,
+        "lines": 14,
+        "stations": 49,
+        "inputBytes": 19525362,
+        "outputBytes": 19655568,
+        "requests": 591,
+        "statistics": null,
+        "checksum": "6800e6dfc46a41ec1c200df9ed0445280e8c8f14e00ab2b17c329ba866a07502",
+        "round": 1
+      }
+    ]
+  },
+  "cumulative57-small": {
+    "baselineCommit": "498c5cd2af607e60dd1c75a8ba5863c08ac5d4fa",
+    "scope": "Continuous operating core only: shared serialized world/forecast; 30 warmup + 5 x 30 game minutes; unchanged .1-minute quantum; excludes forecast, routing benchmarks, construction, DOM/map rendering and FPS",
+    "method": "Six independent processes, reversed order in round 2; exact complete state comparison, no excluded fields; forced GC outside timed batches",
+    "lines": 10,
+    "stations": 25,
+    "summary": [
+      {
+        "mode": "javascript",
+        "medianMs": 43.30728199999999,
+        "medianCpuMs": 72.8515,
+        "retainedHeapMiB": 18.57278060913086,
+        "eventLoopMaxMs": 59.015251999999975,
+        "peakRssMiB": 104.23828125,
+        "wasmMiB": 0,
+        "requests": 0,
+        "inputBytes": 0,
+        "outputBytes": 0,
+        "checksum": "a0f04535ad5a214ede16d50169f3516165e13e08044865287eb1cf6a60411b66"
+      },
+      {
+        "mode": "rust-sync",
+        "medianMs": 80.81996400000003,
+        "medianCpuMs": 126.5275,
+        "retainedHeapMiB": 19.334827423095703,
+        "eventLoopMaxMs": 104.80099100000001,
+        "peakRssMiB": 135.57421875,
+        "wasmMiB": 5.3125,
+        "requests": 0,
+        "inputBytes": 0,
+        "outputBytes": 0,
+        "checksum": "a0f04535ad5a214ede16d50169f3516165e13e08044865287eb1cf6a60411b66"
+      },
+      {
+        "mode": "rust-worker",
+        "medianMs": 79.294848,
+        "medianCpuMs": 107.462,
+        "retainedHeapMiB": 19.736438751220703,
+        "eventLoopMaxMs": 2.800328000000036,
+        "peakRssMiB": 164.6796875,
+        "wasmMiB": 6.625,
+        "requests": 583,
+        "inputBytes": 11542780,
+        "outputBytes": 11235168,
+        "checksum": "a0f04535ad5a214ede16d50169f3516165e13e08044865287eb1cf6a60411b66"
+      }
+    ],
+    "results": [
+      {
+        "mode": "javascript",
+        "lines": 10,
+        "stations": 25,
+        "samplesMs": [
+          59.78576599999997,
+          52.20239000000004,
+          46.766774999999996,
+          34.07912199999993,
+          36.86186999999995
+        ],
+        "medianMs": 46.766774999999996,
+        "cpuMicros": [
+          161913,
+          75635,
+          70068,
+          51220,
+          81083
+        ],
+        "heapMiB": [
+          18.49797821044922,
+          18.56879425048828,
+          18.572265625,
+          18.66486358642578,
+          18.709678649902344
+        ],
+        "eventLoopMaxMs": [
+          59.015251999999975,
+          51.75788499999999,
+          45.97391699999997,
+          33.193285,
+          36.00720899999999
+        ],
+        "peakRssMiB": 101.8828125,
+        "wasmMiB": 0,
+        "requests": 0,
+        "inputBytes": 0,
+        "outputBytes": 0,
+        "generated": 7542,
+        "completed": 7300,
+        "checksum": "a0f04535ad5a214ede16d50169f3516165e13e08044865287eb1cf6a60411b66",
+        "round": 0
+      },
+      {
+        "mode": "rust-sync",
+        "lines": 10,
+        "stations": 25,
+        "samplesMs": [
+          86.66313199999996,
+          97.65456200000006,
+          86.18009500000005,
+          75.459833,
+          57.40504400000009
+        ],
+        "medianMs": 86.18009500000005,
+        "cpuMicros": [
+          184454,
+          148817,
+          132202,
+          109589,
+          82220
+        ],
+        "heapMiB": [
+          19.294349670410156,
+          19.330001831054688,
+          19.33069610595703,
+          19.374588012695312,
+          19.433929443359375
+        ],
+        "eventLoopMaxMs": [
+          86.67314099999999,
+          96.80412600000005,
+          85.33257400000002,
+          74.742618,
+          56.51339800000005
+        ],
+        "peakRssMiB": 123.48828125,
+        "wasmMiB": 5.3125,
+        "requests": 0,
+        "inputBytes": 0,
+        "outputBytes": 0,
+        "generated": 7542,
+        "completed": 7300,
+        "checksum": "a0f04535ad5a214ede16d50169f3516165e13e08044865287eb1cf6a60411b66",
+        "round": 0
+      },
+      {
+        "mode": "rust-worker",
+        "lines": 10,
+        "stations": 25,
+        "samplesMs": [
+          86.01514600000002,
+          79.68550099999993,
+          78.90419500000007,
+          73.23346299999992,
+          80.20034499999997
+        ],
+        "medianMs": 79.68550099999993,
+        "cpuMicros": [
+          141653,
+          100963,
+          113277,
+          86965,
+          111400
+        ],
+        "heapMiB": [
+          19.57366943359375,
+          19.631004333496094,
+          19.73705291748047,
+          19.74854278564453,
+          19.871490478515625
+        ],
+        "eventLoopMaxMs": [
+          1.167951999999957,
+          0.832127000000014,
+          1.2042770000000473,
+          1.1242169999999305,
+          2.800328000000036
+        ],
+        "peakRssMiB": 152.1875,
+        "wasmMiB": 6.625,
+        "requests": 583,
+        "inputBytes": 11542780,
+        "outputBytes": 11235168,
+        "generated": 7542,
+        "completed": 7300,
+        "checksum": "a0f04535ad5a214ede16d50169f3516165e13e08044865287eb1cf6a60411b66",
+        "round": 0
+      },
+      {
+        "mode": "rust-worker",
+        "lines": 10,
+        "stations": 25,
+        "samplesMs": [
+          103.12064299999997,
+          77.656429,
+          76.62499600000001,
+          73.700425,
+          79.74229700000001
+        ],
+        "medianMs": 77.656429,
+        "cpuMicros": [
+          171930,
+          98950,
+          107738,
+          86936,
+          107186
+        ],
+        "heapMiB": [
+          19.57280731201172,
+          19.62848663330078,
+          19.735824584960938,
+          19.74652099609375,
+          19.87110137939453
+        ],
+        "eventLoopMaxMs": [
+          1.4812749999999824,
+          1.1634860000000344,
+          1.119860000000017,
+          1.0099349999999276,
+          1.0948029999999562
+        ],
+        "peakRssMiB": 164.6796875,
+        "wasmMiB": 6.625,
+        "requests": 583,
+        "inputBytes": 11542780,
+        "outputBytes": 11235168,
+        "generated": 7542,
+        "completed": 7300,
+        "checksum": "a0f04535ad5a214ede16d50169f3516165e13e08044865287eb1cf6a60411b66",
+        "round": 1
+      },
+      {
+        "mode": "rust-sync",
+        "lines": 10,
+        "stations": 25,
+        "samplesMs": [
+          104.68487199999998,
+          93.16040700000008,
+          74.136169,
+          66.181106,
+          58.93886599999996
+        ],
+        "medianMs": 74.136169,
+        "cpuMicros": [
+          197281,
+          139233,
+          116732,
+          120853,
+          79098
+        ],
+        "heapMiB": [
+          19.272384643554688,
+          19.330047607421875,
+          19.338958740234375,
+          19.383262634277344,
+          19.43731689453125
+        ],
+        "eventLoopMaxMs": [
+          104.80099100000001,
+          92.30889099999996,
+          73.30111699999998,
+          65.28205700000001,
+          58.045927000000006
+        ],
+        "peakRssMiB": 135.57421875,
+        "wasmMiB": 5.3125,
+        "requests": 0,
+        "inputBytes": 0,
+        "outputBytes": 0,
+        "generated": 7542,
+        "completed": 7300,
+        "checksum": "a0f04535ad5a214ede16d50169f3516165e13e08044865287eb1cf6a60411b66",
+        "round": 1
+      },
+      {
+        "mode": "javascript",
+        "lines": 10,
+        "stations": 25,
+        "samplesMs": [
+          49.56792300000001,
+          40.88322099999999,
+          45.73134299999998,
+          33.629943999999966,
+          30.074703999999997
+        ],
+        "medianMs": 40.88322099999999,
+        "cpuMicros": [
+          132465,
+          65157,
+          81562,
+          49960,
+          66621
+        ],
+        "heapMiB": [
+          18.5042724609375,
+          18.569656372070312,
+          18.57329559326172,
+          18.667686462402344,
+          18.7259521484375
+        ],
+        "eventLoopMaxMs": [
+          48.780482999999975,
+          40.395983,
+          45.345376999999985,
+          32.76059100000003,
+          29.18495999999999
+        ],
+        "peakRssMiB": 104.23828125,
+        "wasmMiB": 0,
+        "requests": 0,
+        "inputBytes": 0,
+        "outputBytes": 0,
+        "generated": 7542,
+        "completed": 7300,
+        "checksum": "a0f04535ad5a214ede16d50169f3516165e13e08044865287eb1cf6a60411b66",
+        "round": 1
+      }
+    ]
+  },
+  "cumulative57-large": {
+    "baselineCommit": "498c5cd2af607e60dd1c75a8ba5863c08ac5d4fa",
+    "scope": "Continuous operating core only: shared serialized world/forecast; 30 warmup + 5 x 30 game minutes; unchanged .1-minute quantum; excludes forecast, routing benchmarks, construction, DOM/map rendering and FPS",
+    "method": "Six independent processes, reversed order in round 2; exact complete state comparison, no excluded fields; forced GC outside timed batches",
+    "lines": 14,
+    "stations": 49,
+    "summary": [
+      {
+        "mode": "javascript",
+        "medianMs": 155.42967449999998,
+        "medianCpuMs": 192.131,
+        "retainedHeapMiB": 49.29991912841797,
+        "eventLoopMaxMs": 202.45903399999997,
+        "peakRssMiB": 176.0078125,
+        "wasmMiB": 0,
+        "requests": 0,
+        "inputBytes": 0,
+        "outputBytes": 0,
+        "checksum": "dd0638f9375ab921d091d0ee124da809121b3c825540713d8896c4f51ce69d18"
+      },
+      {
+        "mode": "rust-sync",
+        "medianMs": 138.63598999999994,
+        "medianCpuMs": 187.55,
+        "retainedHeapMiB": 49.41234588623047,
+        "eventLoopMaxMs": 177.643731,
+        "peakRssMiB": 240.41796875,
+        "wasmMiB": 16.9375,
+        "requests": 0,
+        "inputBytes": 0,
+        "outputBytes": 0,
+        "checksum": "dd0638f9375ab921d091d0ee124da809121b3c825540713d8896c4f51ce69d18"
+      },
+      {
+        "mode": "rust-worker",
+        "medianMs": 123.53249800000003,
+        "medianCpuMs": 162.442,
+        "retainedHeapMiB": 49.42229080200195,
+        "eventLoopMaxMs": 6.620151000000078,
+        "peakRssMiB": 278.6796875,
+        "wasmMiB": 18,
+        "requests": 591,
+        "inputBytes": 19525362,
+        "outputBytes": 19655568,
+        "checksum": "dd0638f9375ab921d091d0ee124da809121b3c825540713d8896c4f51ce69d18"
+      }
+    ],
+    "results": [
+      {
+        "mode": "javascript",
+        "lines": 14,
+        "stations": 49,
+        "samplesMs": [
+          177.62271199999998,
+          203.305793,
+          146.566058,
+          133.95699000000013,
+          109.51347099999998
+        ],
+        "medianMs": 146.566058,
+        "cpuMicros": [
+          292955,
+          321461,
+          164526,
+          162745,
+          119477
+        ],
+        "heapMiB": [
+          49.035736083984375,
+          49.184349060058594,
+          49.31309509277344,
+          49.302215576171875,
+          49.46613311767578
+        ],
+        "eventLoopMaxMs": [
+          176.8832940000001,
+          202.45903399999997,
+          146.66806600000007,
+          133.12681500000008,
+          108.66592100000003
+        ],
+        "peakRssMiB": 175.5,
+        "wasmMiB": 0,
+        "requests": 0,
+        "inputBytes": 0,
+        "outputBytes": 0,
+        "generated": 22974,
+        "completed": 22028,
+        "checksum": "dd0638f9375ab921d091d0ee124da809121b3c825540713d8896c4f51ce69d18",
+        "round": 0
+      },
+      {
+        "mode": "rust-sync",
+        "lines": 14,
+        "stations": 49,
+        "samplesMs": [
+          176.963341,
+          162.43145500000003,
+          148.26597500000003,
+          130.96927299999993,
+          127.6880799999999
+        ],
+        "medianMs": 148.26597500000003,
+        "cpuMicros": [
+          271457,
+          236315,
+          177911,
+          158885,
+          197189
+        ],
+        "heapMiB": [
+          49.21769714355469,
+          49.382545471191406,
+          49.48753356933594,
+          49.41253662109375,
+          49.55425262451172
+        ],
+        "eventLoopMaxMs": [
+          177.643731,
+          161.56795,
+          147.41327699999988,
+          130.08085200000005,
+          126.80128000000013
+        ],
+        "peakRssMiB": 223.984375,
+        "wasmMiB": 16.9375,
+        "requests": 0,
+        "inputBytes": 0,
+        "outputBytes": 0,
+        "generated": 22974,
+        "completed": 22028,
+        "checksum": "dd0638f9375ab921d091d0ee124da809121b3c825540713d8896c4f51ce69d18",
+        "round": 0
+      },
+      {
+        "mode": "rust-worker",
+        "lines": 14,
+        "stations": 49,
+        "samplesMs": [
+          141.70804999999996,
+          114.43365900000003,
+          123.85088000000019,
+          121.97390000000019,
+          116.96517999999992
+        ],
+        "medianMs": 121.97390000000019,
+        "cpuMicros": [
+          197023,
+          141732,
+          150281,
+          144666,
+          167548
+        ],
+        "heapMiB": [
+          49.115455627441406,
+          49.30664825439453,
+          49.388427734375,
+          49.57342529296875,
+          49.763587951660156
+        ],
+        "eventLoopMaxMs": [
+          1.5299479999999903,
+          1.0258689999999433,
+          2.518637000000126,
+          1.2056659999998374,
+          1.9984289999999874
+        ],
+        "peakRssMiB": 263.37109375,
+        "wasmMiB": 18,
+        "requests": 591,
+        "inputBytes": 19525362,
+        "outputBytes": 19655568,
+        "generated": 22974,
+        "completed": 22028,
+        "checksum": "dd0638f9375ab921d091d0ee124da809121b3c825540713d8896c4f51ce69d18",
+        "round": 0
+      },
+      {
+        "mode": "rust-worker",
+        "lines": 14,
+        "stations": 49,
+        "samplesMs": [
+          131.18444899999997,
+          142.33776899999998,
+          123.21411599999988,
+          131.71352500000012,
+          113.1675929999999
+        ],
+        "medianMs": 131.18444899999997,
+        "cpuMicros": [
+          180476,
+          170888,
+          157336,
+          149178,
+          169923
+        ],
+        "heapMiB": [
+          49.14928436279297,
+          49.34614562988281,
+          49.456153869628906,
+          49.57079315185547,
+          49.763275146484375
+        ],
+        "eventLoopMaxMs": [
+          1.6701790000000756,
+          1.7069750000000568,
+          1.1112080000000333,
+          6.620151000000078,
+          1.1838979999999992
+        ],
+        "peakRssMiB": 278.6796875,
+        "wasmMiB": 18,
+        "requests": 591,
+        "inputBytes": 19525362,
+        "outputBytes": 19655568,
+        "generated": 22974,
+        "completed": 22028,
+        "checksum": "dd0638f9375ab921d091d0ee124da809121b3c825540713d8896c4f51ce69d18",
+        "round": 1
+      },
+      {
+        "mode": "rust-sync",
+        "lines": 14,
+        "stations": 49,
+        "samplesMs": [
+          150.53343100000006,
+          146.30270699999994,
+          128.81486699999994,
+          111.99741200000017,
+          113.5802749999998
+        ],
+        "medianMs": 128.81486699999994,
+        "cpuMicros": [
+          244662,
+          247362,
+          158522,
+          140791,
+          159149
+        ],
+        "heapMiB": [
+          49.153839111328125,
+          49.39977264404297,
+          49.7098388671875,
+          49.41215515136719,
+          49.57495880126953
+        ],
+        "eventLoopMaxMs": [
+          151.311417,
+          146.62659000000008,
+          127.98086799999987,
+          111.1088699999998,
+          113.35672299999987
+        ],
+        "peakRssMiB": 240.41796875,
+        "wasmMiB": 16.9375,
+        "requests": 0,
+        "inputBytes": 0,
+        "outputBytes": 0,
+        "generated": 22974,
+        "completed": 22028,
+        "checksum": "dd0638f9375ab921d091d0ee124da809121b3c825540713d8896c4f51ce69d18",
+        "round": 1
+      },
+      {
+        "mode": "javascript",
+        "lines": 14,
+        "stations": 49,
+        "samplesMs": [
+          164.29329099999995,
+          166.33170900000005,
+          197.32657799999993,
+          130.16270199999985,
+          87.5546989999998
+        ],
+        "medianMs": 164.29329099999995,
+        "cpuMicros": [
+          321722,
+          219736,
+          224759,
+          161608,
+          98245
+        ],
+        "heapMiB": [
+          49.04705810546875,
+          49.18206787109375,
+          49.308372497558594,
+          49.29762268066406,
+          49.467445373535156
+        ],
+        "eventLoopMaxMs": [
+          163.549577,
+          165.56162499999994,
+          197.41593799999998,
+          129.26807099999996,
+          86.71061400000008
+        ],
+        "peakRssMiB": 176.0078125,
+        "wasmMiB": 0,
+        "requests": 0,
+        "inputBytes": 0,
+        "outputBytes": 0,
+        "generated": 22974,
+        "completed": 22028,
+        "checksum": "dd0638f9375ab921d091d0ee124da809121b3c825540713d8896c4f51ce69d18",
+        "round": 1
+      }
+    ]
+  }
+}

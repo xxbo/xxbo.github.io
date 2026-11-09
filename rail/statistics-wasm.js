@@ -5,6 +5,7 @@
   const Core = node ? require('./routing-wasm') : root.RailRouting;
   const BAL = node ? require('./game-balance') : root.RailBalance;
   const FLOW = node ? require('./flow-history') : root.RailFlowHistory;
+  const Wire = node ? require('./value-wire') : root.RailValueWire;
   const NETWORK = ['attempted', 'completed', 'rejected', 'boarded', 'waitMinutes', 'revenue',
     'passengerKm'
   ];
@@ -71,13 +72,13 @@
       const q=s.ridership, previous=c.statsContext;
       return !q || !!previous && previous.q===q && previous.day===q.current &&
         previous.records===q.records && previous.lines===q.lines && previous.flow===q.current.flow &&
-        previous.revision===state(q).revision;
+        previous.revision===state(q).revision && state(q).finance.size===0;
     }
 
-    function context(c, s, rt) {
+    function context(c, s, rt, live = false) {
       const q = s.ridership,
-        number = hooks.day(rt.minute);
-      const d = q.current.number === number ? q.current : {
+        number = live ? q.current.number : hooks.day(rt.minute);
+      const d = live || q.current.number === number ? q.current : {
         number,
         attempted: 0,
         completed: 0,
@@ -90,8 +91,9 @@
         stations: {}
       };
       const start = 420 + (number - 1) * 1440,
-        index = Math.floor((rt.minute - start) / FLOW.STEP);
-      const slot = rt.minute >= start && rt.minute <= start + 1440 && index >= 0 && index < FLOW
+        stamp = live ? Math.min(rt.minute,start+1440-1e-5) : rt.minute,
+        index = Math.floor((stamp - start) / FLOW.STEP);
+      const slot = stamp >= start && stamp <= start + 1440 && index >= 0 && index < FLOW
         .SLOTS ? index : -1;
       const valid = d.flow?.version === 1 && FLOW.FIELDS.every(k => Array.isArray(d.flow[k]) && d
         .flow[k].length === FLOW.SLOTS);
@@ -123,8 +125,8 @@
         previous.revision !== v.revision || previous.number !== number || slot < previous.slot;
       let out;
       if (reset) {
-        out = Number.isNaN(v.windowMinute) ? [1, ...context(c, s, rt)] :
-          [3, v.windowMinute, ...context(c, s, rt)];
+        const head=context(c,s,rt,true),body=Wire.encode({data:q,names:c.names});
+        out=[6,v.windowMinute];for(const value of head)out.push(value);for(const value of body)out.push(value);
         c.statsContext = {
           q,
           day: q.current,
@@ -158,6 +160,7 @@
       let d = null;
       const hourDeletes = [];
       const windowDeletes = [];
+      let archive=null;
       const current = () => d || (d = hooks.ensureDay(s, rt.minute));
       return (data, at) => {
         const op = data[at],
@@ -165,6 +168,17 @@
           b = data[at + 2],
           value = data[at + 3];
         switch (op) {
+          case 43: archive={number:a,boundary:b,continuous:!!value,drop:data[at+4],maturity:{}};break;
+          case 44: archive.maturity[c.names[a]]=b;break;
+          case 45: {
+            if(q.current.flow&&q.current.number===archive.number-1)FLOW.touch(q.current,archive.boundary);
+            q.history.push({...q.current,maturity:archive.maturity});q.history=q.history.slice(archive.drop);
+            q.current=hooks.emptyDay(archive.number);
+            if(archive.continuous)FLOW.touch(q.current,archive.boundary);
+            FLOW.touch(q.current,rt.minute);d=q.current;archive=null;
+            if(c.statsContext){c.statsContext.day=q.current;c.statsContext.flow=q.current.flow;c.statsContext.number=q.current.number;c.statsContext.slot=Math.floor((rt.minute-FLOW.start(q.current))/FLOW.STEP);}
+            break;
+          }
           case 41:
             windowDeletes.push(a);
             break;

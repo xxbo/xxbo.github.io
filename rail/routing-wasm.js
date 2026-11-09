@@ -43,7 +43,7 @@
     peakMemoryBytes = 0;
   const recycleLimit = () => recycleBytes === 0 ? 0 : Math.max(recycleBytes,
     simulationRecycleBytes);
-  const asset = node ? null : new URL('wasm/rail-core-v16.wasm?v=56',
+  const asset = node ? null : new URL('wasm/rail-core-v17.wasm?v=57',
     root.document?.currentScript?.src || root.location.href).href;
 
   function install(module) {
@@ -488,7 +488,7 @@
     const fs = require('node:fs'),
       path = require('node:path');
     install(new WebAssembly.Module(fs.readFileSync(path.join(__dirname,
-      'wasm/rail-core-v16.wasm'))));
+      'wasm/rail-core-v17.wasm'))));
     module.exports = api;
   } else {
     root.RailRouting = api;

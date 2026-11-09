@@ -95,6 +95,7 @@ pub(super) fn settle(
     if allocations > 0 {
         assert_eq!(allocations, state.weights.len() + 1);
         if let Some(stats) = queue.finance_stats() {
+            stats.day_operating(output[at]);
             for (i, &(id, _)) in state.weights.iter().enumerate() {
                 stats.set_operating(id, output[at + 1 + i]);
             }

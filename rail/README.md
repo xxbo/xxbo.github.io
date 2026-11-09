@@ -95,3 +95,5 @@ GitHub Pages 上的东京圈铁路经营实验。静态网页，无自己的后�
 
 - [MAP56：统计增量与滚动小时维护、双基线收益](rust-wasm-map56.md)
 - [后续迁移的性能基线约定](performance-baselines.md)
+
+- [MAP57：P1-1 原生历史生命周期及双基线](rust-wasm-map57.md)

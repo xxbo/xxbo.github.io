@@ -11,6 +11,7 @@
   const Native = node ? require('./operations-wasm') : root.RailNativeOperations;
   const statistics = Statistics.bind({
     ensureDay,
+    emptyDay,
     lineStats,
     day: minute => day(minute)
   });
@@ -241,7 +242,7 @@
   function step(s, rt, minutes, applyFeedback=Native.feedback, nativeWindow=false) {
     const q = s.ridership;
     if (!q) return;
-    ensureDay(s, rt.minute);
+    if(!nativeWindow||q.current.number===day(rt.minute))ensureDay(s, rt.minute);
     sync(s, rt.minute);
     applyFeedback(s, rt, minutes, true);
     q.lastMinute = rt.minute;
