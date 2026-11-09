@@ -196,6 +196,15 @@ impl Statistics {
         row.set(8, value);
         row.dirty = dirty;
     }
+    pub(super) fn set_feedback(&mut self, id: usize, values: &[f64]) {
+        if let Some(row) = self.feedback.get_mut(&id) {
+            let dirty = row.dirty;
+            for i in 0..4 {
+                row.set(i, values[i]);
+            }
+            row.dirty = dirty;
+        }
+    }
     pub(super) fn frame(&mut self, r: &mut Read, now: f64) {
         self.now = now;
         let n = r.u();

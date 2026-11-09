@@ -205,7 +205,7 @@
 
   const deltaStates = new WeakMap();
 
-  function incremental(rt, s, index, track, identity) {
+  function incremental(rt, s, index, track, identity, spawn = []) {
     let c = deltaStates.get(rt),
       reset = !c || c.plan !== s || Core.simulationToken() !== c.token;
     if (reset) {
@@ -220,6 +220,24 @@
       };
       deltaStates.set(rt, c);
     }
+    const templates = spawn.map(({l,dir,d}) => {
+      if(!d||rt.minute+1e-8<d.next)return {l,dir,skip:true};
+      const loop=l.stops[0]===l.stops.at(-1),dwell=loop?X.loopDwell(s,l):B.DWELL;
+      const row=new Array(20).fill(0);
+      row[0]=1;row[2]=dir===1?0:l.stops.length-1;row[3]=dir;row[4]=l.stops.length-1;
+      row[9]=+loop;row[11]=+B.isOpen(l,rt.minute);row[12]=l.fleet/X.directions(l).length;
+      row[14]=dwell;row[18]=l.cars||6;row[19]=-1;
+      const data=[intern(c.groups,l.id+'|'+dir),...row,l.trackIds.length];
+      for(let i=0;i<l.trackIds.length;i++) {
+        const tr=index.track.get(l.trackIds[i]);
+        if(!tr) data.push(0,-1);
+        else {const from=l.stops[dir===1?i:i+1],block=tr.id+'|'+(from===tr.a?1:-1);
+          data.push(tr.km,intern(c.blocks,block));}
+      }
+      const called=new Set(l.callStops||l.stops);
+      data.push(l.stops.length,...l.stops.map(id=>+called.has(id)));
+      return {l,dir,dwell,loop,data};
+    });
     const changed = c.context.length !== rt.trains.length || rt.trains.some((t, i) => c.context[i]
       .t !== t);
     const parameters = c.minute !== Math.floor(rt.minute),
@@ -315,6 +333,7 @@
     c.minute = Math.floor(rt.minute);
     return {
       context: c.context,
+      templates,
       input
     };
   }

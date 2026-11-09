@@ -279,7 +279,7 @@ s.ridership = {
 };
 exact(SIM.timedArrivals(catalog, s, 1020, 1, .2, 99, true), OldSIM.arrivals(catalog, j => OldQ
   .factor(s, j), j => OldC.profile(j.purpose, j.back, 1020, j.externalKind), .2, 99));
-const bytes = fs.readFileSync(path.join(__dirname, '../rail/wasm/rail-core-v10.wasm'));
+const bytes = fs.readFileSync(path.join(__dirname, '../rail/wasm/rail-core-v11.wasm'));
 Core.create(bytes, {
   recycleBytes: 0
 });
@@ -407,7 +407,7 @@ for (const cash of [5e9, .01]) {
   const p=pair(480.9),original=Core.kernel,calls=[];
   Core.kernel=function(name,input,...rest) {calls.push([name,input[0],input[1]]);return original(name,input,...rest);};
   try {M.advance(p.a,p.ra,.1);} finally {Core.kernel=original;}
-  assert.equal(calls.filter(c=>c[0]==='engine_prepare').length,1);
+  assert.equal(calls.filter(c=>c[0]==='engine_cycle').length>=1,true);
   assert.equal(calls.filter(c=>c[0]==='operations_run'&&c[2]===0).length,0);
   assert.equal(calls.filter(c=>c[0]==='simulation_run'&&[3,9].includes(c[1])).length,0);
 }

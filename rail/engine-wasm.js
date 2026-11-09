@@ -86,6 +86,15 @@
     return out;
   }
 
+  function continuation(codec,rt,job,previous) {
+    const s=job.world,c=state(s);
+    if(!previous||Core.engineToken()!==c.token||!matches(c.snapshot,s.economy)||c.codec!==codec||
+      c.rows!==Q.financeLayout(s)||c.q!==s.ridership)return null;
+    const frame=previous.slice(0,16);frame[2]=0;frame[6]=rt.demandCarry||0;
+    const day=s.ridership?.current;
+    frame[15]=day?.number===Q.day(rt.minute)?Number(day.operating):0;
+    return frame;
+  }
   function project(rt, job, data) {
     const s = job.world,
       {
@@ -115,7 +124,7 @@
     } : null;
   }
   const api = {
-    begin,
+    begin,continuation,
     encode,
     project
   };

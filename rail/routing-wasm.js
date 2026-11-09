@@ -21,6 +21,7 @@
     engineSteps = 0,
     preparationCalls=0,
     activeSamplingToken = 0,
+    activeCycleToken = 0,
     queueSteps = 0,
     statisticsCalls = 0,
     statisticsBatches = 0,
@@ -29,6 +30,10 @@
     timedArrivalCalls = 0,
     nativeTokens = 0,
     recycles = 0;
+  let transactionDepth=0;
+  let remoteTokens=null,workerStatus=null;
+  let loopCalls=0,loopSteps=0,cycleCalls=0;
+  let kernelNow=()=>performance.now();
   let recycleBytes = 64 * 1024 * 1024;
   // A persistent queue may itself need more than the old transient 64 MiB budget.
   // Learn a bounded simulation working-set allowance, avoiding rebuild thrashing.
@@ -36,7 +41,7 @@
     peakMemoryBytes = 0;
   const recycleLimit = () => recycleBytes === 0 ? 0 : Math.max(recycleBytes,
     simulationRecycleBytes);
-  const asset = node ? null : new URL('wasm/rail-core-v10.wasm?v=50',
+  const asset = node ? null : new URL('wasm/rail-core-v11.wasm?v=51',
     root.document?.currentScript?.src || root.location.href).href;
 
   function install(module) {
@@ -44,12 +49,13 @@
       rail_math: {
         exp: Math.exp,
         log: Math.log,
-        hypot: Math.hypot
+        hypot: Math.hypot,
+        now:()=>kernelNow()
       }
     });
     if (next.exports.routing_abi() !== ABI || next.exports.demand_abi?.() !== 1 || next.exports
       .world_abi?.() !== 1 || next.exports.simulation_abi?.() !== 1 || next.exports.queue_abi?.
-      () !== 1 || next.exports.statistics_abi?.() !== 1 || next.exports.operations_abi?.() !== 1 || next.exports.engine_abi?.() !== 1 || next.exports.engine_prepare_abi?.() !== 1)
+      () !== 1 || next.exports.statistics_abi?.() !== 1 || next.exports.operations_abi?.() !== 1 || next.exports.engine_abi?.() !== 1 || next.exports.engine_prepare_abi?.() !== 1 || next.exports.cycle_abi?.() !== 1 || next.exports.engine_continue_abi?.() !== 1)
       throw Error('寻路WASM接口版本不匹配');
     compiled = module;
     instance = next;
@@ -58,6 +64,7 @@
     activeQueueToken = 0;
     activeEngineToken = 0;
     activeSamplingToken = 0;
+    activeCycleToken = 0;
     return api;
   }
 
@@ -194,7 +201,7 @@
         }
       });
       calls++;
-      if (wasm.memory.buffer.byteLength > recycleLimit()) {
+      if (!transactionDepth && wasm.memory.buffer.byteLength > recycleLimit()) {
         install(compiled);
         recycles++;
       }
@@ -265,20 +272,31 @@
     return tree.map((_, id) => pathAt(tree, id));
   }
 
-  function kernel(name, values, read = null, context = null) {
+  function kernel(name, values, read = null, context = null, bytes = null) {
     if (!['demand_ipf', 'demand_distribution', 'demand_mode', 'demand_strategy',
         'demand_capacity', 'world_run', 'world_policy', 'simulation_run', 'simulation_step',
-        'statistics_run', 'operations_run', 'temporal_run', 'engine_step', 'engine_prepare'
+        'statistics_run', 'operations_run', 'temporal_run', 'engine_step', 'engine_prepare', 'engine_cycle', 'engine_continue'
       ].includes(name)) throw Error('未知需求核心操作');
     try {
       const wasm = exports();
       write(values);
+      if(bytes) {const p=wasm.cycle_bytes_resize(bytes.length);new Uint8Array(wasm.memory.buffer,p,bytes.length).set(bytes);}
       const pointer = wasm[name]();
       const view = new Float64Array(wasm.memory.buffer, pointer, wasm.output_len());
       // Short object projections consume synchronously; persistent matrices own a copy.
       const data = read ? read(view, context) : view.slice();
       wasm.output_clear();
-      if (name === 'simulation_step' || name === 'engine_step') {
+      if(name==='engine_continue') {loopCalls++;loopSteps+=data[1];engineSteps+=data[1];queueSteps+=data[1];statisticsBatches+=data[1];simulationCalls++;
+      } else if(name==='engine_cycle') {
+        cycleCalls++;
+        activeCycleToken=values[1];
+        if(values[15]) activeSamplingToken=values[15];
+        preparationCalls++;
+        if(data[1]===0) {activeQueueToken=values[1];activeSimulationToken=values[14];
+          if(values[16]) activeEngineToken=values[16];
+          queueSteps++;engineSteps++;statisticsBatches++;simulationCalls++;}
+        if(recycleBytes>=64*1024*1024) simulationRecycleBytes=Math.max(simulationRecycleBytes,Math.min(192*1024*1024,Math.ceil(wasm.memory.buffer.byteLength*1.5/65536)*65536));
+      } else if (name === 'simulation_step' || name === 'engine_step') {
         if(name==='engine_step') {
           engineSteps++;activeEngineToken=values[2+values[0]+1];
           values=values.subarray(2,2+values[0]);
@@ -314,7 +332,7 @@
           Math.min(192 * 1024 * 1024, Math.ceil(wasm.memory.buffer.byteLength * 1.5 / 65536) *
             65536));
       }
-      if (wasm.memory.buffer.byteLength > recycleLimit()) {
+      if (!transactionDepth && wasm.memory.buffer.byteLength > recycleLimit()) {
         install(compiled);
         recycles++;
       }
@@ -352,7 +370,7 @@
         graph
       });
       wasm.output_clear();
-      if (wasm.memory.buffer.byteLength > recycleLimit()) {
+      if (!transactionDepth && wasm.memory.buffer.byteLength > recycleLimit()) {
         install(compiled);
         recycles++;
       }
@@ -371,7 +389,7 @@
       const wasm = exports();
       const result = wasm.demand_mode_scalar(...values);
       demandCalls++;
-      if (wasm.memory.buffer.byteLength > recycleLimit()) {
+      if (!transactionDepth && wasm.memory.buffer.byteLength > recycleLimit()) {
         install(compiled);
         recycles++;
       }
@@ -385,13 +403,26 @@
   }
   const api = {
     init,
+    reportWorkerStatus:value=>{workerStatus=value;},
+    withTokens:(tokens,fn)=>{const old=remoteTokens;remoteTokens=tokens;try{return fn();}finally{remoteTokens=old;}},
+    withClock:(now,fn)=>{const old=kernelNow;kernelNow=now||old;try{return fn();}finally{kernelNow=old;}},
+    transaction: fn => {
+      transactionDepth++;
+      try{return fn();}finally {
+        transactionDepth--;
+        if(!transactionDepth&&instance.exports.memory.buffer.byteLength>recycleLimit()) {
+          install(compiled);recycles++;
+        }
+      }
+    },
     kernel,
     modeKernel,
-    simulationToken: () => activeSimulationToken,
-    queueToken: () => activeQueueToken,
-    engineToken: () => activeEngineToken,
+    simulationToken: () => remoteTokens ? remoteTokens.simulation : activeSimulationToken,
+    queueToken: () => remoteTokens ? remoteTokens.queue : activeQueueToken,
+    engineToken: () => remoteTokens ? remoteTokens.engine : activeEngineToken,
     allocateToken: () => ++nativeTokens,
-    samplingToken: () => activeSamplingToken,
+    samplingToken: () => remoteTokens ? remoteTokens.sampling : activeSamplingToken,
+    cycleToken: () => remoteTokens ? remoteTokens.cycle : activeCycleToken,
     recycleSimulation: () => {
       simulationRecycleBytes = 0;
       install(compiled);
@@ -404,6 +435,7 @@
     paths,
     status: () => ({
       backend: 'Rust/WASM',
+      cycleAbi:1,loopAbi:1,loopCalls,loopSteps,cycleCalls,worker:workerStatus,
       demandAbi: 1,
       demandCalls,
       forecastCalls,
@@ -432,7 +464,9 @@
       recycles,
       peakMemoryBytes,
       recycleLimitBytes: recycleLimit(),
-      memoryBytes: instance?.exports.memory.buffer.byteLength || 0
+      mainMemoryBytes:instance?.exports.memory.buffer.byteLength||0,
+      workerMemoryBytes:workerStatus?.memoryBytes||0,
+      memoryBytes:(instance?.exports.memory.buffer.byteLength||0)+(workerStatus?.memoryBytes||0)
     }),
     // Also used by deterministic module-failure/recycling tests; no alternate algorithm.
     create: (bytes, options = {}) => {
@@ -446,7 +480,7 @@
     const fs = require('node:fs'),
       path = require('node:path');
     install(new WebAssembly.Module(fs.readFileSync(path.join(__dirname,
-      'wasm/rail-core-v10.wasm'))));
+      'wasm/rail-core-v11.wasm'))));
     module.exports = api;
   } else {
     root.RailRouting = api;

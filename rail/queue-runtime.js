@@ -5,6 +5,9 @@
   const Core = node ? require('./routing-wasm') : root.RailRouting;
   const Engine = node ? require('./engine-wasm') : root.RailNativeEngine;
   const SIM = node ? require('./simulation-wasm') : root.RailSimulation;
+  const Native = node ? require('./operations-wasm') : root.RailNativeOperations;
+  const Prepare = node ? require('./preparation-wasm') : root.RailPreparation;
+  const R = node ? require('./engine') : root.RailSim;
   const Q = node ? require('./ridership') : root.RailRidership;
   const X = node ? require('./service-plan') : root.RailServicePlan;
   const counters = ['generated', 'boarded', 'alighted', 'completed', 'cancelled', 'rejected',
@@ -71,12 +74,8 @@
     }
   }
 
-  function defs(c, rt, s, out) {
-    out.push(rt.defs.length - c.sent);
-    const runs = new Map(s.services.map(l => [l.id, l]));
-    for (let i = c.sent; i < rt.defs.length; i++) {
-      const j = rt.defs[i],
-        byline = Object.entries(j.byLine),
+  function definition(c,j,s,out,runs=new Map(s.services.map(l=>[l.id,l]))) {
+      const byline = Object.entries(j.byLine),
         valid = j.legs.map(e => {
           const l = runs.get(e.service);
           if (!l || !X.directions(l).includes(e.dir)) return false;
@@ -94,8 +93,12 @@
         out.push(named(c, e.service), e.dir, e.from, e.to, +valid[k]);
         c.limitIds.add(e.from);
       });
-    }
-    c.sent = rt.defs.length;
+  }
+  function defs(c,rt,s,out) {
+    out.push(rt.defs.length-c.sent);
+    const runs=new Map(s.services.map(l=>[l.id,l]));
+    for(let i=c.sent;i<rt.defs.length;i++) definition(c,rt.defs[i],s,out,runs);
+    c.sent=rt.defs.length;
   }
 
   function fullState(c, rt, out) {
@@ -132,7 +135,7 @@
     for (const x of rt.transfers) out.push(x.journey, x.leg, x.amount, x.ready, x.station);
   }
 
-  function packet(c, rt, s, job, resume) {
+  function parts(c, rt, s, job, resume) {
     const full = Core.queueToken() !== c.token;
     if (full) {
       c.sent = 0;
@@ -183,27 +186,28 @@
     });
     const statistics = Q.nativeStatisticsFrame(c, s, rt, full);
     const finance = job.settlement ? Engine.encode(c, rt, job.settlement, named, full) : null;
-    const size = header.length + motion.length + definition.length + limits.length + trainData
-      .length +
-      snapshot.length + tail.length + statistics.length;
+    return {parts:[header,motion,definition,limits,trainData,snapshot,tail,statistics],finance};
+  }
+  function packetFrame(c,rt,s,job,resume) {
+    const frame=parts(c,rt,s,job,resume),finance=frame.finance;
+    const size=frame.parts.reduce((n,p)=>n+p.length,0);
     // Encode directly into the transaction buffer; avoid a second full queue copy.
     const input = new Float64Array(size + (finance ? 2 + finance.length : 0));
     let at = finance ? 2 : 0;
-    for (const part of [header, motion, definition, limits, trainData, snapshot, tail,
-      statistics]) {
+    for (const part of frame.parts) {
       input.set(part, at);
       at += part.length;
     }
-    if (!finance) return {
-      queue: Core.kernel('simulation_step', input)
-    };
-    input.set([size, finance.length]);
-    input.set(finance, at);
-    const result = Core.kernel('engine_step', input);
-    return {
-      queue: result.subarray(3, 3 + result[1]),
-      finance: result.subarray(3 + result[1])
-    };
+    if(!finance)return {name:'simulation_step',input};
+    input.set([size,finance.length]);input.set(finance,at);
+    return {name:'engine_step',input};
+  }
+  function unpack(request,result) {
+    return request.name==='engine_step'?{queue:result.subarray(3,3+result[1]),finance:result.subarray(3+result[1])}:{queue:result};
+  }
+  function packet(...args) {
+    const request=packetFrame(...args);
+    return unpack(request,Core.kernel(request.name,request.input));
   }
 
   function pose(rt, job, data) {
@@ -418,8 +422,175 @@
     for (const id of c.trains.keys())
       if (!alive.has(id)) c.trains.delete(id);
   }
+  const catalogs=new WeakMap();
+  function catalogToken(catalog) {
+    if(!catalogs.has(catalog)) catalogs.set(catalog,Core.allocateToken());
+    return catalogs.get(catalog);
+  }
+  function finish(c,rt) {
+    rt.trains=rt.trains.filter(t=>t.status!=='finished');
+    const alive=new Set(rt.trains.map(uid));
+    for(const id of c.trains.keys()) if(!alive.has(id)) c.trains.delete(id);
+  }
+  // The only identity allocation is native. These objects are save/UI projections.
+  function trainView(rt,s,source,ordinal,id,c,job) {
+    const {l,dir,dwell,loop}=source;
+    const t={id:'T'+String(ordinal).padStart(4,'0'),service:l.id,parentLine:l.parentLine||l.id,
+      callStops:l.callStops||l.stops,dir,stops:[...l.stops],trackIds:[...l.trackIds],
+      index:dir===1?0:l.stops.length-1,status:'dwell',ready:rt.minute+dwell,
+      onboard:0,capacity:R.capacity(l),passengers:{},progress:0,loop,segment:null};
+    identities.set(t,id);rt.trains.push(t);c.trains.set(id,{t,l});
+    job.motion.context.push({t,l});
+  }
+  function* cycle(rt,s,index,track,frames,reroute,settlement,journeyKey) {
+    const c=cache(rt,s),catalog=rt.demandCatalog||rt.defs;
+    // Forecast workspaces must not coexist with a newly rehydrated continuous arena.
+    if(!c.sent&&Core.queueToken()!==c.token&&Core.status().memoryBytes>64*1024*1024)
+      Core.recycleSimulation();
+    const job={settlement,index,track,arrivals:[],gates:rt.arrivalMode==='integer'&&!!frames.sampling};
+    let requests=[],needsKeys=false;
+    let requested=new Set();
+    let result,stableFrame=null,stableMotion=null;
+    // A metadata miss has no game-side effects. Replay the same random seed/clock,
+    // supply only the selected catalog templates, then commit one complete transaction.
+    for(let attempt=0;attempt<4096;attempt++) {
+      if(Core.cycleToken()!==c.token) {c.keySent=0;stableFrame=null;stableMotion=null;}
+      const keyMode=needsKeys||c.keySent&&c.keySent<rt.defs.length?(c.keySent?2:1):0;
+      const text=[],keyRows=[],profiles=[],encoder=new TextEncoder();
+      let byteLength=0;
+      const string=value=>{const b=encoder.encode(value),off=byteLength;byteLength+=b.length;text.push(b);return [off,b.length];};
+      if(keyMode) for(let i=keyMode===1?0:c.keySent;i<rt.defs.length;i++)
+        keyRows.push(i,...string(journeyKey(rt.defs[i])));
+      for(const p of requested) {
+        const j=catalog[p],data=[];definition(c,j,s,data,index.runs);
+        profiles.push(p,j.legs[0]?named(c,j.legs[0].service):-1,...string(journeyKey(j)),data.length,...data);
+      }
+      // Metadata calls finish before encoding any cache-dependent frames.
+      job.motion=stableMotion||(stableMotion=SIM.incremental(rt,s,index,track,uid,frames.dispatch?.context||[]));
+      const templates=[job.motion.templates.length];
+      for(const t of job.motion.templates) {
+        if(t.skip){templates.push(0,0,0);continue;}
+        const {l,dir,loop,dwell}=t;
+        const q=[named(c,l.id),named(c,l.parentLine||l.id),R.capacity(l),dir,+loop,l.cars||6,
+          l.stops.length,...l.stops,(l.callStops||l.stops).length,...(l.callStops||l.stops),0,0];
+        templates.push(q.length,t.data.length,dwell,...q,...t.data);
+      }
+      // Re-encode sampling after a native arena recycle; never replay a delta into an empty cache.
+      const sampling=frames.sampling?SIM.timedFrame(catalog,s,frames.minute,frames.interval,
+        rt.arrivalRemainder||0,rt.rngState,job.gates):null;
+      const prep=Prepare.encode(frames.feedback,sampling,frames.dispatch)||new Float64Array([1,0,0,0,0]);
+      const rules=[frames.sampling?s.services.length:0];
+      for(const l of frames.sampling?s.services:[]) rules.push(named(c,l.id),l.open??0,l.close??1440,+!!l.fleetManaged,l.fleet);
+      const feedbackIds=(frames.feedback?.context.ls||[]).map(l=>named(c,l.id));
+      const frame=stableFrame||(stableFrame=parts(c,rt,s,job,null)),fin=frame.finance||[];
+      const sections=[feedbackIds,keyRows,profiles,templates,rules,prep,fin,...frame.parts];
+      const input=new Float64Array(25+sections.reduce((n,p)=>n+p.length,0));
+      input.set([1,c.token,catalogToken(catalog),rt.defs.length,trainSerial,rt.nextId,keyMode,
+        keyRows.length/3,requested.size,feedbackIds.length,prep.length,fin.length,templates.length,rules.length,
+        job.motion.input[1],sampling?.input[1]||0,fin[1]||0,...frame.parts.map(p=>p.length)]);
+      let at=25;for(const part of sections) {input.set(part,at);at+=part.length;}
+      const bytes=new Uint8Array(byteLength);at=0;for(const part of text){bytes.set(part,at);at+=part.length;}
+      result=yield {name:'engine_cycle',input,bytes};
+      if(keyMode&&Core.cycleToken()===c.token)c.keySent=rt.defs.length;
+      if(result[1]===0) break;
+      needsKeys=needsKeys||!!result[2];
+      requests=Array.from(result.subarray(11,11+result[3]));
+      requested=new Set(requests);
+      if(attempt===4095)throw Error('原生运行元数据未能收敛');
+    }
+    let at=11;
+    for(let i=0;i<result[4];i++,at+=2) {
+      const p=result[at],id=result[at+1];
+      if(id!==rt.defs.length) throw Error('原生出行编号不连续');
+      const j={...catalog[p],id,daily:0};rt.defs.push(j);
+      if(rt._demandIndex)rt._demandIndex.set(journeyKey(j),j);
+    }
+    c.sent=rt.defs.length;
+    if(c.keySent)c.keySent=rt.defs.length;
+    for(let i=0;i<result[5];i++,at+=3)
+      trainView(rt,s,job.motion.templates[result[at+1]],result[at+2],result[at],c,job);
+    trainSerial=Math.max(trainSerial,result[6]);rt.nextId=result[7];
+    const prepared=result.subarray(at,at+result[8]);at+=result[8];
+    let p=4;
+    if(frames.feedback)Native.projectFeedback(frames.feedback,prepared.subarray(p,p+prepared[1]));
+    p+=prepared[1];
+    if(prepared[2]) {
+      const sampled=SIM.projectArrivals(prepared.subarray(p,p+prepared[2]));
+      if(job.gates) {rt.expectedGenerated=(rt.expectedGenerated||0)+sampled.total;
+        rt.arrivalRemainder=sampled.remainder;rt.rngState=sampled.rng;}
+    }
+    p+=prepared[2];
+    if(frames.dispatch)for(const d of SIM.projectDispatch(frames.dispatch,prepared.subarray(p))) {
+      if(d.action<0)continue;
+      if(d.action===1)d.d.lastRun=rt.minute;
+      d.d.next=d.next;
+    }
+    let pending=project(c,rt,s,job,{queue:result.subarray(at,at+result[9]),finance:result.subarray(at+result[9])});
+    while(pending) {
+      const next=reroute(rt,rt.defs[pending.original],pending.station);
+      pending.next=next?.id??-1;
+      const request=packetFrame(c,rt,s,job,pending);
+      pending=project(c,rt,s,job,unpack(request,yield request));
+    }
+    finish(c,rt);
+    c.lastJob=job;c.lastFinance=stableFrame.finance;
+  }
+  function* continueRun(rt,s,minutes,options) {
+    s=rt.plan||s;
+    const c=states.get(rt),job=c?.lastJob;
+    if(!job?.settlement||c.plan!==s||Core.queueToken()!==c.token) return null;
+    let barrier=Math.floor(rt.minute)+1;
+    for(const d of Object.values(rt.departures))barrier=Math.min(barrier,d.next-1e-8);
+    const world=job.settlement.world;
+    if(world.urban)barrier=Math.min(barrier,world.urban.lastMinute+360-1e-7);
+    if(world.operationsReview)barrier=Math.min(barrier,world.operationsReview.nextAt-1e-7);
+    if(rt.minute+.1>=barrier-1e-8||minutes<.1)return null;
+    const fin=Engine.continuation(c,rt,job.settlement,c.lastFinance);
+    if(!fin)return null;
+    const input=new Float64Array([c.token,rt.minute,minutes,options.maxSteps,options.budget,barrier,
+      +!!s.ridership,...fin,...[s.routeModel===9?1:0,rt.arrivalMode==='integer'?1:0,X.TRANSFER]]);
+    const result=yield {name:'engine_continue',input,now:options.now};
+    let at=4;
+    for(let i=0;i<result[1];i++) {
+      rt.minute=result[at++];rt.demandCarry=result[at++];const nq=result[at++],nf=result[at++];
+      job.motion.context=rt.trains.map(t=>({t,l:t.retiringRun||job.index.runs.get(t.service)}));
+      let pending=project(c,rt,s,job,{queue:result.subarray(at,at+nq),finance:result.subarray(at+nq,at+nq+nf)});
+      at+=nq+nf;
+      while(pending) {
+        const next=options.reroute(rt,rt.defs[pending.original],pending.station);
+        pending.next=next?.id??-1;
+        const request=packetFrame(c,rt,s,job,pending);
+        pending=project(c,rt,s,job,unpack(request,yield request));
+      }
+      finish(c,rt);
+    }
+    return {steps:result[1],remaining:result[2],running:result[3]!==2,reason:result[3]};
+  }
+  function sync(generator) {
+    return Core.transaction(()=>{
+      let step=generator.next();
+      while(!step.done) {
+        const request=step.value;
+        const result=Core.withClock(request.now,()=>Core.kernel(request.name,request.input,null,null,request.bytes));
+        step=generator.next(result);
+      }
+      return step.value;
+    });
+  }
+  const clients=new WeakMap();
+  function client(rt) {
+    if(!clients.has(rt)) {
+      const W=node?require('./simulation-client'):root.RailSimulationClient;
+      clients.set(rt,W.create());
+    }
+    return clients.get(rt);
+  }
   const api = {
-    step
+    continueRun:(...args)=>sync(continueRun(...args)),
+    continueAsync:(...args)=>client(args[0]).run(()=>continueRun(...args)),
+    cycleAsync:(...args)=>client(args[0]).run(()=>cycle(...args)),
+    dispose:rt=>{clients.get(rt)?.close();clients.delete(rt);},
+    step,cycle:(...args)=>sync(cycle(...args))
   };
   if (node) module.exports = api;
   else root.RailQueueRuntime = api;

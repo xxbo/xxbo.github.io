@@ -807,6 +807,15 @@ pub(super) fn run(
     queue_state: &mut Option<Queues>,
     prefix: usize,
 ) -> Vec<f64> {
+    run_patched(input, simulation_state, queue_state, prefix, &[])
+}
+pub(super) fn run_patched(
+    input: &[f64],
+    simulation_state: &mut Option<crate::simulation::MotionState>,
+    queue_state: &mut Option<Queues>,
+    prefix: usize,
+    feedback: &[(usize, [f64; 4])],
+) -> Vec<f64> {
     let mut r = Read { v: input, at: 0 };
     let protocol = r.f();
     assert!(protocol == 1.0 || protocol == 2.0);
@@ -883,6 +892,11 @@ pub(super) fn run(
                 .as_mut()
                 .expect("statistics state missing")
                 .frame(&mut r, now);
+        }
+    }
+    if let Some(stats) = q.stats.as_mut() {
+        for (id, values) in feedback {
+            stats.set_feedback(*id, values);
         }
     }
     assert_eq!(r.at, input.len());

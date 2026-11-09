@@ -6,8 +6,8 @@
   const Native = node ? require('./operations-wasm') : root.RailNativeOperations;
   const SIM = node ? require('./simulation-wasm') : root.RailSimulation;
 
-  function run(feedback, sampling, dispatch) {
-    if (!feedback && !sampling && !dispatch) return {sampled: null, dispatch: []};
+  function encode(feedback, sampling, dispatch) {
+    if (!feedback && !sampling && !dispatch) return null;
     const parts = [feedback?.input || [], sampling?.input || [], dispatch?.input || []];
     const mapping = sampling?.context.names.map(
       id => feedback?.context.ids.get(id) ?? -1) || [];
@@ -20,9 +20,14 @@
       input.set(part, at);
       at += part.length;
     }
+    return input;
+  }
+  function run(feedback,sampling,dispatch) {
+    const input=encode(feedback,sampling,dispatch);
+    if(!input) return {sampled:null,dispatch:[]};
     const data = Core.kernel('engine_prepare', input);
     if (data[0] !== 1) throw Error('原生准备批次版本错误');
-    at = 4;
+    let at = 4;
     if (feedback) Native.projectFeedback(feedback, data.subarray(at, at + data[1]));
     at += data[1];
     const sampled = sampling ? SIM.projectArrivals(data.subarray(at, at + data[2])) : null;
@@ -32,6 +37,6 @@
       dispatch: dispatch ? SIM.projectDispatch(dispatch, data.subarray(at)) : []
     };
   }
-  if (node) module.exports = {run};
-  else root.RailPreparation = {run};
+  if (node) module.exports = {run,encode};
+  else root.RailPreparation = {run,encode};
 })(typeof globalThis !== 'undefined' ? globalThis : this);

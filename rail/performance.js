@@ -43,13 +43,26 @@
   }
 
   function createClock() {
-    let pending = 0;
+    let pending = 0, busy=false,epoch=0,fault=null,lastOk=true,lastMs=0;
     return {
       reset() {
-        pending = 0;
+        pending = 0;epoch++;lastOk=true;fault=null;
       },
       get pending() {
         return pending;
+      },
+      runAsync(elapsed,speed,budget,advance,now) {
+        pending+=Math.max(0,Math.min(.12,elapsed))*speed;
+        if(fault){const error=fault;fault=null;throw error;}
+        if(!busy&&pending>1e-8&&lastOk) {
+          const requested=pending,version=epoch,started=now();busy=true;
+          Promise.resolve().then(()=>advance(requested,{budget,maxSteps:100,now})).then(result=>{
+            if(!Number.isFinite(result.remaining)||result.remaining<0||result.remaining>requested||
+              !Number.isInteger(result.steps)||result.steps<0||result.steps>100)throw Error('Invalid async simulation result');
+            if(version===epoch){lastOk=result.running;pending=lastOk?Math.max(0,pending-(requested-result.remaining)):0;}
+          }).catch(error=>{fault=error;}).finally(()=>{lastMs=now()-started;busy=false;});
+        }
+        return {ok:lastOk,pending,busy,ms:lastMs};
       },
       runBudget(elapsed, speed, budget, advance, now) {
         pending += Math.max(0, Math.min(.12, elapsed)) * speed;

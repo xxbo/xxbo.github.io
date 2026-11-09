@@ -9,8 +9,8 @@
   const Q = node ? require('./ridership') : root.RailRidership;
   const F = node ? require('./fleet') : root.RailFleet;
   const SIM = node ? require('./simulation-wasm') : root.RailSimulation;
-  const Native = node ? require('./operations-wasm') : root.RailNativeOperations;
   const Prepare = node ? require('./preparation-wasm') : root.RailPreparation;
+  const Native = node ? require('./operations-wasm') : root.RailNativeOperations;
   const QUEUES = node ? require('./queue-runtime') : root.RailQueueRuntime;
   const key = (id, dir, station) => `${id}|${dir}|${station}`;
 
@@ -210,39 +210,9 @@
     const dt=interval;
     let feedback=null;
     if(interval) Q.step(s,rt,dt,(...args)=>{feedback=Native.feedbackFrame(...args);});
-    const incoming = [];
-    const catalog = rt.demandCatalog || rt.defs,
-      minute = Math.round(rt.minute * 1e6) / 1e6;
-    const open = interval?new Set(s.services.filter(l => B.isOpen(l, minute) && (!l.fleetManaged || l
-      .fleet > 0)).map(l => l.id)):null;
-    function arrive(j, n) {
-      if (n > 0) incoming.push({
-        j,
-        id: open.has(j.legs[0]?.service) ? materialize(rt, j).id : -1,
-        n
-      });
-    }
-    const integer = rt.arrivalMode === 'integer';
-    // Finish metadata calls before encoding the sampling cache token: a native recycle
-    // during dispatch metadata must never invalidate an already encoded delta frame.
+    const minute=Math.round(rt.minute*1e6)/1e6;
     const dispatch=SIM.dispatchFrame(rt,s,index);
-    const sampling=interval?SIM.timedFrame(catalog,s,minute,dt,rt.arrivalRemainder||0,
-      rt.rngState,integer):null;
-    const result=Prepare.run(feedback,sampling,dispatch);
-    const sampled=result.sampled;
-    if(!sampled) return {arrivals:[],gates:false,dispatch:result.dispatch};
-    if (integer) {
-      rt.expectedGenerated = (rt.expectedGenerated || 0) + sampled.total;
-      rt.arrivalRemainder = sampled.remainder;
-      rt.rngState = sampled.rng;
-    }
-    for (let i = 0; i < sampled.events.length; i += 2) arrive(catalog[sampled.events[i]], sampled
-      .events[i + 1]);
-    return {
-      arrivals: incoming,
-      gates: integer,
-      dispatch:result.dispatch
-    };
+    return {feedback,dispatch,interval,minute,sampling:!!interval};
   }
 
   function refreshFleet(rt) {
@@ -284,7 +254,7 @@
     return tracks.map.get(id) || index.track.get(id);
   }
 
-  function tick(rt, s, dt, target, carry, interval, settlement=null) {
+  function prepareTick(rt, s, dt, target, carry, interval, settlement=null) {
     s = rt.plan || s;
     rt.minute = target;
     if (Math.floor(rt.minute) !== rt.fleetMinute) {
@@ -292,7 +262,50 @@
       rt.fleetMinute = Math.floor(rt.minute);
     }
     const index = planIndex(s);
-    const incoming = generate(rt, s, interval, carry, index);
+    const frames=generate(rt,s,interval,carry,index);
+    return [rt,s,index,trainTrack,frames,reroute,settlement,journeyKey];
+  }
+
+  // Version-1 weighted saves retain their established streaming adapter. The default
+  // version-9 game uses canonical native identities; avoid a second large key index for
+  // historical all-positive weighted catalogs until their save migration is performed.
+  function legacyTick(rt,s,index,track,frames,reroute,settlement) {
+    const interval=frames.interval,dt=interval;
+    const incoming=(()=>{
+    const incoming = [];
+    const catalog = rt.demandCatalog || rt.defs,
+      minute = Math.round(rt.minute * 1e6) / 1e6;
+    const open = interval?new Set(s.services.filter(l => B.isOpen(l, minute) && (!l.fleetManaged || l
+      .fleet > 0)).map(l => l.id)):null;
+    function arrive(j, n) {
+      if (n > 0) incoming.push({
+        j,
+        id: open.has(j.legs[0]?.service) ? materialize(rt, j).id : -1,
+        n
+      });
+    }
+    const integer = rt.arrivalMode === 'integer';
+    // Finish metadata calls before encoding the sampling cache token: a native recycle
+    // during dispatch metadata must never invalidate an already encoded delta frame.
+    const dispatch=frames.dispatch;
+    const sampling=interval?SIM.timedFrame(catalog,s,minute,dt,rt.arrivalRemainder||0,
+      rt.rngState,integer):null;
+    const result=Prepare.run(frames.feedback,sampling,dispatch);
+    const sampled=result.sampled;
+    if(!sampled) return {arrivals:[],gates:false,dispatch:result.dispatch};
+    if (integer) {
+      rt.expectedGenerated = (rt.expectedGenerated || 0) + sampled.total;
+      rt.arrivalRemainder = sampled.remainder;
+      rt.rngState = sampled.rng;
+    }
+    for (let i = 0; i < sampled.events.length; i += 2) arrive(catalog[sampled.events[i]], sampled
+      .events[i + 1]);
+    return {
+      arrivals: incoming,
+      gates: integer,
+      dispatch:result.dispatch
+    };
+    })();
     for (const {
         l,
         dir,
@@ -327,6 +340,14 @@
       d.next = next;
     }
     QUEUES.step(rt, s, index, trainTrack, incoming.arrivals, incoming.gates, reroute, settlement);
+  }
+  function tick(...args) {
+    const prepared=prepareTick(...args);
+    if(prepared[1].routeModel!==9)legacyTick(...prepared);else QUEUES.cycle(...prepared);
+  }
+  async function tickAsync(...args) {
+    const prepared=prepareTick(...args);
+    if(prepared[1].routeModel!==9)legacyTick(...prepared);else await QUEUES.cycleAsync(...prepared);
   }
 
   function advance(rt, s, minutes) {
@@ -792,6 +813,10 @@
       if (dt > 1e-9) tick(rt, s, dt, target, carry, interval, settlement);
       return rt;
     },
+    continueRun:(rt,s,minutes,options)=>QUEUES.continueRun(rt,s,minutes,{...options,reroute}),
+    continueAsync:(rt,s,minutes,options)=>QUEUES.continueAsync(rt,s,minutes,{...options,reroute}),
+    advanceTickAsync:(rt,s,dt,target,carry,interval,settlement)=>dt>1e-9?tickAsync(rt,s,dt,target,carry,interval,settlement):Promise.resolve(rt),
+    dispose:rt=>QUEUES.dispose(rt),
     demandSummary,
     MAX_SAVED_DEFINITIONS,
     reconcile,

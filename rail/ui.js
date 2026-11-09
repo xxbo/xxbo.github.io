@@ -392,6 +392,8 @@
     return saveQueue.request(saveNow);
   }
   async function saveNow() {
+    await M.whenIdle(traffic);
+    if(runtimeFault||M.lastError(traffic))return false;
     if (runtimeFault) {
       saveStatus = '运营异常，已暂停覆盖上次存档';
       return false;
@@ -727,6 +729,7 @@
   }
   async function commit(action, message) {
     if (calculating) return false;
+    await M.whenIdle(traffic);
     const paused = !playing,
       before = paused ? R.clone(s) : null,
       beforeTraffic = paused ? R.clone(O.snapshot(traffic)) : null,
@@ -930,6 +933,7 @@
     $('calculation-status').textContent = '需求后台更新中' + (playing ? ' · 运营继续' : '');
     try {
       const next = await calculate(s);
+      await M.whenIdle(traffic);
       if (calculating || identity !== traffic || revision !== networkRevision) {
         forecastDirty = true;
         return;
@@ -1760,6 +1764,7 @@
     }
   }
   document.addEventListener('click', async e => {
+    if(e.target.closest('[data-repay],#borrow-money,#save-line-identity,#save-station-name,#undo'))await M.whenIdle(traffic);
     if (calculating) return;
     const b = e.target.closest('button,[data-line],[data-node]');
     if (!b || b.closest('#map')) return;
@@ -2262,7 +2267,7 @@
         closeUtility();
         break;
       case 'confirm-newgame':
-        startNewGame();
+        await startNewGame();
         break;
       case 'play':
         setPlaying(!playing);
@@ -2350,6 +2355,7 @@
           undoState = null;
           mode = null;
           draft = [];
+          O.dispose(traffic);
           traffic = O.restore(s, forecast, rt) || O.create(s, forecast, s.economy.minute, false);
           scheduleForecast();
           save();
@@ -2688,7 +2694,7 @@
     }
     if (playing && !calculating && lastFrame) {
       try {
-        const result = simulationClock.runBudget((now - lastFrame) / 1000, speed, perf.budget, (dt,options) => M.advanceBudget(
+        const result = simulationClock.runAsync((now - lastFrame) / 1000, speed, perf.budget, (dt,options) => M.advanceBudgetAsync(
           s, traffic, dt,options), () => performance.now());
         computeMs = computeMs * .8 + result.ms * .2;
         if (!result.ok) {
@@ -3050,12 +3056,13 @@
   }
 
   function memoryDiagnostics() {
+    const native=RailRouting.status(),runtime=native.worker||native;
     const latest = memoryAudit.latest(),
       queue = saveQueue.stats(),
       cache = forecast.diagnostics?.memory;
     const mb = value => value === null || value === undefined ? '未提供' : (value / 1024 / 1024).toFixed(1) +
       ' MB';
-    return `<details id="memory-details" class="console-details" ${$('memory-details')?.open?'open':''}><summary>内存与后台任务</summary><div class="detail-row"><span>寻路核心</span><b>Rust / WASM · 需求、列车、队列、统计与经营核</b></div><p class="station-note">堆内存为当前页面JS估计，Worker、图片与浏览器总内存需结合浏览器任务管理器；采样最多保留48条。</p><div class="detail-row"><span>运行分配内核调用</span><b>${RailRouting.status().simulationCalls||0} 次</b></div><div class="detail-row"><span>原生统计批次 / 单独调用</span><b>${RailRouting.status().statisticsBatches||0} / ${RailRouting.status().statisticsCalls||0}</b></div><div class="detail-row"><span>准备批次 · MAP50 / 覆盖缓存复用</span><b>${RailRouting.status().preparationCalls||0} / ${RailRouting.status().coverageCacheHits||0}</b></div><div class="detail-row"><span>队列与经营合并事务 · MAP49</span><b>${RailRouting.status().engineSteps||0} 次 · ABI ${RailRouting.status().engineAbi||0}</b></div><div class="detail-row"><span>反馈与经营时钟调用</span><b>${RailRouting.status().operationsCalls||0} 次 · ABI ${RailRouting.status().operationsAbi||0}</b></div><div class="detail-row"><span>独立时序 / 原生到达批次</span><b>${RailRouting.status().temporalCalls||0} / ${RailRouting.status().timedArrivalCalls||0} · ABI ${RailRouting.status().temporalAbi||0}</b></div><div class="detail-row"><span>运行线程WASM / 峰值</span><b>${mb(RailRouting.status().memoryBytes)} / ${mb(RailRouting.status().peakMemoryBytes)}</b></div><div class="detail-row"><span>运行线程回收阈值</span><b>${mb(RailRouting.status().recycleLimitBytes)}</b></div><div class="detail-row"><span>页面JS堆 / 采样峰值</span><b>${mb(latest?.heap)} / ${mb(latest?.peak)}</b></div><div class="detail-row"><span>预测路径 / 实际使用出行组合</span><b>${forecast.flows.length} / ${traffic.defs.length}</b></div><div class="detail-row"><span>保存编码 / 待保存</span><b>${queue.active?1:0} / ${queue.pending?1:0}</b></div><div class="detail-row"><span>已合并保存请求</span><b>${queue.coalesced}</b></div>${cache?`<div class="detail-row"><span>整段预测调用</span><b>${cache.wasm?.forecastCalls||0} 次</b></div><div class="detail-row"><span>需求线程WASM线性内存</span><b>${mb(cache.wasm?.memoryBytes)}</b></div><div class="detail-row"><span>寻路树组缓存峰值 / 预算</span><b>${cache.routeTrees.peak} / ${cache.routeTrees.limit}</b></div><div class="detail-row"><span>路线策略缓存峰值 / 预算</span><b>${cache.strategies.peak} / ${cache.strategies.limit}</b></div>`:''}</details>`;
+    return `<details id="memory-details" class="console-details" ${$('memory-details')?.open?'open':''}><summary>内存与后台任务</summary><div class="detail-row"><span>寻路核心</span><b>Rust / WASM · 需求、列车、队列、统计与经营核</b></div><p class="station-note">堆内存为当前页面JS估计，Worker、图片与浏览器总内存需结合浏览器任务管理器；采样最多保留48条。</p><div class="detail-row"><span>模拟执行位置</span><b>${native.worker?'独立 Worker · Rust/WASM':'主线程 · Rust/WASM'}</b></div><div class="detail-row"><span>融合事务 / Rust 循环步数</span><b>${runtime.cycleCalls||0} / ${runtime.loopSteps||0}</b></div><div class="detail-row"><span>主线程 / 模拟 Worker WASM</span><b>${mb(native.mainMemoryBytes)} / ${mb(native.workerMemoryBytes)}</b></div><div class="detail-row"><span>运行分配内核调用</span><b>${runtime.simulationCalls||0} 次</b></div><div class="detail-row"><span>原生统计批次 / 单独调用</span><b>${runtime.statisticsBatches||0} / ${runtime.statisticsCalls||0}</b></div><div class="detail-row"><span>准备批次 / 覆盖缓存复用</span><b>${runtime.preparationCalls||0} / ${runtime.coverageCacheHits||0}</b></div><div class="detail-row"><span>运行结算步数</span><b>${runtime.engineSteps||0} 次 · ABI ${runtime.engineAbi||0}</b></div><div class="detail-row"><span>反馈与经营时钟调用</span><b>${runtime.operationsCalls||0} 次 · ABI ${runtime.operationsAbi||0}</b></div><div class="detail-row"><span>独立时序 / 原生到达批次</span><b>${runtime.temporalCalls||0} / ${runtime.timedArrivalCalls||0} · ABI ${runtime.temporalAbi||0}</b></div><div class="detail-row"><span>运行线程WASM / 峰值</span><b>${mb(runtime.memoryBytes)} / ${mb(runtime.peakMemoryBytes)}</b></div><div class="detail-row"><span>运行线程回收阈值</span><b>${mb(runtime.recycleLimitBytes)}</b></div><div class="detail-row"><span>页面JS堆 / 采样峰值</span><b>${mb(latest?.heap)} / ${mb(latest?.peak)}</b></div><div class="detail-row"><span>预测路径 / 实际使用出行组合</span><b>${forecast.flows.length} / ${traffic.defs.length}</b></div><div class="detail-row"><span>保存编码 / 待保存</span><b>${queue.active?1:0} / ${queue.pending?1:0}</b></div><div class="detail-row"><span>已合并保存请求</span><b>${queue.coalesced}</b></div>${cache?`<div class="detail-row"><span>整段预测调用</span><b>${cache.wasm?.forecastCalls||0} 次</b></div><div class="detail-row"><span>需求线程WASM线性内存</span><b>${mb(cache.wasm?.memoryBytes)}</b></div><div class="detail-row"><span>寻路树组缓存峰值 / 预算</span><b>${cache.routeTrees.peak} / ${cache.routeTrees.limit}</b></div><div class="detail-row"><span>路线策略缓存峰值 / 预算</span><b>${cache.strategies.peak} / ${cache.strategies.limit}</b></div>`:''}</details>`;
   }
 
   function diagnosticContent() {
@@ -3229,7 +3236,8 @@
     });
   }
 
-  function downloadLocalSave() {
+  async function downloadLocalSave() {
+    await M.whenIdle(traffic);
     syncRecords();
     const data = LS.pack(s, O.snapshot(traffic), {
         playing,
@@ -3274,6 +3282,7 @@
     if (!pendingImport || calculating) return;
     const c = pendingImport;
     calculating = true;
+    await M.whenIdle(traffic);
     $('calculation-status').textContent = '正在校验并恢复存档…';
     $('calculation-status').hidden = false;
     try {
@@ -3665,7 +3674,10 @@
     }
   });
 
-  function startNewGame() {
+  async function startNewGame() {
+    setPlaying(false);
+    await M.whenIdle(traffic);
+    O.dispose(traffic);
     runtimeFault = '';
     networkRevision++;
     storageReadBlocked = false;

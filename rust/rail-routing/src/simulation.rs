@@ -272,6 +272,7 @@ pub(super) struct MotionState {
     routes: Vec<Vec<(f64, f64)>>,
     calls: Vec<Vec<bool>>,
     blocks: usize,
+    releases: Vec<f64>,
     delta: crate::numbers::Map<usize, DeltaTrain>,
     order: Vec<usize>,
 }
@@ -314,6 +315,7 @@ pub(super) fn persistent(v: &[f64], cache: &mut Option<MotionState>) -> Vec<f64>
             routes,
             calls,
             blocks: nb,
+            releases: vec![],
             delta: crate::numbers::Map::default(),
             order: vec![],
         });
@@ -382,6 +384,16 @@ pub(super) fn persistent(v: &[f64], cache: &mut Option<MotionState>) -> Vec<f64>
     out
 }
 
+pub(super) fn continuation(state: &mut Option<MotionState>, now: f64) -> (Vec<f64>, Vec<usize>) {
+    let s = state.as_mut().expect("motion missing");
+    s.order.retain(|id| s.delta[id].row[1] != 3.0);
+    let mut packet = vec![6.0, s.token, now, 2.0, 0.0, s.releases.len() as f64];
+    packet.extend_from_slice(&s.releases);
+    packet.push(s.order.len() as f64);
+    packet.extend(s.order.iter().map(|&id| id as f64));
+    packet.push(0.0);
+    (packet, s.order.clone())
+}
 struct DeltaTrain {
     group: usize,
     row: [f64; 20],
@@ -410,6 +422,7 @@ fn incremental(v: &[f64], cache: &mut Option<MotionState>) -> Vec<f64> {
             routes: vec![],
             calls: vec![],
             blocks: nb,
+            releases: vec![],
             delta: crate::numbers::Map::default(),
             order: vec![],
         });
@@ -495,6 +508,7 @@ fn incremental(v: &[f64], cache: &mut Option<MotionState>) -> Vec<f64> {
         };
         out.extend_from_slice(&move_train(now, spacing, row, &mut blocks));
     }
+    s.releases = blocks;
     for (id, r) in s.order.iter().zip(out.chunks_exact(8)) {
         let row = &mut s.delta.get_mut(id).unwrap().row;
         match r[0] as u8 {

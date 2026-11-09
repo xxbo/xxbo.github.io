@@ -236,11 +236,21 @@
         reason = 'time';
         break;
       }
+      if(!options.shouldYield&&(!options.now||options.nativeLoop===true)) {
+        const result=P.continueRun(rt,s,remaining,{maxSteps:maxSteps-steps,budget:Math.max(0,budget-(now()-start)),now});
+        if(result?.steps) {
+          remaining=result.remaining;steps+=result.steps;running=result.running;
+          if(!running){reason='blocked';break;}
+          if(remaining<=1e-8)break;
+          if(steps>=maxSteps){reason='steps';break;}
+          if(now()-start>=budget){reason='time';break;}
+        }
+      }
     }
     return {running, remaining, steps, consumed: minutes - remaining, reason};
   }
 
-  function advanceInterval(s, rt, minutes, trackFixed = s.tracks.reduce(
+  function* interval(s, rt, minutes, trackFixed = s.tracks.reduce(
     (value, track) => value + track.km * 2200, 0)) {
     let frame = Engine.begin(s, rt, minutes);
     if (!frame.running) return false;
@@ -258,7 +268,7 @@
         beforeRevenue: rt.revenue,
         beforeExpense: rt.vehicleExpense
       };
-      P.advanceTick(rt, s, dt, target, frame.carry, frame.interval, job);
+      yield [rt,s,dt,target,frame.carry,frame.interval,job];
       if (dt > 1e-9) frame = job.result;
       else {
         const active = s.services.reduce((v, l) => v + (l.fleetManaged ? F.planned(l, rt.minute) :
@@ -273,7 +283,45 @@
     }
     return true;
   }
-
+  function advanceInterval(...args) {
+    const generator=interval(...args);let step=generator.next();
+    while(!step.done){P.advanceTick(...step.value);step=generator.next();}
+    return step.value;
+  }
+  async function advanceIntervalAsync(...args) {
+    const generator=interval(...args);let step=generator.next();
+    while(!step.done){await P.advanceTickAsync(...step.value);step=generator.next();}
+    return step.value;
+  }
+  const pending=new WeakMap(),errors=new WeakMap();
+  function whenIdle(rt) {return pending.get(rt)||Promise.resolve();}
+  function advanceBudgetAsync(s,rt,minutes,options={}) {
+    const task=whenIdle(rt).then(async()=>{
+      validInterval(minutes,1e8);init(s);
+      const now=options.now||(()=>performance.now()),start=now(),budget=options.budget??6,max=options.maxSteps??100;
+      if(!Number.isFinite(budget)||budget<0||!Number.isInteger(max)||max<1||max>10000)throw Error('Invalid simulation budget');
+      const trackFixed=s.tracks.reduce((n,t)=>n+t.km*2200,0);
+      let remaining=minutes,steps=0,running=true,reason='complete';
+      while(remaining>1e-8&&steps<max) {
+        if(options.shouldYield?.()){reason='interrupted';break;}
+        const batch=await P.continueAsync(rt,s,remaining,{maxSteps:max-steps,budget:Math.max(0,budget-(now()-start))});
+        if(batch?.steps) {remaining=batch.remaining;steps+=batch.steps;running=batch.running;}
+        else {
+          const dt=Math.min(.1,remaining);
+          running=await advanceIntervalAsync(s,rt,dt,trackFixed);
+          remaining-=dt;if(running)steps++;
+        }
+        if(!running){reason='blocked';break;}
+        if(remaining<=1e-8)break;
+        if(steps>=max){reason='steps';break;}
+        if(now()-start>=budget){reason='time';break;}
+      }
+      return {running,remaining,steps,consumed:minutes-remaining,reason};
+    });
+    const settled=task.then(()=>{},error=>{errors.set(rt,error);});pending.set(rt,settled);
+    settled.finally(()=>{if(pending.get(rt)===settled)pending.delete(rt);});
+    return task;
+  }
   function signature(s) {
     return 'transit-city-v19|' + s.region + '|' + JSON.stringify([s.routeModel, s.services.map(
       l => [l.id, l
@@ -296,7 +344,8 @@
     repay,
     settle,
     advance,
-    advanceBudget,
+    advanceBudget,advanceBudgetAsync,whenIdle,
+    isBusy:rt=>pending.has(rt),lastError:rt=>errors.get(rt),
     signature,
     INITIAL,
     CREDIT,
