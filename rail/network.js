@@ -408,14 +408,29 @@
 
   function removeLine(s, id) {
     const c = R.clone(s);
-    if (!c.services.some(l => l.id === id)) return {
-      error: '线路不存在。'
+    const Core = typeof module !== 'undefined' && module.exports ? require('./routing-wasm') : root.RailRouting;
+    const names = new Map(),
+      intern = v => {
+        if (!names.has(v)) names.set(v, names.size);
+        return names.get(v);
+      };
+    const values = [1, c.services.length, c.tracks.length];
+    for (const l of c.services) {
+      const patterns = l.patterns || [];
+      values.push(+(l.id === id), patterns.length, ...patterns.map(p => +(p.target === id)), l.trackIds.length,
+        ...l.trackIds.map(intern));
+    }
+    values.push(...c.tracks.map(t => intern(t.id)));
+    const plan = Core.kernel('network_remove_line', Float64Array.from(values));
+    if (plan[1]) return {
+      error: plan[1] === 1 ? '线路不存在。' : '其他线路存在跨线交路，请先移除相关交路。'
     };
-    if (c.services.some(l => l.patterns?.some(p => p.target === id))) return {
-      error: '其他线路存在跨线交路，请先移除相关交路。'
-    };
-    c.services = c.services.filter(l => l.id !== id);
-    prune(c);
+    let at = 3;
+    const lines = plan.slice(at, at + plan[2]);
+    at += plan[2];
+    const n = plan[at++];
+    c.services = Array.from(lines, i => c.services[i]);
+    c.tracks = Array.from(plan.slice(at, at + n), i => c.tracks[i]);
     return commit(s, c);
   }
 
