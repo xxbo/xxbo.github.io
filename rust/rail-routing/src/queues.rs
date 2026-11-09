@@ -1079,10 +1079,20 @@ fn execute(
         let mode = r.f();
         if mode < 0.0 {
             q.stats = None;
-        } else if mode == 1.0 {
+        } else if mode == 1.0 || mode == 3.0 {
+            let prune = if mode == 3.0 { r.f() } else { f64::NAN };
             q.stats = Some(crate::statistics::Statistics::read(&mut r, now));
+            if !prune.is_nan() {
+                q.stats.as_mut().unwrap().prune_hour(prune);
+            }
         } else {
-            assert_eq!(mode, 0.0);
+            assert!(mode == 0.0 || mode == 2.0);
+            if mode == 2.0 {
+                q.stats
+                    .as_mut()
+                    .expect("statistics state missing")
+                    .window_frame(&mut r);
+            }
             q.stats
                 .as_mut()
                 .expect("statistics state missing")

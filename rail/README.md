@@ -92,3 +92,6 @@ GitHub Pages 上的东京圈铁路经营实验。静态网页，无自己的后�
 - [MAP54：P1 原生分时槽切换与空需求修复](rust-wasm-map54.md)
 
 - [MAP55：P1 日归档、分时与纪录规则](rust-wasm-map55.md)
+
+- [MAP56：统计增量与滚动小时维护、双基线收益](rust-wasm-map56.md)
+- [后续迁移的性能基线约定](performance-baselines.md)

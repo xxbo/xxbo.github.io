@@ -238,15 +238,18 @@
   const event = (...args) => statistics.event(...args);
   const projectEvents = (s, rt, apply) => apply();
 
-  function step(s, rt, minutes, applyFeedback=Native.feedback) {
+  function step(s, rt, minutes, applyFeedback=Native.feedback, nativeWindow=false) {
     const q = s.ridership;
     if (!q) return;
     ensureDay(s, rt.minute);
     sync(s, rt.minute);
     applyFeedback(s, rt, minutes, true);
     q.lastMinute = rt.minute;
-    q.hour = q.hour.filter(b => b.minute > Math.floor(rt.minute) - 60);
-    statistics.invalidate(s);
+    if(nativeWindow) statistics.minute(s,rt.minute,nativeWindow==='projected');
+    else {
+      q.hour = q.hour.filter(b => b.minute > Math.floor(rt.minute) - 60);
+      statistics.invalidate(s);
+    }
   }
 
   function line(s, id) {
@@ -400,6 +403,8 @@
   }
 
   const api = {
+    nativeStatisticsDiagnostics: statistics.diagnostics,
+    nativeStatisticsCurrent: statistics.current,
     financeFrame,
     financeLayout,
     nativeFinanceApply,

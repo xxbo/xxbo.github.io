@@ -42,7 +42,11 @@
       if (!v) {
         v = {
           revision: 0,
-          finance: new Map()
+          finance: new Map(),
+          windowMinute: NaN,
+          fullFrames: 0,
+          deltaFrames: 0,
+          encodedValues: 0
         };
         revisions.set(q, v);
       }
@@ -55,6 +59,19 @@
 
     function financeChanged(s, id, value) {
       if (s.ridership) state(s.ridership).finance.set(id, value);
+    }
+    function minute(s, value, alreadyPruned = false) {
+      if (s.ridership) state(s.ridership).windowMinute = alreadyPruned ? NaN : value;
+    }
+    function diagnostics(s) {
+      const v = s.ridership && state(s.ridership);
+      return v ? {fullFrames:v.fullFrames,deltaFrames:v.deltaFrames,encodedValues:v.encodedValues} : null;
+    }
+    function current(c, s) {
+      const q=s.ridership, previous=c.statsContext;
+      return !q || !!previous && previous.q===q && previous.day===q.current &&
+        previous.records===q.records && previous.lines===q.lines && previous.flow===q.current.flow &&
+        previous.revision===state(q).revision;
     }
 
     function context(c, s, rt) {
@@ -103,10 +120,11 @@
       const reset = full || !previous || previous.q !== q || previous.day !== q.current ||
         previous.records !== q.records || previous.lines !== q.lines || previous.flow !== q
         .current.flow ||
-        previous.revision !== v.revision || previous.number !== number || previous.slot !== slot;
+        previous.revision !== v.revision || previous.number !== number || slot < previous.slot;
       let out;
       if (reset) {
-        out = [1, ...context(c, s, rt)];
+        out = Number.isNaN(v.windowMinute) ? [1, ...context(c, s, rt)] :
+          [3, v.windowMinute, ...context(c, s, rt)];
         c.statsContext = {
           q,
           day: q.current,
@@ -117,10 +135,20 @@
           number,
           slot
         };
+        v.fullFrames++;
       } else {
-        out = [0, v.finance.size];
+        const flow=q.current.flow;
+        const valid=flow?.version===1&&FLOW.FIELDS.every(k=>Array.isArray(flow[k])&&flow[k].length===FLOW.SLOTS);
+        const active=slot>=0&&slot<FLOW.SLOTS;
+        out = [2, v.windowMinute, active?slot:-1];
+        for(const k of FLOW.FIELDS)out.push(valid&&active?Number(flow[k][slot]):0);
+        out.push(v.finance.size);
         for (const [id, value] of v.finance) out.push(intern(c, id), value);
+        previous.slot=slot;
+        v.deltaFrames++;
       }
+      v.windowMinute=NaN;
+      v.encodedValues+=out.length;
       v.finance.clear();
       return out;
     }
@@ -129,6 +157,7 @@
       const q = s.ridership;
       let d = null;
       const hourDeletes = [];
+      const windowDeletes = [];
       const current = () => d || (d = hooks.ensureDay(s, rt.minute));
       return (data, at) => {
         const op = data[at],
@@ -136,6 +165,18 @@
           b = data[at + 2],
           value = data[at + 3];
         switch (op) {
+          case 41:
+            windowDeletes.push(a);
+            break;
+          case 42: {
+            let deleted=0;
+            q.hour=q.hour.filter((row,i)=>{
+              if(i===windowDeletes[deleted]){deleted++;return false;}
+              return true;
+            });
+            windowDeletes.length=0;
+            break;
+          }
           case 40:
             current();
             break;
@@ -274,6 +315,9 @@
       invalidate(s);
     }
     return {
+      minute,
+      diagnostics,
+      current,
       rejectBatch,
       frame,
       projector,
