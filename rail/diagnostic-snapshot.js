@@ -34,8 +34,8 @@
           onboard: train.onboard,
           capacity: train.capacity
         })),
-        queues: totals(runtime.queues),
-        outside: totals(runtime.outside)
+        queues: runtime.nativeView?.queues||totals(runtime.queues),
+        outside: runtime.nativeView?.outside||totals(runtime.outside)
       }
     };
   }

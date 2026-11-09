@@ -16,6 +16,7 @@
   const kinds = ['attempt', 'enter', 'board', 'alight', 'reject', 'complete'];
   const states = new WeakMap(),
     identities = new WeakMap();
+  const nativeViews=new WeakSet(),materialized=new WeakSet(),views=new WeakMap();
   let serial = 0,
     trainSerial = 0;
   const uid = t => {
@@ -53,6 +54,7 @@
       };
       states.set(rt, c);
     }
+    c.sparse=nativeViews.has(rt);
     return c;
   }
 
@@ -173,7 +175,7 @@
     const motion = resume ? new Float64Array(0) : job.motion.input;
     const ops = resume?.ops || [],
       arrivals = resume ? [] : job.arrivals;
-    const header = [2, c.token, resume ? 1 : 0, +full, rt.minute, s.routeModel === 9 ? 1 : 0, rt
+    const header = [c.sparse?3:2, c.token, resume ? 1 : 0, +full, rt.minute, s.routeModel === 9 ? 1 : 0, rt
       .arrivalMode === 'integer' ? 1 : 0, X.TRANSFER, resume ? 0 : +job.gates, resume?.cursor ||
       0, resume?.original ?? -1, resume?.next ?? -1, resume?.amount || 0, motion.length
     ];
@@ -320,11 +322,36 @@
         f = data[at + 5],
         g = data[at + 6],
         h = data[at + 7];
-      if (op >= 32) {
+      if (op >= 32 && op < 48) {
         statistics(data, at);
         continue;
       }
       switch (op) {
+        case 54: {
+          const t=c.trains.get(a)?.t;if(!t)break;
+          t.status=['dwell','moving','signal','finished'][b];t.index=d;t.progress=e;t.ready=h;
+          if(f)t.departedAt=f;else delete t.departedAt;if(g)t.arriveAt=g;else delete t.arriveAt;
+          if(t.status==='moving'){const i=t.dir===1?t.index:t.index-1;t.segment={track:t.trackIds[i],from:t.stops[t.index],to:t.stops[t.index+t.dir]};}
+          break;
+        }
+        case 56: {const t=c.trains.get(a)?.t;if(t){t.segment=Number.isNaN(b)?null:{track:t.trackIds[t.dir===1?b:b-1],from:t.stops[b],to:t.stops[b+t.dir]};}break;}
+        case 55: {const t=c.trains.get(a)?.t;if(t){if(Number.isNaN(b))delete t.laps;else t.laps=b;}break;}
+        case 57: rt.nextId=a;rt.expectedGenerated=b;rt.arrivalRemainder=d;rt.rngState=e;rt.demandCarry=f;rt.minute=g;break;
+        case 58: {const name=SIM.blockNames(c.original||rt)[a];if(name)rt.blocks[name]=b;break;}
+        case 48: {
+          const view={minute:rt.minute,summary:{waiting:a,outside:b,transferring:d,onboard:e},queues:{},outside:{},transfers:[],stations:{}};
+          views.set(rt,view);
+          if(!Object.getOwnPropertyDescriptor(rt,'nativeView'))Object.defineProperty(rt,'nativeView',{get:()=>views.get(rt),configurable:true});
+          break;
+        }
+        case 49: {
+          const view=views.get(rt);view.queues[key(a,b,d)]={total:e};view.stations[d]=(view.stations[d]||0)+e;break;
+        }
+        case 50: views.get(rt).outside[a]={total:b};break;
+        case 51: {
+          const view=views.get(rt);view.transfers.push({station:a,amount:b});view.stations[a]=(view.stations[a]||0)+b;break;
+        }
+        case 17: rt.queues[key(a,b,d)]=rt.queues[key(a,b,d)]||{};break;
         case 3: {
           const k = key(a, b, d),
             q = rt.queues[k] || (rt.queues[k] = {});
@@ -346,13 +373,13 @@
           rt.stationOccupancy[a] = b;
           break;
         case 8:
-          update(c.trains.get(a).t.passengers, tok(b, d, e), f);
+          if(c.trains.has(a))update(c.trains.get(a).t.passengers, tok(b, d, e), f);
           break;
         case 9:
-          c.trains.get(a).t.onboard = b;
+          if(c.trains.has(a))c.trains.get(a).t.onboard = b;
           break;
         case 10:
-          c.trains.get(a).t.passengers = {};
+          if(c.trains.has(a))c.trains.get(a).t.passengers = {};
           break;
         case 11:
           compactTransfers();
@@ -439,11 +466,13 @@
       callStops:l.callStops||l.stops,dir,stops:[...l.stops],trackIds:[...l.trackIds],
       index:dir===1?0:l.stops.length-1,status:'dwell',ready:rt.minute+dwell,
       onboard:0,capacity:R.capacity(l),passengers:{},progress:0,loop,segment:null};
-    identities.set(t,id);rt.trains.push(t);c.trains.set(id,{t,l});
+    identities.set(t,id);rt.trains.push(t);c.trains.set(id,{t,l});c.seen.add(t);
     job.motion.context.push({t,l});
   }
   function* cycle(rt,s,index,track,frames,reroute,settlement,journeyKey) {
     const c=cache(rt,s),catalog=rt.demandCatalog||rt.defs;
+    c.journeyKey=journeyKey;
+    if(c.sparse)SIM.trackCatalog(catalog);
     // Forecast workspaces must not coexist with a newly rehydrated continuous arena.
     if(!c.sent&&Core.queueToken()!==c.token&&Core.status().memoryBytes>64*1024*1024)
       Core.recycleSimulation();
@@ -467,6 +496,7 @@
       }
       // Metadata calls finish before encoding any cache-dependent frames.
       job.motion=stableMotion||(stableMotion=SIM.incremental(rt,s,index,track,uid,frames.dispatch?.context||[]));
+      if(c.sparse)job.motion.input[0]=11;
       const templates=[job.motion.templates.length];
       for(const t of job.motion.templates) {
         if(t.skip){templates.push(0,0,0);continue;}
@@ -484,11 +514,11 @@
       const feedbackIds=(frames.feedback?.context.ls||[]).map(l=>named(c,l.id));
       const frame=stableFrame||(stableFrame=parts(c,rt,s,job,null)),fin=frame.finance||[];
       const sections=[feedbackIds,keyRows,profiles,templates,rules,prep,fin,...frame.parts];
-      const input=new Float64Array(25+sections.reduce((n,p)=>n+p.length,0));
-      input.set([1,c.token,catalogToken(catalog),rt.defs.length,trainSerial,rt.nextId,keyMode,
+      const input=new Float64Array(30+sections.reduce((n,p)=>n+p.length,0));
+      input.set([2,c.token,catalogToken(catalog),rt.defs.length,trainSerial,rt.nextId,keyMode,
         keyRows.length/3,requested.size,feedbackIds.length,prep.length,fin.length,templates.length,rules.length,
-        job.motion.input[1],sampling?.input[1]||0,fin[1]||0,...frame.parts.map(p=>p.length)]);
-      let at=25;for(const part of sections) {input.set(part,at);at+=part.length;}
+        job.motion.input[1],sampling?.input[1]||0,fin[1]||0,...frame.parts.map(p=>p.length),+c.sparse,rt.expectedGenerated||0,rt.arrivalRemainder||0,rt.rngState,rt.demandCarry||0]);
+      let at=30;for(const part of sections) {input.set(part,at);at+=part.length;}
       const bytes=new Uint8Array(byteLength);at=0;for(const part of text){bytes.set(part,at);at+=part.length;}
       result=yield {name:'engine_cycle',input,bytes};
       if(keyMode&&Core.cycleToken()===c.token)c.keySent=rt.defs.length;
@@ -499,6 +529,11 @@
       requested=new Set(requests);
       if(attempt===4095)throw Error('原生运行元数据未能收敛');
     }
+    yield* applyCycle(c,rt,s,job,result,frames,catalog,journeyKey,reroute);
+    c.lastJob=job;c.lastFinance=stableFrame.finance;c.calendarReady=false;c.rebasePending=false;
+    if(c.sparse)releaseDetails(rt);
+  }
+  function* applyCycle(c,rt,s,job,result,frames,catalog,journeyKey,reroute) {
     let at=11;
     for(let i=0;i<result[4];i++,at+=2) {
       const p=result[at],id=result[at+1];
@@ -534,7 +569,94 @@
       pending=project(c,rt,s,job,unpack(request,yield request));
     }
     finish(c,rt);
-    c.lastJob=job;c.lastFinance=stableFrame.finance;
+  }
+  function calendarFrame(c,rt,s,job) {
+    const T=node?require('./temporal-wasm'):root.RailTemporal;
+    const F=node?require('./fleet'):root.RailFleet;
+    const dispatch=SIM.dispatchFrame(rt,s,job.index,true);
+    const contexts=dispatch?.context||[];
+    const motion=SIM.incremental(rt,s,job.index,job.track,uid,contexts,true);
+    const feedback=Native.feedbackFrame(s,rt,1,true);
+    const sampling=SIM.timedFrame(rt.demandCatalog||rt.defs,s,rt.minute,0,rt.arrivalRemainder||0,rt.rngState,rt.arrivalMode==='integer');
+    const bases=new Map((s.baseLines||s.services).map((l,i)=>[l.id,{l,i}]));
+    const runs=s.services, runIds=new Map(runs.map((l,i)=>[l.id,i]));
+    const data=[1,c.token,catalogToken(rt.demandCatalog||rt.defs),job.motion.input[1],sampling.input[1],
+      motion.blocks,trainSerial,rt.nextId,rt.fleetMinute??-1,rt.demandCarry||0,rt.arrivalRemainder||0,
+      rt.rngState,rt.expectedGenerated||0,s.ridership.lastMinute,+(rt.arrivalMode==='integer'),X.TRANSFER,runs.length];
+    for(const l of runs) {
+      const base=bases.get(l.parentLine||l.id),managed=!!base?.l.fleetManaged;
+      const ds=X.directions(l),isLoop=l.stops[0]===l.stops.at(-1);
+      data.push(named(c,l.id),named(c,l.parentLine||l.id),base?.i??-1,X.duration(s,l),l.headway,+isLoop,ds.length,
+        new Set(l.callStops||l.stops).size,l.open??0,l.close??1440,+managed,
+        managed?F.allocations(base.l,720)[l.patternIndex||0]:l.fleet,
+        managed?F.allocations(base.l,480)[l.patternIndex||0]:l.fleet,
+        managed?F.planned(base.l,720):(base?.l.fleet??l.fleet),managed?F.planned(base.l,480):(base?.l.fleet??l.fleet),l.fleet,
+        (l.fareLines||[]).length,...(l.fareLines||[]).map(id=>named(c,id)));
+    }
+    data.push(contexts.length);
+    for(const x of contexts) data.push(runIds.get(x.l.id),x.dir,+!!x.d,x.d?.next||0,x.d?.headway||0,
+      +(x.d?.lastRun!=null),x.d?.lastRun||0);
+    const templates=[motion.templates.length];
+    for(const t of motion.templates) {
+      const l=t.l,q=[named(c,l.id),named(c,l.parentLine||l.id),R.capacity(l),t.dir,+t.loop,l.cars||6,
+        l.stops.length,...l.stops,(l.callStops||l.stops).length,...(l.callStops||l.stops),0,0];
+      templates.push(q.length,t.data.length,t.dwell,...q,...t.data);
+    }
+    const ids=feedback.context.ls.map(l=>named(c,l.id)),mapping=sampling.context.names.map(id=>feedback.context.ids.get(id)??-1);
+    for(const section of [templates,feedback.input,sampling.input,ids,mapping]) {
+      data.push(section.length);for(const value of section)data.push(value);
+    }
+    data.push(+c.sparse);
+    c.calendar={feedback,sampling,dispatch,motion,journeyKey:c.journeyKey};
+    return new Float64Array(data);
+  }
+  function* autonomous(rt,s,minutes,options) {
+    s=rt.plan||s;
+    const c=states.get(rt),job=c?.lastJob;
+    if(!job?.settlement||c.plan!==s||Core.queueToken()!==c.token||s.routeModel!==9||!s.ridership||
+      rt.trains.some(t=>t.retiringRun)||rt.defs.length>45000)return null;
+    if(!SIM.canCalendar(rt.demandCatalog||rt.defs))return null;
+    const fin=Engine.continuation(c,rt,job.settlement,c.lastFinance);
+    if(!fin||minutes<.1)return null;
+    const world=job.settlement.world;
+    // Rust advances the 15-minute windows; day archiving remains a host transaction.
+    let barrier=420+Q.day(rt.minute)*1440;
+    if(world.urban)barrier=Math.min(barrier,world.urban.lastMinute+360-1e-7);
+    if(world.operationsReview)barrier=Math.min(barrier,world.operationsReview.nextAt-1e-7);
+    if(rt.minute+.1>=barrier-1e-8)return null;
+    const demand=SIM.demandStatus(rt.demandCatalog||rt.defs);
+    if(!demand?.managed||demand?.pending||demand?.untracked)c.calendarReady=false;
+    const meta=c.calendarReady?new Float64Array(0):calendarFrame(c,rt,s,job);
+    const input=new Float64Array(8+fin.length+meta.length);
+    input.set([c.token,rt.minute,minutes,options.maxSteps,options.budget,barrier,fin.length,meta.length]);
+    input.set(fin,8);input.set(meta,8+fin.length);
+    const result=yield {name:'engine_loop',input,now:options.now};
+    c.calendarReady=true;
+    let at=5;
+    for(let i=0;i<result[1];i++) {
+      rt.minute=result[at++];rt.demandCarry=result[at++];const interval=result[at++],changed=result[at++],nv=result[at++],nr=result[at++];
+      if(changed) {
+        rt.fleetMinute=Math.floor(rt.minute);
+        const n=result[at++];
+        for(let k=0;k<n;k++)s.services[k].fleet=result[at++];
+        const nd=result[at++];
+        for(let k=0;k<nd;k++) {
+          const d=c.calendar.dispatch.context[k].d;
+          const next=result[at++],h=result[at++];
+          if(d){d.next=next;d.headway=h;}
+        }
+      }else at+=nv;
+      const reply=result.subarray(at,at+nr);at+=nr;
+      if(interval)Q.step(s,rt,interval,()=>{});
+      const frames={feedback:interval?c.calendar.feedback:null,dispatch:reply[8]&&reply[11+reply[3]+reply[4]*2+reply[5]*3+3]?c.calendar.dispatch:null};
+      job.motion.templates=c.calendar.motion.templates;
+      job.gates=rt.arrivalMode==='integer'&&!!interval;
+      yield* applyCycle(c,rt,s,job,reply,frames,rt.demandCatalog||rt.defs,c.journeyKey,options.reroute);
+    }
+    if(result[4]) {projectCommands(c,rt,s,job,result.subarray(at,at+result[4]));at+=result[4];}
+    if(c.sparse)releaseDetails(rt);
+    if(at!==result.length)throw Error('原生多步结果长度无效');
+    return {steps:result[1],remaining:result[2],running:result[3]!==2,reason:result[3]};
   }
   function* continueRun(rt,s,minutes,options) {
     s=rt.plan||s;
@@ -549,7 +671,7 @@
     const fin=Engine.continuation(c,rt,job.settlement,c.lastFinance);
     if(!fin)return null;
     const input=new Float64Array([c.token,rt.minute,minutes,options.maxSteps,options.budget,barrier,
-      +!!s.ridership,...fin,...[s.routeModel===9?1:0,rt.arrivalMode==='integer'?1:0,X.TRANSFER]]);
+      +!!s.ridership,...fin,...[s.routeModel===9?1:0,rt.arrivalMode==='integer'?1:0,X.TRANSFER,+c.sparse]]);
     const result=yield {name:'engine_continue',input,now:options.now};
     let at=4;
     for(let i=0;i<result[1];i++) {
@@ -564,7 +686,27 @@
       }
       finish(c,rt);
     }
+    if(at<result.length)projectCommands(c,rt,s,job,result.subarray(at));
+    if(c.sparse)releaseDetails(rt);
     return {steps:result[1],remaining:result[2],running:result[3]!==2,reason:result[3]};
+  }
+  function releaseDetails(rt) {
+    materialized.delete(rt);
+    rt.queues={};rt.waitSince={};rt.outside={};rt.outsideSince={};rt.transfers=[];
+    for(const t of rt.trains)if(Object.keys(t.passengers).length)t.passengers={};
+  }
+  function* query(rt,kind=1,entity=-1) {
+    const c=states.get(rt);
+    if(!c?.sparse||c.rebasePending||c.plan!==rt.plan)return rt;
+    const train=kind===4?rt.trains.find(t=>t.id===entity):null;
+    if(kind===4&&!train)return {...rt,trains:[]};
+    const id=kind===4?uid(train):entity;
+    const data=yield {name:'runtime_query',input:new Float64Array([c.token,kind,id])};
+    const temp={...rt,blocks:{...rt.blocks},trains:rt.trains.map(t=>({...t,passengers:{}})),queues:{},waitSince:{},outside:{},outsideSince:{},transfers:[]};
+    const byId=new Map(temp.trains.map(t=>[t.id,t]));
+    const codec={...c,original:rt,trains:new Map([...c.trains].map(([id,x])=>[id,{...x,t:byId.get(x.t.id)}]).filter(([,x])=>x.t))};
+    projectCommands(codec,temp,rt.plan,c.lastJob,data);
+    return temp;
   }
   function sync(generator) {
     return Core.transaction(()=>{
@@ -581,14 +723,25 @@
   function client(rt) {
     if(!clients.has(rt)) {
       const W=node?require('./simulation-client'):root.RailSimulationClient;
-      clients.set(rt,W.create());
+      if(!node&&rt.plan?.routeModel===9)nativeViews.add(rt);
+      clients.set(rt,W.create({retainRuntime:nativeViews.has(rt),onLocal:()=>{nativeViews.delete(rt);views.delete(rt);const c=states.get(rt);if(c)c.sparse=false;}}));
     }
     return clients.get(rt);
   }
   const api = {
-    continueRun:(...args)=>sync(continueRun(...args)),
-    continueAsync:(...args)=>client(args[0]).run(()=>continueRun(...args)),
+    continueRun:(...args)=>sync(autonomous(...args))||sync(continueRun(...args)),
+    continueAsync:(...args)=>client(args[0]).run(()=>autonomous(...args)).then(result=>result||client(args[0]).run(()=>continueRun(...args))),
     cycleAsync:(...args)=>client(args[0]).run(()=>cycle(...args)),
+    invalidate:rt=>{views.delete(rt);const c=states.get(rt);if(c){c.calendarReady=false;c.rebasePending=true;}},
+    canSnapshot:rt=>!nativeViews.has(rt)||materialized.has(rt)||!views.has(rt),
+    nativeViews:(rt,value=true)=>{if(value){nativeViews.add(rt);SIM.trackCatalog(rt.demandCatalog||rt.defs);}else nativeViews.delete(rt);if(states.has(rt))states.get(rt).sparse=value;},
+    queryAsync:(...args)=>client(args[0]).run(()=>query(...args)),
+    materializeAsync:async rt=>{
+      const temp=await client(rt).run(()=>query(rt));
+      if(temp!==rt){for(const k of ['queues','waitSince','outside','outsideSince','transfers'])rt[k]=temp[k];
+        const trains=new Map(temp.trains.map(t=>[t.id,t]));for(const t of rt.trains)t.passengers=trains.get(t.id)?.passengers||{};}
+      materialized.add(rt);return rt;
+    },
     dispose:rt=>{clients.get(rt)?.close();clients.delete(rt);},
     step,cycle:(...args)=>sync(cycle(...args))
   };

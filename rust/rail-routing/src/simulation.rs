@@ -384,6 +384,63 @@ pub(super) fn persistent(v: &[f64], cache: &mut Option<MotionState>) -> Vec<f64>
     out
 }
 
+pub(super) fn snapshot(state: &Option<MotionState>, entity: Option<usize>) -> Vec<f64> {
+    let mut out = vec![];
+    if let Some(s) = state {
+        for &uid in &s.order {
+            if entity.is_some_and(|id| id != uid) {
+                continue;
+            }
+            let t = &s.delta[&uid];
+            let r = &t.row;
+            out.extend_from_slice(&[54.0, uid as f64, r[1], r[2], r[5], r[6], r[7], r[8]]);
+            out.extend_from_slice(&[
+                55.0,
+                uid as f64,
+                t.laps.unwrap_or(f64::NAN),
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+            ]);
+            out.extend_from_slice(&[
+                56.0,
+                uid as f64,
+                t.segment.map_or(f64::NAN, |n| n as f64),
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+            ]);
+        }
+        if entity.is_none() {
+            for (id, &n) in s.releases.iter().enumerate() {
+                if n != 0.0 {
+                    out.extend_from_slice(&[58.0, id as f64, n, 0.0, 0.0, 0.0, 0.0, 0.0]);
+                }
+            }
+        }
+    }
+    out
+}
+pub(super) fn calendar_params(
+    state: &mut Option<MotionState>,
+    blocks: usize,
+    values: &[(usize, f64, f64, f64)],
+) {
+    let s = state.as_mut().expect("motion missing");
+    s.releases.resize(blocks, 0.0);
+    s.blocks = blocks;
+    for &(uid, open, fleet, dwell) in values {
+        if let Some(t) = s.delta.get_mut(&uid) {
+            t.row[11] = open;
+            t.row[12] = fleet;
+            t.row[14] = dwell;
+        }
+    }
+}
 pub(super) fn continuation(state: &mut Option<MotionState>, now: f64) -> (Vec<f64>, Vec<usize>) {
     let s = state.as_mut().expect("motion missing");
     s.order.retain(|id| s.delta[id].row[1] != 3.0);
@@ -396,12 +453,14 @@ pub(super) fn continuation(state: &mut Option<MotionState>, now: f64) -> (Vec<f6
 }
 struct DeltaTrain {
     group: usize,
+    laps: Option<f64>,
+    segment: Option<usize>,
     row: [f64; 20],
     route: Vec<(f64, f64)>,
     calls: Vec<bool>,
 }
 pub(super) fn motion_packet(v: &[f64], cache: &mut Option<MotionState>) -> Vec<f64> {
-    if v[0] == 6.0 {
+    if v[0] == 6.0 || v[0] == 11.0 {
         incremental(v, cache)
     } else {
         persistent(v, cache)
@@ -461,10 +520,31 @@ fn incremental(v: &[f64], cache: &mut Option<MotionState>) -> Vec<f64> {
         at += 1;
         let calls = v[at..at + nc].iter().map(|&x| x != 0.0).collect();
         at += nc;
+        let mut laps = if row[15].is_finite() {
+            Some(row[15])
+        } else {
+            None
+        };
+        let mut segment = if row[16].is_finite() {
+            Some(int(row[16]))
+        } else {
+            None
+        };
+        if v[0] == 11.0 && !reset {
+            if let Some(old) = s.delta.get(&id) {
+                for k in [1, 2, 5, 6, 7, 8] {
+                    row[k] = old.row[k];
+                }
+                laps = old.laps;
+                segment = old.segment;
+            }
+        }
         s.delta.insert(
             id,
             DeltaTrain {
                 group,
+                laps,
+                segment,
                 row,
                 route,
                 calls,
@@ -480,7 +560,13 @@ fn incremental(v: &[f64], cache: &mut Option<MotionState>) -> Vec<f64> {
     for id in &s.order {
         *counts.entry(s.delta[id].group).or_insert(0.0) += 1.0;
     }
-    let mut blocks = releases.to_vec();
+    let mut blocks = if v[0] == 11.0 && !reset {
+        let mut b = s.releases.clone();
+        b.resize(nb, 0.0);
+        b
+    } else {
+        releases.to_vec()
+    };
     let mut out = Vec::with_capacity(s.order.len() * 8);
     for id in &s.order {
         let t = s.delta.get_mut(id).unwrap();
@@ -510,7 +596,14 @@ fn incremental(v: &[f64], cache: &mut Option<MotionState>) -> Vec<f64> {
     }
     s.releases = blocks;
     for (id, r) in s.order.iter().zip(out.chunks_exact(8)) {
-        let row = &mut s.delta.get_mut(id).unwrap().row;
+        let t = s.delta.get_mut(id).unwrap();
+        if r[0] == 4.0 {
+            t.laps = Some(t.laps.unwrap_or(0.0) + 1.0);
+        }
+        if r[0] == 7.0 {
+            t.segment = Some(int(r[4]));
+        }
+        let row = &mut t.row;
         match r[0] as u8 {
             1 => row[1] = 3.0,
             2 => row[5] = r[1],

@@ -1,5 +1,6 @@
 //! Deterministic metro routing and demand kernels with versioned f64-array ABIs.
 //! Heap tie order, tolerances and arithmetic order intentionally match the frozen JS oracle.
+mod calendar;
 mod cycle;
 mod demand;
 mod engine;
@@ -96,6 +97,7 @@ struct Core {
     settlement_state: Option<engine::Settlement>,
     feedback_cache: operations::CoverageCache,
     cycle_state: Option<cycle::Cycle>,
+    calendar_state: Option<calendar::Calendar>,
     cycle_bytes: Vec<u8>,
 }
 thread_local! { static CORE: RefCell<Core> = RefCell::new(Core::default()); }

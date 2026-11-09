@@ -145,6 +145,7 @@ impl<'a> Read<'a> {
 pub(super) struct Queues {
     token: f64,
     stats_protocol: bool,
+    sparse: bool,
     stats: Option<crate::statistics::Statistics>,
     arrival_ids: Vec<Vec<usize>>,
     now: f64,
@@ -181,10 +182,126 @@ impl Queues {
         self.stats.as_mut()
     }
 
+    pub(super) fn train_rows(&self, order: &[usize]) -> Vec<(usize, usize, usize, i32, f64, f64)> {
+        order
+            .iter()
+            .filter_map(|&uid| {
+                self.trains
+                    .get(&uid)
+                    .map(|t| (uid, t.service, t.parent, t.dir, t.onboard, t.capacity))
+            })
+            .collect()
+    }
+    pub(super) fn feedback_values(&self, id: usize) -> [f64; 4] {
+        self.stats
+            .as_ref()
+            .map_or([0.0; 4], |s| s.feedback_values(id))
+    }
+    pub(super) fn prune_hour(&mut self, now: f64) {
+        if let Some(s) = &mut self.stats {
+            s.prune_hour(now);
+        }
+    }
+    pub(super) fn view(&self) -> Vec<f64> {
+        let mut out = vec![1.0, 0.0, 0.0, -1.0, -1.0, 0.0, 0.0, 0.0, 0.0];
+        out.extend(self.counters);
+        let mut outside = 0.0;
+        let mut inside = 0.0;
+        let mut transfers = 0.0;
+        let mut qs = vec![];
+        for k in &self.queue_order {
+            let n = self.queues[k].sum(|c| c.n);
+            inside += n;
+            emit(&mut qs, 49.0, &[k.0 as f64, k.1 as f64, k.2 as f64, n]);
+        }
+        for (&id, q) in &self.outside {
+            let n = q.sum(|c| c.n);
+            outside += n;
+            emit(&mut qs, 50.0, &[id as f64, n]);
+        }
+        let mut by_station = BTreeMap::new();
+        for x in &self.transfers {
+            transfers += x.n;
+            *by_station.entry(x._station).or_insert(0.0) += x.n;
+        }
+        for (id, n) in by_station {
+            emit(&mut qs, 51.0, &[id as f64, n]);
+        }
+        let onboard = self.trains.values().fold(0.0, |total, t| total + t.onboard);
+        emit(
+            &mut out,
+            48.0,
+            &[inside + outside + transfers, outside, transfers, onboard],
+        );
+        out.extend(qs);
+        out
+    }
+    fn snapshot(&self, kind: usize, entity: usize) -> Vec<f64> {
+        let mut out = vec![1.0, 0.0, 0.0, -1.0, -1.0, 0.0, 0.0, 0.0, 255.0];
+        out.extend(self.counters);
+        let tok = |t: Token| [t.j as f64, t.leg as f64, t.stamp as f64];
+        for k in &self.queue_order {
+            if kind == 3 && k.2 != entity || kind == 4 {
+                continue;
+            }
+            emit(&mut out, 17.0, &[k.0 as f64, k.1 as f64, k.2 as f64]);
+            for &(t, c) in self.queues[k].rows.iter().flatten() {
+                let t = tok(t);
+                emit(
+                    &mut out,
+                    3.0,
+                    &[k.0 as f64, k.1 as f64, k.2 as f64, t[0], t[1], t[2], c.n],
+                );
+                if let Some(since) = c.since {
+                    emit(
+                        &mut out,
+                        4.0,
+                        &[k.0 as f64, k.1 as f64, k.2 as f64, t[0], t[1], t[2], since],
+                    );
+                }
+            }
+        }
+        for (&id, q) in &self.outside {
+            if kind == 3 && id != entity || kind == 4 {
+                continue;
+            }
+            emit(&mut out, 16.0, &[id as f64]);
+            for &(t, c) in q.rows.iter().flatten() {
+                let t = tok(t);
+                emit(&mut out, 5.0, &[id as f64, t[0], t[1], t[2], c.n]);
+                if let Some(since) = c.since {
+                    emit(&mut out, 6.0, &[id as f64, t[0], t[1], t[2], since]);
+                }
+            }
+        }
+        for x in &self.transfers {
+            if kind == 3 && x._station != entity || kind == 4 {
+                continue;
+            }
+            emit(
+                &mut out,
+                11.0,
+                &[x.j as f64, x.leg as f64, x.n, x.ready, x._station as f64],
+            );
+        }
+        for (&uid, t) in &self.trains {
+            if kind == 3 || kind == 4 && uid != entity {
+                continue;
+            }
+            emit(&mut out, 10.0, &[uid as f64]);
+            emit(&mut out, 9.0, &[uid as f64, t.onboard]);
+            for &(token, n) in t.passengers.rows.iter().flatten() {
+                let t = tok(token);
+                emit(&mut out, 8.0, &[uid as f64, t[0], t[1], t[2], n]);
+            }
+        }
+        out
+    }
     fn new(token: f64) -> Self {
         Self {
             token,
             stats_protocol: false,
+            sparse: false,
             stats: None,
             arrival_ids: vec![],
             now: 0.0,
@@ -215,6 +332,9 @@ impl Queues {
         }
     }
     fn cmd(&mut self, op: f64, args: &[f64]) {
+        if self.sparse && matches!(op as u8, 3 | 4 | 5 | 6 | 8 | 10 | 11 | 12 | 16) {
+            return;
+        }
         self.commands.push(op);
         self.commands.extend_from_slice(args);
         for _ in args.len()..7 {
@@ -782,6 +902,55 @@ impl Queues {
         }
     }
 }
+fn emit(out: &mut Vec<f64>, op: f64, args: &[f64]) {
+    out.push(op);
+    out.extend_from_slice(args);
+    out.resize(out.len() + 7 - args.len(), 0.0);
+}
+#[no_mangle]
+pub extern "C" fn runtime_query_abi() -> u32 {
+    1
+}
+#[no_mangle]
+pub extern "C" fn runtime_query() -> *const f64 {
+    CORE.with(|cell| {
+        let mut c = cell.borrow_mut();
+        let crate::Core {
+            input,
+            output,
+            queue_state,
+            simulation_state,
+            cycle_state,
+            settlement_state,
+            ..
+        } = &mut *c;
+        let q = queue_state.as_ref().expect("runtime missing");
+        assert_eq!(q.token, input[0]);
+        let kind = int(input[1]);
+        assert!((1..=4).contains(&kind));
+        *output = if kind == 2 {
+            q.view()
+        } else {
+            q.snapshot(kind, if input[2] < 0.0 { 0 } else { int(input[2]) })
+        };
+        if kind == 1 || kind == 4 {
+            output.extend(crate::simulation::snapshot(
+                simulation_state,
+                if kind == 4 { Some(int(input[2])) } else { None },
+            ));
+        }
+        if kind == 1 {
+            if let Some(c) = cycle_state {
+                let mut clock = c.snapshot(q.now);
+                if let Some(bank) = settlement_state {
+                    clock[5] = bank.carry;
+                }
+                output.extend_from_slice(&clock);
+            }
+        }
+        output.as_ptr()
+    })
+}
 #[no_mangle]
 pub extern "C" fn queue_abi() -> u32 {
     1
@@ -843,7 +1012,7 @@ fn execute(
 ) -> Vec<f64> {
     let mut r = Read { v: input, at: 0 };
     let protocol = r.f();
-    assert!(protocol == 1.0 || protocol == 2.0);
+    assert!(protocol == 1.0 || protocol == 2.0 || protocol == 3.0);
     let token = r.f();
     let phase = r.u();
     let load = r.u() != 0;
@@ -865,7 +1034,8 @@ fn execute(
     let q = queue_state.as_mut().expect("queue state missing");
     assert_eq!(q.token, token);
     q.now = now;
-    q.stats_protocol = protocol == 2.0;
+    q.stats_protocol = protocol >= 2.0;
+    q.sparse = protocol == 3.0;
     q.modern = modern;
     q.integer = integer;
     q.transfer = transfer;

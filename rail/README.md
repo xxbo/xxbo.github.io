@@ -86,3 +86,7 @@ GitHub Pages 上的东京圈铁路经营实验。静态网页，无自己的后�
 
 - [核心 Rust 迁移盘点与剩余工作](core-rust-inventory.md)
 - [MAP46：原生运营统计与增量纪录投影](rust-wasm-map46.md)
+
+- [MAP53：P0 原生服务日历、运行明细与按需快照](rust-wasm-map53.md)
+
+- [MAP54：P1 原生分时槽切换与空需求修复](rust-wasm-map54.md)

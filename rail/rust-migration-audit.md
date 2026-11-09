@@ -2,26 +2,26 @@
 
 审计基线：MAP51，代码提交 `e13ebd90f64b357c1bc7ec72d352d018c151580d`。本报告逐项对照实际入口、宿主适配器和原生实现；不使用文件数量或代码行占比表示完成率。审计记录保留 MAP51 基线；下方补充 MAP52 的实施进展。
 
-## MAP52：P0 第一批进展
+## MAP53：P0 验收与 P1 起点
 
-已完成：原生运动结果按动作压缩，省略空闲列车；到达明细在 Rust 内消费后仅回传摘要；目录元数据分批补齐时复用原生准备结果，不再重复发送采样帧和扫描目录；连续子步不再建立整份列车包装数组；增加 Worker 传输量及原生投影压缩诊断。
+默认 routeModel 9 的 P0 主线已落地：`calendar.rs::engine_loop` 在专用 Worker 内跨分钟执行配车、满意度准备、到达、发车、列车/队列和经营事务；分钟及普通发车不再要求主线程准备。运行中的候车、站外、换乘和车厢乘客明细由 Rust 持有，主线程只接收点位、计数、统计及按站台汇总；详情和保存通过 `runtime_query` 按需取回。运动重同步使用原生已有动态状态，避免 UI 投影反向覆盖实际列车状态。受控需求目录使用明确的 `setDaily` 修改集合，无变化分钟不扫描目录；未接管的兼容目录仍保留直接字段修改检测。
 
-两组固定真实 Worker 场景完整状态哈希一致，回传字节分别减少 27.84% / 20.66%，批次中位耗时下降 8.98% / 7.37%。这些是 Node 基准，未包含地图、DOM 和浏览器渲染，不代表实际帧率。详见 [MAP52 实施与验证](rust-wasm-map52.md)。
+已保留的边界有明确后续归属：每 15 分钟的统计槽/日归档、城市生长、运营效果采样、改签和大目录整理事务，仍通过宿主桥接；贷款切分继续调用已原生化的财务规则，宿主接续事务。退役列车和超过 45,000 条实际出行定义时使用原生短批次桥接，先读取完整原生快照，再执行既有目录/改签事务。历史 routeModel 1 和 Worker 不可用环境保留完整兼容投影，计算核仍为 Rust。这些兼容与生命周期工作继续按下表 P1/P2 推进，不以本轮验收宣称整个游戏已全部 Rust 化。
 
-P0 尚余：Rust 成为完整运行状态唯一权威源、原生快照与按需查询；需求目录显式修订替代每分钟扫描；将配车/发车日历和宿主边界准备迁入原生，进一步跨分钟推进。当前仍保留 JS 完整运行镜像，每个新采样分钟仍扫描日需求目录，Worker 请求次数未减少。
+详见 [MAP53 实施与验收](rust-wasm-map53.md)。P1 从日归档/分时历史与纪录开始，再推进原生改签、城市生长和预测目录整合。
 
 ## 结论
 
 寻路、整段需求分配、到达采样、运行/信号、队列/上下车、事件统计、满意度和经营/借贷已有 Rust 计算。下一步收益更可能来自减少状态复制、控制权往返和重复派生，而不是再把已经原生化的算法迁一次。
 
-默认调用链：`ui.js` → `performance.runAsync` → `management.advanceBudgetAsync` → `passengers.prepareTick` → `queue-runtime.cycle/continueRun` → `simulation-client` → `simulation-worker` → `cycle.rs::engine_cycle / engine.rs::engine_continue`。事件边界之间是原生多步；跨分钟、发车、城市和诊断边界仍返回宿主准备下一帧。Worker 只持有原生内核，JS 世界对象和界面镜像仍在主线程。
+默认调用链：`ui.js` → `performance.runAsync` → `management.advanceBudgetAsync` → `passengers.prepareTick` → `queue-runtime.cycle/continueRun` → `simulation-client` → `simulation-worker` → `cycle.rs::engine_cycle / engine.rs::engine_continue`。MAP53 已将默认模型的分钟准备与发车日历放入原生多步循环；城市、历史和改签事务仍有宿主边界。Worker 持有运行明细，JS 保留世界/历史对象、轻量视图及外部编辑事务。
 
 ## 待迁移清单
 
 | 优先级 | 仍在 JS 的逻辑与入口 | 已在 Rust 的部分 | 建议迁移单元与验收 |
 | --- | --- | --- | --- |
-| P0-1 | `management.js::interval/advanceBudgetAsync`、`queue-runtime.js::continueRun` 计算宿主事件边界；`passengers.js::prepareTick` 触发每分钟配车；`simulation-wasm.js::dispatchFrame` 提供发车元数据；`service-plan.js::duration/headway/loopDwell` 计算派生运行参数 | `temporal.rs` 配车分配/服务刷新，`simulation.rs` 调度与运动，`operations.rs` 贷款切分和分钟门控，`engine.rs` 有界多步 | 原生持有服务时长、运营窗、发车计划和事件日历；由一个入口跨分钟推进。只在用户编辑、预算、外部数据或 UI 查询时让出；对照高峰/末班/还款/环线及余量，分别统计调用次数和 CPU。 |
-| P0-2 | `queue-runtime.js::pose/projectCommands/trainView` 写列车、车厢、站台/站外/换乘镜像；`passengers.js::materialize/compactDefinitions/snapshot/restore/reconcile` 维护目录、重编号与运行副本；`simulation-wasm.js::timedFrame` 每次扫描全目录检查日需求差异 | 原生已持有运动、队列、实际出行 ID、统计、经济状态；采样日需求已支持差量输入 | Rust 作为运行状态的唯一权威源，UI 返回可见列车/分线/分站摘要，保存由原生生成快照；需求目录用修订号/明确修改集合替代全量扫描。保留完整 JSON 导入兼容、乘客守恒及暂停/编辑原子性，验收 JS 堆、传输字节和主线程长任务。 |
+| P0-1（已验收默认路径） | 线网修订后准备静态服务元数据；城市/归档/诊断和特殊事务桥接 | `calendar.rs` 持有运行时长、运营窗、平高峰配车、间隔、循环停站、发车日历、反馈与采样准备；复用 `cycle.rs` 执行完整原生小步 | 已验证跨分钟、普通发车、快慢/直达、单/双向环线、平高峰、贷款切分、预算及余量。P1/P2 逐项减少剩余业务边界。 |
+| P0-2（已验收默认路径） | 地图点位与统计摘要、静态出行元数据；浏览器 JSON/IndexedDB；外部编辑前的临时完整事务投影 | Rust 持有候车/站外/换乘/车厢明细、运动动态状态及采样时钟；原生查询生成保存所需运行快照；需求目录按明确修改集合更新 | 主线程持续运行时不保留逐乘客队列/车厢副本，详情只查询所选对象；保存、编辑前取回快照，编辑后未重同步时保存当前已迁移事务，避免读取旧原生状态覆盖编辑。完整同步接口及旧模型保留兼容投影。 |
 | P1-1 | `ridership.js::ensureDay/step`、`flow-history.js` 日切、30 日归档、分时窗口、滚动小时裁剪；`insights.js::records/daily` 里程/收入等里程碑汇总 | `statistics.rs` 日/线/站事件、周转量、分时累计与客流纪录 | 把归档和纪录规则与原生统计生命周期合并，避免分钟重载统计帧；逐字段对照 07:00/跨日、缺失与零值、历史截断、成就去重。HTML/图表仍在前端。 |
 | P1-2 | `passengers.js::reroute` 接住原生改签请求，在 JS 组织寻路、重建出行定义、沿用旧票价并注册新 ID；`reconcile` 安排旧几何列车退役与档案 | 搜索、路径票价及换乘在 `lib.rs`，队列事件和改签请求在 `queues.rs` | 原生端完成失效后缀、续程、继承票价与新 ID 的整段事务；宿主只发送线网修订。保持原先候车/车内人数、旧票价、退役列车和找不到路径时的取消语义。 |
 | P1-3 | `urban-growth.js::autoFacilities/context/zone/candidates/step/advance/city` 设施选址、覆盖、开发阈值/升级和人口就业变化；`city-development.js::phase/potential/score/budgets/allocate` 阶段释放与住宅/商业/工业预算 | `world.rs/demand.rs` 对给定城市的客流预测；原生反馈覆盖缓存不等于城市生长已迁移 | 一次城市 tick 返回变更地块、设施、人口/岗位总量和需求修订；固定随机/遍历顺序，对照东京/大湾区、土地约束、分阶段预算、空白开局及增长上限。 |
@@ -31,7 +31,7 @@ P0 尚余：Rust 成为完整运行状态唯一权威源、原生快照与按需
 | P2-3 | `operations-center.js::analyze/preview` 加减车/交路建议，`operations-review.js::sample/baseline/record/observe` 调整效果，`network-stats.js::aggregate/finish` 专业指标，`alerts.js::evaluate` 拥挤报警 | 原生有实时统计原料；诊断 Worker 只是把 JS 分析换线程 | 从原生状态一次查询断面、负载、等待和经营摘要，再批量生成证据/建议；按面板频率查询，保留“不足样本”与实际观察窗口，不改客流算法。卡片和建议文案留 JS。 |
 | P2-4 | `local-save.js::numbers/validateRidership/parse`、`management.signature`、`passengers.restore`、`network.validate`、`urban-growth.validate` 等结构与关联校验；旧模型 `legacyTick` 与旧运行/需求路径 | 默认模型的多数计算在 Rust，原生状态尚非完整存档模型 | 原生版本化快照、关联校验与迁移；先覆盖现有存档再删除旧模型桥接。JSON 文件选择/下载、IndexedDB、错误提示仍在浏览器。 |
 
-P0-1 与 P0-2 建议交替推进：持久状态不足时，只加原生循环会继续为编码/镜像付费。P1-1、P1-2 补齐连续运行生命周期；城市与建设是独立大批次，随后再合并为更长的自主循环。
+P0 将原生日历与轻量投影一起交付。P1-1、P1-2 接续补齐归档和改签生命周期；城市与建设保持独立批次，随后再扩展自主循环。
 
 ## 保留在浏览器的职责
 
@@ -43,3 +43,7 @@ P0-1 与 P0-2 建议交替推进：持久状态不足时，只加原生循环会
 2. 主线程任务时间、端到端 CPU、每游戏分钟跨线程/语言次数、编码/传输量、JS 堆和 WASM 线性内存分开测量。
 3. 不以降低需求量、跳过乘客、缩减候车或丢失历史换取速度；每一步验证乘客守恒、贷款边界、存档恢复和热编辑连续性。
 4. 已有 MAP51 小场景同步 CPU 负收益的证据，优先验证状态/投影优化是否真正改善，不用“Rust 化比例”代替性能结果。
+
+## MAP54 增量进度
+
+P0 代码恢复并通过固定提交回归；P1-1 第一段已实现原生 15 分钟统计槽切换，日历可跨槽续算。修复空需求目录复用采样包越界。整日归档、完整历史和成就汇总仍待迁移；详见 [MAP54](rust-wasm-map54.md)。

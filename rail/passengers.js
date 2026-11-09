@@ -346,6 +346,8 @@
     if(prepared[1].routeModel!==9)legacyTick(...prepared);else QUEUES.cycle(...prepared);
   }
   async function tickAsync(...args) {
+    if(args[0].defs.length>45000&&args[3]-(args[0].lastDefCompact??-Infinity)>=5)
+      await QUEUES.materializeAsync(args[0]);
     const prepared=prepareTick(...args);
     if(prepared[1].routeModel!==9)legacyTick(...prepared);else await QUEUES.cycleAsync(...prepared);
   }
@@ -360,6 +362,8 @@
   }
 
   function summary(rt) {
+    if(rt.nativeView)return {active:rt.trains.length,...rt.nativeView.summary,inside:rt.nativeView.summary.waiting-rt.nativeView.summary.outside,
+      completed:rt.completed,cancelled:rt.cancelled,generated:rt.generated,revenue:rt.revenue};
     const transferring = (rt.transfers || []).reduce((v, x) => v + x.amount, 0),
       outside = Object.values(rt.outside || {}).reduce((v, q) => v + Object.values(q).reduce((a,
           b) => a +
@@ -432,6 +436,7 @@
   }
 
   function snapshot(rt) {
+    if(!QUEUES.canSnapshot(rt))throw Error('原生运行中的存档请使用 snapshotAsync');
     const out = {
       ...rt
     };
@@ -633,6 +638,8 @@
   }
 
   function compactDefinitions(rt) {
+    if(!QUEUES.canSnapshot(rt))throw Error('出行整理前需读取原生快照');
+    QUEUES.invalidate(rt);
     const ids = new Set(),
       add = token => ids.add(+token.split(':')[0]);
     for (const q of Object.values(rt.queues)) Object.keys(q).forEach(add);
@@ -670,6 +677,8 @@
   }
 
   function reconcile(rt, s, m = null) {
+    if(!QUEUES.canSnapshot(rt))throw Error('线网变更前需等待 materializeAsync');
+    QUEUES.invalidate(rt);
     const prediction = m ? validateCatalog(m.preparedDefinitions || definitions(s, m)) : null,
       fresh = prediction === rt.defs ? prediction.map(j => ({
         ...j
@@ -830,6 +839,21 @@
     summary,
     station,
     snapshot,
+    snapshotAsync:async rt=>snapshot(await QUEUES.queryAsync(rt)),
+    detailsAsync:async(rt,kind,id)=>{
+      if(kind==='station')return station(await QUEUES.queryAsync(rt,3,id),id);
+      const temp=await QUEUES.queryAsync(rt,4,id);return temp.trains.find(t=>t.id===id)?.passengers||{};
+    },
+    materializeAsync:QUEUES.materializeAsync,
+    nativeViews:QUEUES.nativeViews,
+    setDaily:(rt,index,value)=>{
+      const catalog=rt.demandCatalog||rt.defs,previous=catalog[index]?.daily;
+      SIM.setDaily(catalog,index,value);
+      if(rt.demandStatus&&!Object.is(previous,value)){
+        rt.demandStatus.daily+=value-previous;rt.demandStatus.activeProfiles+=(value>0?1:0)-(previous>0?1:0);
+        rt.demandStatus.updatedAt=rt.minute;
+      }
+    },
     restore,
     definitions
   };
