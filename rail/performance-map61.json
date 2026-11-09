@@ -1,0 +1,1089 @@
+{
+  "scope": "MAP61 P2-1b service-plan validation and native line-deletion plan",
+  "baselineJs": "498c5cd2af607e60dd1c75a8ba5863c08ac5d4fa",
+  "previousGame": "2cc7f26c936ac03c8807e5bc921540674accf79e",
+  "sourceBase": "07a24ca8d916dff9d141a2c3fa3cadc338e54113",
+  "method": "Independent processes: current/previous/js then reverse; per scene 10 warmups, 7 windows x 5 operations. Median over 14 window averages. No concurrent test suites. Same valid service-plan input; actual configure/delete use N-created complete worlds, fixed nameSeed. Delete includes structuredClone input preparation and existing internal clone/validate/commit. All timed calls asserted success, sources unchanged for read/delete benchmarks, full final JSON output SHA256 identical across modes. 40-line 800-station input is isolated compiler-validator stress data; editor limits stay unchanged. Raw ranges retain JIT/GC/CPU noise, small-operation percentages are indicative only. No full-game CPU/RSS or browser FPS claim.",
+  "rows": [
+    {
+      "label": "plan validation",
+      "lines": 10,
+      "patterns": 1,
+      "stationsPerLine": 20,
+      "inputBytes": 16432,
+      "outputHash": "ca034c3fea2c64521a61392f039853dc456c171a54ce4c6c9591ed0bbd9b4533",
+      "outputBytes": 16,
+      "jsMs": 3.685127699999998,
+      "jsRange": [
+        2.291204399999998,
+        4.272340200000002
+      ],
+      "previousMs": 4.883417600000001,
+      "previousRange": [
+        2.972443200000009,
+        5.1094425999999995
+      ],
+      "currentMs": 0.2705273000000005,
+      "currentRange": [
+        0.13551199999999994,
+        0.3291417999999993
+      ],
+      "vsJsPercent": -92.65894367785408,
+      "vsPreviousPercent": -94.46028740200305
+    },
+    {
+      "label": "plan validation",
+      "lines": 10,
+      "patterns": 5,
+      "stationsPerLine": 20,
+      "inputBytes": 20912,
+      "outputHash": "c409084f7511e56943b9e35dbf371b5f87790224059a6231bcc406c378c943ef",
+      "outputBytes": 16,
+      "jsMs": 16.206054199999993,
+      "jsRange": [
+        11.355792399999995,
+        19.523278200000004
+      ],
+      "previousMs": 17.895710399999995,
+      "previousRange": [
+        13.626587799999992,
+        23.175070400000003
+      ],
+      "currentMs": 0.28214650000000036,
+      "currentRange": [
+        0.24607440000000053,
+        0.40612739999999975
+      ],
+      "vsJsPercent": -98.2590055758298,
+      "vsPreviousPercent": -98.42338474587741
+    },
+    {
+      "label": "plan validation",
+      "lines": 40,
+      "patterns": 1,
+      "stationsPerLine": 20,
+      "inputBytes": 65392,
+      "outputHash": "59e53cb97fa3355622efd3cd5a6f59f589c898e01d618cc1ce0c3c6454414cfe",
+      "outputBytes": 16,
+      "jsMs": 40.67528149999996,
+      "jsRange": [
+        33.33612159999998,
+        53.57337120000002
+      ],
+      "previousMs": 37.63830269999998,
+      "previousRange": [
+        35.58175700000002,
+        49.14392400000001
+      ],
+      "currentMs": 0.5003092999999993,
+      "currentRange": [
+        0.44387520000000225,
+        0.6892467999999979
+      ],
+      "vsJsPercent": -98.76999179464806,
+      "vsPreviousPercent": -98.67074425755123
+    },
+    {
+      "label": "plan validation",
+      "lines": 40,
+      "patterns": 5,
+      "stationsPerLine": 20,
+      "inputBytes": 83312,
+      "outputHash": "7fc3587c47d4884f887dd7c2184add04d7b3e5535cb99a4b80aa2ca621fa90db",
+      "outputBytes": 16,
+      "jsMs": 209.10668090000019,
+      "jsRange": [
+        177.26292099999992,
+        265.39991899999984
+      ],
+      "previousMs": 207.160966,
+      "previousRange": [
+        185.88753240000005,
+        243.06255899999996
+      ],
+      "currentMs": 0.9936000000000007,
+      "currentRange": [
+        0.8799344000000019,
+        1.140940999999998
+      ],
+      "vsJsPercent": -99.52483584181839,
+      "vsPreviousPercent": -99.52037296447054
+    },
+    {
+      "label": "configure name",
+      "lines": 4,
+      "stationsPerLine": 10,
+      "outputHash": "d522a69c73227ef2f70b77ab0ca7aa7574f3d550eaba0299dc5c429da6071989",
+      "jsMs": 0.48173399999996036,
+      "jsRange": [
+        0.32462059999998016,
+        0.7648452000001271
+      ],
+      "previousMs": 0.4712516999999934,
+      "previousRange": [
+        0.38669279999994616,
+        0.6671588000001065
+      ],
+      "currentMs": 0.3718234999999993,
+      "currentRange": [
+        0.2539802000000009,
+        0.6603931999999986
+      ],
+      "vsJsPercent": -22.815599480204863,
+      "vsPreviousPercent": -21.098746168978376
+    },
+    {
+      "label": "delete line including input clone",
+      "lines": 4,
+      "stationsPerLine": 10,
+      "outputHash": "9380762a8d9a7347ad88d5155bbaf8227e39131bf2ea78fcb5fb587ff0380fd4",
+      "jsMs": 0.5480757999999697,
+      "jsRange": [
+        0.3846187999999529,
+        0.707060199999978
+      ],
+      "previousMs": 0.5766558000001168,
+      "previousRange": [
+        0.47390860000014073,
+        0.6793671999999787
+      ],
+      "currentMs": 0.4555646999999993,
+      "currentRange": [
+        0.3327268000000004,
+        1.1916901999999994
+      ],
+      "vsJsPercent": -16.879252833271508,
+      "vsPreviousPercent": -20.998852348332054
+    },
+    {
+      "label": "configure name",
+      "lines": 10,
+      "stationsPerLine": 10,
+      "outputHash": "0a3e0c224411d9e4a85803a9d65e192373e50574b7141268182e8699b44a893c",
+      "jsMs": 2.1820211999998715,
+      "jsRange": [
+        1.3853652000001602,
+        2.574334599999929
+      ],
+      "previousMs": 1.4454153000000587,
+      "previousRange": [
+        1.359521400000085,
+        1.7890521999997873
+      ],
+      "currentMs": 0.8456647000000033,
+      "currentRange": [
+        0.6047061999999983,
+        1.1399653999999941
+      ],
+      "vsJsPercent": -61.2439741648682,
+      "vsPreviousPercent": -41.493306456630904
+    },
+    {
+      "label": "delete line including input clone",
+      "lines": 10,
+      "stationsPerLine": 10,
+      "outputHash": "ffe907061446f63a27390350d04aac723e9eb1aefeaa088ea5cee11ef0c81c04",
+      "jsMs": 1.8211611999999149,
+      "jsRange": [
+        1.7498977999999625,
+        1.9251857999999629
+      ],
+      "previousMs": 1.1919128999998065,
+      "previousRange": [
+        1.0952335999998468,
+        1.4625201999999262
+      ],
+      "currentMs": 1.1986311,
+      "currentRange": [
+        0.8178510000000074,
+        1.4031216000000086
+      ],
+      "vsJsPercent": -34.18314095424084,
+      "vsPreviousPercent": 0.56364856863238
+    }
+  ],
+  "rawRuns": {
+    "js": [
+      {
+        "root": "/tmp/rail-js-baseline",
+        "node": "v24.22.1",
+        "rows": [
+          {
+            "label": "plan validation",
+            "lines": 10,
+            "patterns": 1,
+            "stationsPerLine": 20,
+            "ms": 4.054051399999997,
+            "rawMs": [
+              4.272340200000002,
+              4.182124200000004,
+              4.122398399999997,
+              4.054051399999997,
+              3.932456199999996,
+              3.7872195999999976,
+              3.8028429999999958
+            ],
+            "inputBytes": 0,
+            "outputHash": "ca034c3fea2c64521a61392f039853dc456c171a54ce4c6c9591ed0bbd9b4533",
+            "outputBytes": 0
+          },
+          {
+            "label": "plan validation",
+            "lines": 10,
+            "patterns": 5,
+            "stationsPerLine": 20,
+            "ms": 18.939929800000005,
+            "rawMs": [
+              15.638541799999985,
+              19.523278200000004,
+              18.969926800000007,
+              18.939929800000005,
+              13.070364199999995,
+              18.262433399999985,
+              19.1110502
+            ],
+            "inputBytes": 0,
+            "outputHash": "c409084f7511e56943b9e35dbf371b5f87790224059a6231bcc406c378c943ef",
+            "outputBytes": 0
+          },
+          {
+            "label": "plan validation",
+            "lines": 40,
+            "patterns": 1,
+            "stationsPerLine": 20,
+            "ms": 47.968722200000045,
+            "rawMs": [
+              53.26152299999999,
+              42.572151199999965,
+              53.57337120000002,
+              53.53856379999998,
+              47.968722200000045,
+              46.43797139999997,
+              38.55228719999995
+            ],
+            "inputBytes": 0,
+            "outputHash": "59e53cb97fa3355622efd3cd5a6f59f589c898e01d618cc1ce0c3c6454414cfe",
+            "outputBytes": 0
+          },
+          {
+            "label": "plan validation",
+            "lines": 40,
+            "patterns": 5,
+            "stationsPerLine": 20,
+            "ms": 240.5437274,
+            "rawMs": [
+              263.94289779999997,
+              224.04734179999997,
+              194.42367080000002,
+              240.5437274,
+              177.26292099999992,
+              253.8899583999999,
+              265.39991899999984
+            ],
+            "inputBytes": 0,
+            "outputHash": "7fc3587c47d4884f887dd7c2184add04d7b3e5535cb99a4b80aa2ca621fa90db",
+            "outputBytes": 0
+          },
+          {
+            "label": "configure name",
+            "lines": 4,
+            "stationsPerLine": 10,
+            "ms": 0.6165759999999864,
+            "rawMs": [
+              0.7648452000001271,
+              0.6293391999999585,
+              0.6165759999999864,
+              0.5715341999999509,
+              0.5632438000000548,
+              0.6292629999999917,
+              0.5584363999998458
+            ],
+            "outputHash": "d522a69c73227ef2f70b77ab0ca7aa7574f3d550eaba0299dc5c429da6071989"
+          },
+          {
+            "label": "delete line including input clone",
+            "lines": 4,
+            "stationsPerLine": 10,
+            "ms": 0.5566517999999633,
+            "rawMs": [
+              0.6360914000000776,
+              0.707060199999978,
+              0.6233382000002166,
+              0.5566517999999633,
+              0.5539197999998577,
+              0.5431575999999041,
+              0.5529881999998907
+            ],
+            "outputHash": "9380762a8d9a7347ad88d5155bbaf8227e39131bf2ea78fcb5fb587ff0380fd4"
+          },
+          {
+            "label": "configure name",
+            "lines": 10,
+            "stationsPerLine": 10,
+            "ms": 2.26974999999984,
+            "rawMs": [
+              2.574334599999929,
+              2.1537857999999686,
+              2.2723501999997096,
+              2.1801272000000607,
+              2.296017799999754,
+              2.172653999999966,
+              2.26974999999984
+            ],
+            "outputHash": "0a3e0c224411d9e4a85803a9d65e192373e50574b7141268182e8699b44a893c"
+          },
+          {
+            "label": "delete line including input clone",
+            "lines": 10,
+            "stationsPerLine": 10,
+            "ms": 1.8007362000000284,
+            "rawMs": [
+              1.8789801999999327,
+              1.7883497999999236,
+              1.8779344000002312,
+              1.7498977999999625,
+              1.8007362000000284,
+              1.9047008000001369,
+              1.7725137999997969
+            ],
+            "outputHash": "ffe907061446f63a27390350d04aac723e9eb1aefeaa088ea5cee11ef0c81c04"
+          }
+        ]
+      },
+      {
+        "root": "/tmp/rail-js-baseline",
+        "node": "v24.22.1",
+        "rows": [
+          {
+            "label": "plan validation",
+            "lines": 10,
+            "patterns": 1,
+            "stationsPerLine": 20,
+            "ms": 2.454636400000004,
+            "rawMs": [
+              2.660938999999999,
+              2.4616070000000008,
+              2.454636400000004,
+              2.3971839999999984,
+              2.344716999999997,
+              3.583035799999999,
+              2.291204399999998
+            ],
+            "inputBytes": 0,
+            "outputHash": "ca034c3fea2c64521a61392f039853dc456c171a54ce4c6c9591ed0bbd9b4533",
+            "outputBytes": 0
+          },
+          {
+            "label": "plan validation",
+            "lines": 10,
+            "patterns": 5,
+            "stationsPerLine": 20,
+            "ms": 11.775418999999989,
+            "rawMs": [
+              11.656654400000003,
+              11.775418999999989,
+              11.359208599999988,
+              12.373124600000006,
+              18.985394599999996,
+              16.773566600000002,
+              11.355792399999995
+            ],
+            "inputBytes": 0,
+            "outputHash": "c409084f7511e56943b9e35dbf371b5f87790224059a6231bcc406c378c943ef",
+            "outputBytes": 0
+          },
+          {
+            "label": "plan validation",
+            "lines": 40,
+            "patterns": 1,
+            "stationsPerLine": 20,
+            "ms": 35.72746379999999,
+            "rawMs": [
+              33.33612159999998,
+              33.68642479999998,
+              35.82826439999999,
+              35.72746379999999,
+              35.04359759999998,
+              46.31114200000002,
+              38.77841179999996
+            ],
+            "inputBytes": 0,
+            "outputHash": "59e53cb97fa3355622efd3cd5a6f59f589c898e01d618cc1ce0c3c6454414cfe",
+            "outputBytes": 0
+          },
+          {
+            "label": "plan validation",
+            "lines": 40,
+            "patterns": 5,
+            "stationsPerLine": 20,
+            "ms": 199.3322204,
+            "rawMs": [
+              214.6019518000001,
+              254.69769020000004,
+              199.3322204,
+              179.90640019999992,
+              191.4151536000001,
+              203.61141000000026,
+              194.47183239999976
+            ],
+            "inputBytes": 0,
+            "outputHash": "7fc3587c47d4884f887dd7c2184add04d7b3e5535cb99a4b80aa2ca621fa90db",
+            "outputBytes": 0
+          },
+          {
+            "label": "configure name",
+            "lines": 4,
+            "stationsPerLine": 10,
+            "ms": 0.3543811999999889,
+            "rawMs": [
+              0.4050316000000748,
+              0.3751928000001499,
+              0.3543231999999989,
+              0.3858186000001297,
+              0.3543811999999889,
+              0.32462059999998016,
+              0.3502934000000096
+            ],
+            "outputHash": "d522a69c73227ef2f70b77ab0ca7aa7574f3d550eaba0299dc5c429da6071989"
+          },
+          {
+            "label": "delete line including input clone",
+            "lines": 4,
+            "stationsPerLine": 10,
+            "ms": 0.4806295999998838,
+            "rawMs": [
+              0.5431634000000486,
+              0.3846187999999529,
+              0.5902003999999579,
+              0.5113296000003175,
+              0.3920962000000145,
+              0.43347240000002785,
+              0.4806295999998838
+            ],
+            "outputHash": "9380762a8d9a7347ad88d5155bbaf8227e39131bf2ea78fcb5fb587ff0380fd4"
+          },
+          {
+            "label": "configure name",
+            "lines": 10,
+            "stationsPerLine": 10,
+            "ms": 1.891824799999813,
+            "rawMs": [
+              1.3853652000001602,
+              1.649216399999932,
+              1.685005199999796,
+              1.891824799999813,
+              2.255539000000135,
+              2.250639600000068,
+              2.183915199999683
+            ],
+            "outputHash": "0a3e0c224411d9e4a85803a9d65e192373e50574b7141268182e8699b44a893c"
+          },
+          {
+            "label": "delete line including input clone",
+            "lines": 10,
+            "stationsPerLine": 10,
+            "ms": 1.832289999999921,
+            "rawMs": [
+              1.8066171999998915,
+              1.9251857999999629,
+              1.8030679999999848,
+              1.855839399999968,
+              1.810032399999909,
+              1.8371391999997286,
+              1.832289999999921
+            ],
+            "outputHash": "ffe907061446f63a27390350d04aac723e9eb1aefeaa088ea5cee11ef0c81c04"
+          }
+        ]
+      }
+    ],
+    "previous": [
+      {
+        "root": "/tmp/rail-p2-services",
+        "node": "v24.22.1",
+        "rows": [
+          {
+            "label": "plan validation",
+            "lines": 10,
+            "patterns": 1,
+            "stationsPerLine": 20,
+            "ms": 3.6685677999999995,
+            "rawMs": [
+              4.991605799999997,
+              4.976909399999999,
+              4.947747600000002,
+              3.6685677999999995,
+              3.0950176000000056,
+              2.972443200000009,
+              3.106931599999996
+            ],
+            "inputBytes": 0,
+            "outputHash": "ca034c3fea2c64521a61392f039853dc456c171a54ce4c6c9591ed0bbd9b4533",
+            "outputBytes": 0
+          },
+          {
+            "label": "plan validation",
+            "lines": 10,
+            "patterns": 5,
+            "stationsPerLine": 20,
+            "ms": 14.121719000000008,
+            "rawMs": [
+              13.933229200000005,
+              14.316007400000013,
+              14.121719000000008,
+              13.992756800000006,
+              16.612024599999994,
+              19.687878,
+              13.626587799999992
+            ],
+            "inputBytes": 0,
+            "outputHash": "c409084f7511e56943b9e35dbf371b5f87790224059a6231bcc406c378c943ef",
+            "outputBytes": 0
+          },
+          {
+            "label": "plan validation",
+            "lines": 40,
+            "patterns": 1,
+            "stationsPerLine": 20,
+            "ms": 36.20444779999998,
+            "rawMs": [
+              49.14392400000001,
+              37.63189400000001,
+              42.976156399999994,
+              35.58175700000002,
+              35.81197319999992,
+              35.67007800000001,
+              36.20444779999998
+            ],
+            "inputBytes": 0,
+            "outputHash": "59e53cb97fa3355622efd3cd5a6f59f589c898e01d618cc1ce0c3c6454414cfe",
+            "outputBytes": 0
+          },
+          {
+            "label": "plan validation",
+            "lines": 40,
+            "patterns": 5,
+            "stationsPerLine": 20,
+            "ms": 216.69701540000023,
+            "rawMs": [
+              203.97803780000012,
+              226.41538380000003,
+              213.38519300000007,
+              243.06255899999996,
+              227.9108806,
+              210.16837639999977,
+              216.69701540000023
+            ],
+            "inputBytes": 0,
+            "outputHash": "7fc3587c47d4884f887dd7c2184add04d7b3e5535cb99a4b80aa2ca621fa90db",
+            "outputBytes": 0
+          },
+          {
+            "label": "configure name",
+            "lines": 4,
+            "stationsPerLine": 10,
+            "ms": 0.48129880000014963,
+            "rawMs": [
+              0.6671588000001065,
+              0.5615615999999136,
+              0.48129880000014963,
+              0.4276560000002064,
+              0.4001567999999679,
+              0.4612045999998372,
+              0.5380081999999675
+            ],
+            "outputHash": "d522a69c73227ef2f70b77ab0ca7aa7574f3d550eaba0299dc5c429da6071989"
+          },
+          {
+            "label": "delete line including input clone",
+            "lines": 4,
+            "stationsPerLine": 10,
+            "ms": 0.5675687999999355,
+            "rawMs": [
+              0.5675687999999355,
+              0.5629538000001049,
+              0.6445867999998882,
+              0.5234683999999106,
+              0.5728006000001187,
+              0.5052808000000368,
+              0.6550065999999788
+            ],
+            "outputHash": "9380762a8d9a7347ad88d5155bbaf8227e39131bf2ea78fcb5fb587ff0380fd4"
+          },
+          {
+            "label": "configure name",
+            "lines": 10,
+            "stationsPerLine": 10,
+            "ms": 1.4099593999999342,
+            "rawMs": [
+              1.529801999999836,
+              1.4661520000001473,
+              1.4099593999999342,
+              1.3778209999996762,
+              1.3855867999998737,
+              1.7890521999997873,
+              1.3675355999999739
+            ],
+            "outputHash": "0a3e0c224411d9e4a85803a9d65e192373e50574b7141268182e8699b44a893c"
+          },
+          {
+            "label": "delete line including input clone",
+            "lines": 10,
+            "stationsPerLine": 10,
+            "ms": 1.180844199999774,
+            "rawMs": [
+              1.180844199999774,
+              1.2051289999999426,
+              1.174296400000094,
+              1.130288400000063,
+              1.396443200000067,
+              1.192840399999841,
+              1.0952335999998468
+            ],
+            "outputHash": "ffe907061446f63a27390350d04aac723e9eb1aefeaa088ea5cee11ef0c81c04"
+          }
+        ]
+      },
+      {
+        "root": "/tmp/rail-p2-services",
+        "node": "v24.22.1",
+        "rows": [
+          {
+            "label": "plan validation",
+            "lines": 10,
+            "patterns": 1,
+            "stationsPerLine": 20,
+            "ms": 4.948847000000001,
+            "rawMs": [
+              5.1094425999999995,
+              5.094387999999998,
+              5.063186999999999,
+              4.948847000000001,
+              4.680985600000002,
+              4.692901600000004,
+              4.8190876000000005
+            ],
+            "inputBytes": 0,
+            "outputHash": "ca034c3fea2c64521a61392f039853dc456c171a54ce4c6c9591ed0bbd9b4533",
+            "outputBytes": 0
+          },
+          {
+            "label": "plan validation",
+            "lines": 10,
+            "patterns": 5,
+            "stationsPerLine": 20,
+            "ms": 22.7785936,
+            "rawMs": [
+              23.175070400000003,
+              18.639447399999995,
+              17.151973399999996,
+              22.7785936,
+              22.426897200000006,
+              22.89258319999999,
+              23.070831399999996
+            ],
+            "inputBytes": 0,
+            "outputHash": "c409084f7511e56943b9e35dbf371b5f87790224059a6231bcc406c378c943ef",
+            "outputBytes": 0
+          },
+          {
+            "label": "plan validation",
+            "lines": 40,
+            "patterns": 1,
+            "stationsPerLine": 20,
+            "ms": 38.0953458,
+            "rawMs": [
+              48.05948240000002,
+              39.47926700000003,
+              38.357604400000035,
+              37.54760539999997,
+              38.0953458,
+              37.64471139999996,
+              36.83806540000005
+            ],
+            "inputBytes": 0,
+            "outputHash": "59e53cb97fa3355622efd3cd5a6f59f589c898e01d618cc1ce0c3c6454414cfe",
+            "outputBytes": 0
+          },
+          {
+            "label": "plan validation",
+            "lines": 40,
+            "patterns": 5,
+            "stationsPerLine": 20,
+            "ms": 193.9141317999998,
+            "rawMs": [
+              209.2516216,
+              185.88753240000005,
+              205.0703104,
+              201.19372600000025,
+              193.9141317999998,
+              190.11172719999996,
+              187.56477079999968
+            ],
+            "inputBytes": 0,
+            "outputHash": "7fc3587c47d4884f887dd7c2184add04d7b3e5535cb99a4b80aa2ca621fa90db",
+            "outputBytes": 0
+          },
+          {
+            "label": "configure name",
+            "lines": 4,
+            "stationsPerLine": 10,
+            "ms": 0.45348640000011076,
+            "rawMs": [
+              0.517833999999857,
+              0.49333719999995085,
+              0.44529120000006517,
+              0.41772779999992055,
+              0.38669279999994616,
+              0.45348640000011076,
+              0.54934179999982
+            ],
+            "outputHash": "d522a69c73227ef2f70b77ab0ca7aa7574f3d550eaba0299dc5c429da6071989"
+          },
+          {
+            "label": "delete line including input clone",
+            "lines": 4,
+            "stationsPerLine": 10,
+            "ms": 0.5884735999999975,
+            "rawMs": [
+              0.5963360000001557,
+              0.6168703999999707,
+              0.580511000000115,
+              0.47390860000014073,
+              0.5884735999999975,
+              0.504685199999949,
+              0.6793671999999787
+            ],
+            "outputHash": "9380762a8d9a7347ad88d5155bbaf8227e39131bf2ea78fcb5fb587ff0380fd4"
+          },
+          {
+            "label": "configure name",
+            "lines": 10,
+            "stationsPerLine": 10,
+            "ms": 1.4665185999998358,
+            "rawMs": [
+              1.4246785999999703,
+              1.4665185999998358,
+              1.359521400000085,
+              1.5625724000001355,
+              1.4239874000002601,
+              1.541314599999896,
+              1.510129600000073
+            ],
+            "outputHash": "0a3e0c224411d9e4a85803a9d65e192373e50574b7141268182e8699b44a893c"
+          },
+          {
+            "label": "delete line including input clone",
+            "lines": 10,
+            "stationsPerLine": 10,
+            "ms": 1.2476667999999336,
+            "rawMs": [
+              1.1191178000000945,
+              1.283555400000114,
+              1.2476667999999336,
+              1.1909853999997722,
+              1.4625201999999262,
+              1.2479310000002442,
+              1.1705971999999747
+            ],
+            "outputHash": "ffe907061446f63a27390350d04aac723e9eb1aefeaa088ea5cee11ef0c81c04"
+          }
+        ]
+      }
+    ],
+    "current": [
+      {
+        "root": "/tmp/rail-p2-validation",
+        "node": "v24.22.1",
+        "rows": [
+          {
+            "label": "plan validation",
+            "lines": 10,
+            "patterns": 1,
+            "stationsPerLine": 20,
+            "ms": 0.24740620000000035,
+            "rawMs": [
+              0.2457898,
+              0.32273580000000096,
+              0.2765841999999992,
+              0.13551199999999994,
+              0.24839780000000075,
+              0.24740620000000035,
+              0.2333112
+            ],
+            "inputBytes": 16432,
+            "outputHash": "ca034c3fea2c64521a61392f039853dc456c171a54ce4c6c9591ed0bbd9b4533",
+            "outputBytes": 16
+          },
+          {
+            "label": "plan validation",
+            "lines": 10,
+            "patterns": 5,
+            "stationsPerLine": 20,
+            "ms": 0.2929448000000008,
+            "rawMs": [
+              0.37385460000000137,
+              0.32428800000000135,
+              0.3204982000000001,
+              0.27134819999999993,
+              0.2929448000000008,
+              0.26828979999999947,
+              0.24607440000000053
+            ],
+            "inputBytes": 20912,
+            "outputHash": "c409084f7511e56943b9e35dbf371b5f87790224059a6231bcc406c378c943ef",
+            "outputBytes": 16
+          },
+          {
+            "label": "plan validation",
+            "lines": 40,
+            "patterns": 1,
+            "stationsPerLine": 20,
+            "ms": 0.5071089999999998,
+            "rawMs": [
+              0.5088898000000001,
+              0.48678840000000034,
+              0.4907623999999998,
+              0.5071089999999998,
+              0.44987480000000063,
+              0.5072531999999995,
+              0.5440025999999989
+            ],
+            "inputBytes": 65392,
+            "outputHash": "59e53cb97fa3355622efd3cd5a6f59f589c898e01d618cc1ce0c3c6454414cfe",
+            "outputBytes": 16
+          },
+          {
+            "label": "plan validation",
+            "lines": 40,
+            "patterns": 5,
+            "stationsPerLine": 20,
+            "ms": 0.9748710000000017,
+            "rawMs": [
+              0.9748710000000017,
+              0.953519,
+              0.9717041999999992,
+              0.9393916000000047,
+              1.0206860000000006,
+              1.140940999999998,
+              1.0298297999999988
+            ],
+            "inputBytes": 83312,
+            "outputHash": "7fc3587c47d4884f887dd7c2184add04d7b3e5535cb99a4b80aa2ca621fa90db",
+            "outputBytes": 16
+          },
+          {
+            "label": "configure name",
+            "lines": 4,
+            "stationsPerLine": 10,
+            "ms": 0.404534799999999,
+            "rawMs": [
+              0.4951030000000003,
+              0.546866,
+              0.404534799999999,
+              0.4710188000000016,
+              0.34541780000000133,
+              0.2771051999999997,
+              0.35225199999999857
+            ],
+            "outputHash": "d522a69c73227ef2f70b77ab0ca7aa7574f3d550eaba0299dc5c429da6071989"
+          },
+          {
+            "label": "delete line including input clone",
+            "lines": 4,
+            "stationsPerLine": 10,
+            "ms": 0.558576400000004,
+            "rawMs": [
+              0.558576400000004,
+              0.6277185999999972,
+              0.4587403999999992,
+              0.48847499999999966,
+              0.47571400000000497,
+              1.1916901999999994,
+              0.6792280000000005
+            ],
+            "outputHash": "9380762a8d9a7347ad88d5155bbaf8227e39131bf2ea78fcb5fb587ff0380fd4"
+          },
+          {
+            "label": "configure name",
+            "lines": 10,
+            "stationsPerLine": 10,
+            "ms": 1.0493552000000022,
+            "rawMs": [
+              1.1399653999999941,
+              1.0533472000000075,
+              0.9612805999999978,
+              1.0499880000000075,
+              1.0235681999999997,
+              1.0493552000000022,
+              0.9527276000000029
+            ],
+            "outputHash": "0a3e0c224411d9e4a85803a9d65e192373e50574b7141268182e8699b44a893c"
+          },
+          {
+            "label": "delete line including input clone",
+            "lines": 10,
+            "stationsPerLine": 10,
+            "ms": 1.3198501999999963,
+            "rawMs": [
+              1.3098652000000015,
+              1.3805031999999984,
+              1.3198501999999963,
+              1.3492806000000086,
+              1.2511167999999997,
+              1.4031216000000086,
+              1.2701391999999943
+            ],
+            "outputHash": "ffe907061446f63a27390350d04aac723e9eb1aefeaa088ea5cee11ef0c81c04"
+          }
+        ]
+      },
+      {
+        "root": "/tmp/rail-p2-validation",
+        "node": "v24.22.1",
+        "rows": [
+          {
+            "label": "plan validation",
+            "lines": 10,
+            "patterns": 1,
+            "stationsPerLine": 20,
+            "ms": 0.29527439999999955,
+            "rawMs": [
+              0.30625980000000086,
+              0.3246288000000021,
+              0.3291417999999993,
+              0.23732899999999973,
+              0.29527439999999955,
+              0.2729652000000016,
+              0.2680893999999995
+            ],
+            "inputBytes": 16432,
+            "outputHash": "ca034c3fea2c64521a61392f039853dc456c171a54ce4c6c9591ed0bbd9b4533",
+            "outputBytes": 16
+          },
+          {
+            "label": "plan validation",
+            "lines": 10,
+            "patterns": 5,
+            "stationsPerLine": 20,
+            "ms": 0.2691512000000017,
+            "rawMs": [
+              0.40612739999999975,
+              0.3119308000000018,
+              0.3546201999999994,
+              0.2687765999999982,
+              0.2691512000000017,
+              0.26897900000000163,
+              0.2618536000000006
+            ],
+            "inputBytes": 20912,
+            "outputHash": "c409084f7511e56943b9e35dbf371b5f87790224059a6231bcc406c378c943ef",
+            "outputBytes": 16
+          },
+          {
+            "label": "plan validation",
+            "lines": 40,
+            "patterns": 1,
+            "stationsPerLine": 20,
+            "ms": 0.4935095999999987,
+            "rawMs": [
+              0.6892467999999979,
+              0.4492816000000005,
+              0.4687343999999996,
+              0.5944189999999991,
+              0.5498364000000009,
+              0.44387520000000225,
+              0.4935095999999987
+            ],
+            "inputBytes": 65392,
+            "outputHash": "59e53cb97fa3355622efd3cd5a6f59f589c898e01d618cc1ce0c3c6454414cfe",
+            "outputBytes": 16
+          },
+          {
+            "label": "plan validation",
+            "lines": 40,
+            "patterns": 5,
+            "stationsPerLine": 20,
+            "ms": 1.0123289999999998,
+            "rawMs": [
+              0.8916003999999986,
+              1.0123289999999998,
+              0.8799344000000019,
+              0.954534799999999,
+              1.1034089999999992,
+              1.028804599999995,
+              1.0155766000000028
+            ],
+            "inputBytes": 83312,
+            "outputHash": "7fc3587c47d4884f887dd7c2184add04d7b3e5535cb99a4b80aa2ca621fa90db",
+            "outputBytes": 16
+          },
+          {
+            "label": "configure name",
+            "lines": 4,
+            "stationsPerLine": 10,
+            "ms": 0.3458246000000031,
+            "rawMs": [
+              0.391395,
+              0.6603931999999986,
+              0.45903299999999947,
+              0.3458246000000031,
+              0.2539802000000009,
+              0.33237020000000256,
+              0.256221800000003
+            ],
+            "outputHash": "d522a69c73227ef2f70b77ab0ca7aa7574f3d550eaba0299dc5c429da6071989"
+          },
+          {
+            "label": "delete line including input clone",
+            "lines": 4,
+            "stationsPerLine": 10,
+            "ms": 0.38603319999999713,
+            "rawMs": [
+              0.41695159999999876,
+              0.38603319999999713,
+              0.45238899999999943,
+              0.3327268000000004,
+              0.34218119999999885,
+              0.3881203999999968,
+              0.3607852000000037
+            ],
+            "outputHash": "9380762a8d9a7347ad88d5155bbaf8227e39131bf2ea78fcb5fb587ff0380fd4"
+          },
+          {
+            "label": "configure name",
+            "lines": 10,
+            "stationsPerLine": 10,
+            "ms": 0.659949400000005,
+            "rawMs": [
+              0.7109963999999991,
+              0.6047061999999983,
+              0.6912606000000039,
+              0.6094933999999966,
+              0.7386018000000035,
+              0.659949400000005,
+              0.6289088000000106
+            ],
+            "outputHash": "0a3e0c224411d9e4a85803a9d65e192373e50574b7141268182e8699b44a893c"
+          },
+          {
+            "label": "delete line including input clone",
+            "lines": 10,
+            "stationsPerLine": 10,
+            "ms": 0.8831454000000007,
+            "rawMs": [
+              0.8831454000000007,
+              0.9097052000000077,
+              1.1461454000000004,
+              0.8178510000000074,
+              0.8622017999999911,
+              1.141764599999999,
+              0.8785583999999972
+            ],
+            "outputHash": "ffe907061446f63a27390350d04aac723e9eb1aefeaa088ea5cee11ef0c81c04"
+          }
+        ]
+      }
+    ]
+  }
+}

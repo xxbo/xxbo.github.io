@@ -221,7 +221,7 @@
     '直达交路的起终点必须不同。', '交路端点无效。', '交路车队分配无效。'
   ];
 
-  function serviceFrame(s, minute, line = null, p = null, index) {
+  function serviceFrame(s, minute, line = null, p = null, index, strict = false) {
     const sources = [...s.services];
     if (line && sources.indexOf(line) < 0) sources.push(line);
     const source = line ? sources.indexOf(line) : 0,
@@ -243,10 +243,11 @@
     const numericIndex = line ? ((typeof index === 'number' || typeof index === 'string') && String(Number(
       index)) === String(index) ? Number(index) : NaN) : 0;
     const values = [1, line ? 1 : 0, minute, source, numericIndex, sources.length];
+    const num = v => strict ? (typeof v === 'number' ? v : NaN) : Number(v);
     const write = p => {
-      values.push(PATTERN_CODES.indexOf(p.kind), Number(p.from), Number(p.to), Number(p.fleet), p.kind ===
-        'cross' ? s.services.findIndex(l => l.id === p.target) : -1, Number(p.targetEnd), (Array.isArray(p
-          .calls) ? p.calls : []).length, ...(Array.isArray(p.calls) ? p.calls : []));
+      const calls=Array.isArray(p.calls)?(strict?p.calls.filter(()=>true):p.calls).map(num):[];
+      values.push(PATTERN_CODES.indexOf(p.kind), num(p.from), num(p.to), num(p.fleet), p.kind ===
+        'cross' ? s.services.findIndex(l => l.id === p.target) : -1, num(p.targetEnd),calls.length,...calls);
     };
     for (const l of sources) {
       const d = l.dispatch;
@@ -259,7 +260,8 @@
     return {
       input: Float64Array.from(values),
       sources,
-      trackNames
+      trackNames,
+      trackIndex: trackIds
     };
   }
 
@@ -412,49 +414,36 @@
 
   function validate(s) {
     try {
-      for (const t of s.tracks)
-        if (t.curve && [t.curve.before, t.curve.after].some(p => p && (!Number.isFinite(p.x) || !Number
-            .isFinite(p.y)))) return false;
-      for (const t of s.tracks)
-        if (t.bends && (!Array.isArray(t.bends) || t.bends.length > 120 || t.bends.some(p => !Number
-            .isFinite(p.x) || !Number.isFinite(p.y) || p.x < 25 || p.x > s.world.width - 25 || p.y < 25 ||
-            p.y > s.world.height - 25))) return false;
+      const frame = serviceFrame(s, s.economy?.minute ?? 420, null, null, undefined, true);
+      const num = v => typeof v === 'number' ? v : NaN;
+      const values = [1, frame.input.length, ...frame.input, +(s.routeModel === 9 && !s.operatingPlan), +!!s
+        .world, Number(s.world?.width), Number(s.world?.height), frame.trackNames.length, s.tracks.length
+      ];
+      for (const t of s.tracks) {
+        values.push(frame.trackIndex.get(t.id) ?? -1, Number(t.km));
+        for (const p of [t.curve?.before, t.curve?.after]) {
+          values.push(+!!p);
+          if (p) values.push(num(p.x), num(p.y));
+        }
+        const bends = t.bends,
+          points = Array.isArray(bends) ? bends.filter(() => true) : [];
+        values.push(!bends ? 0 : Array.isArray(bends) ? 1 : -1, Array.isArray(bends) ? bends.length : 0, points
+          .length);
+        for (const p of points) values.push(num(p.x), num(p.y));
+      }
       for (const l of s.services) {
-        if (l.fareBands && (!Array.isArray(l.fareBands) || l.fareBands.length !== 6 || l.fareBands.some((v,
-            i) => !Number.isInteger(v) || v < 20 || v > 3000 || (i && v < l.fareBands[i - 1]))))
-          return false;
-        if (l.loopDirection && !['both', 'forward', 'reverse'].includes(l.loopDirection)) return false;
-        if (!l.patterns) continue;
-        if (!Array.isArray(l.patterns) || !l.patterns.length || l.patterns.length > 8) return false;
-        let fleet = 0;
-        for (const [i, p] of l.patterns.entries()) {
-          if (!KINDS[p.kind] || !Number.isInteger(p.from) || !Number.isInteger(p.to) || p.from < 0 || p.to <
-            0 || p.from >= l.stops.length || p.to >= l.stops.length || p.from === p.to || !Number.isInteger(
-              p.fleet) || p.fleet < 2 || p.fleet % 2 || (!l.fleetManaged && ![4, 5, 6, 8, 10, 12, 15, 20]
-              .includes(p.headway))) return false;
-          if (p.kind === 'local' && (p.from !== 0 || p.to !== l.stops.length - 1)) return false;
-          if (p.kind === 'short' && Math.abs(p.to - p.from) === l.stops.length - 1) return false;
-          if (p.kind === 'express' && (!Array.isArray(p.calls) || p.calls.some(n => !l.stops.slice(Math.min(
-              p.from, p.to), Math.max(p.from, p.to) + 1).includes(n)))) return false;
-          if (p.kind === 'cross') {
-            const other = s.services.find(x => x.id === p.target);
-            if (!other || !Number.isInteger(p.targetEnd) || p.targetEnd < 0 || p.targetEnd >= other.stops
-              .length || other.stops[p.targetEnd] === l.stops[p.to]) return false;
-          }
-          compile(s, l, p, i);
-          fleet += p.fleet;
-        }
-        if (fleet > l.fleet) return false;
+        const bands = l.fareBands,
+          n = Array.isArray(bands) ? bands.length : 0;
+        values.push(!bands ? 0 : Array.isArray(bands) ? 1 : -1, n);
+        for (let i = 0; i < n; i++) values.push(+(i in bands), num(bands[i]));
+        values.push(!l.loopDirection ? 0 : ['both', 'forward', 'reverse'].indexOf(l.loopDirection) + 1 || -1,
+          Number(l.headway), Number(l.callStops ? l.callStops.length : l.stops.length), +!!l.dispatchCompiled);
+        for (const p of l.patterns || [{
+            headway: l.headway
+          }]) values.push(num(p.headway), +Array.isArray(p.calls));
       }
-      for (const minute of [480, 600]) {
-        const op = expand(s, minute);
-        for (const t of s.tracks) {
-          const slots = op.services.filter(l => l.trackIds.includes(t.id)).reduce((v, l) => v + 60 /
-            headway(op, l), 0);
-          if (slots > 30 + 1e-4) return false;
-        }
-      }
-      return true;
+      const result = ROUTING.kernel('service_validate', Float64Array.from(values));
+      return result[0] === 1 && result[1] === 1;
     } catch {
       return false;
     }

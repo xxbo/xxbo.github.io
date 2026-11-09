@@ -1,27 +1,29 @@
 //! Service compilation uses a compact descriptor ABI. Names and extra view fields stay in JS.
 use crate::{queues::Read, CORE};
 #[derive(Clone)]
-struct Pattern {
-    kind: i32,
-    from: f64,
-    to: f64,
-    fleet: f64,
-    calls: Vec<f64>,
-    target: i32,
-    end: f64,
-    default: bool,
+pub(super) struct Pattern {
+    pub(super) kind: i32,
+    pub(super) from: f64,
+    pub(super) to: f64,
+    pub(super) fleet: f64,
+    pub(super) calls: Vec<f64>,
+    pub(super) target: i32,
+    pub(super) end: f64,
+    pub(super) default: bool,
 }
-struct Line {
-    key: usize,
-    spec: usize,
-    managed: bool,
-    auto: bool,
-    manual: f64,
-    off: f64,
-    high: f64,
-    stops: Vec<f64>,
-    tracks: Vec<f64>,
-    patterns: Vec<Pattern>,
+pub(super) struct Line {
+    pub(super) key: usize,
+    pub(super) spec: usize,
+    pub(super) managed: bool,
+    pub(super) auto: bool,
+    pub(super) manual: f64,
+    pub(super) off: f64,
+    pub(super) high: f64,
+    pub(super) fleet: f64,
+    pub(super) explicit: bool,
+    pub(super) stops: Vec<f64>,
+    pub(super) tracks: Vec<f64>,
+    pub(super) patterns: Vec<Pattern>,
 }
 fn list(r: &mut Read) -> Vec<f64> {
     (0..r.u()).map(|_| r.f()).collect()
@@ -73,7 +75,7 @@ fn slice(l: &Line, from: f64, to: f64) -> Result<(Vec<f64>, Vec<f64>), usize> {
 fn same(a: f64, b: f64) -> bool {
     a == b || a.is_nan() && b.is_nan()
 }
-fn compile(
+pub(super) fn compile(
     lines: &[Line],
     source: usize,
     p: &Pattern,
@@ -169,7 +171,7 @@ fn compile(
     out.extend(calls);
     Ok(out)
 }
-fn run(input: &[f64]) -> Vec<f64> {
+pub(super) fn decode(input: &[f64]) -> (usize, f64, usize, f64, Vec<Line>, Option<Pattern>) {
     let mut r = Read { v: input, at: 0 };
     assert_eq!(r.f(), 1.0);
     let op = r.u();
@@ -212,6 +214,8 @@ fn run(input: &[f64]) -> Vec<f64> {
             manual,
             off,
             high,
+            fleet,
+            explicit,
             stops,
             tracks,
             patterns,
@@ -219,6 +223,10 @@ fn run(input: &[f64]) -> Vec<f64> {
     }
     let single = if op == 1 { Some(pattern(&mut r)) } else { None };
     assert_eq!(r.at, input.len());
+    (op, minute, selected, ordinal, lines, single)
+}
+fn run(input: &[f64]) -> Vec<f64> {
+    let (_, minute, selected, ordinal, lines, single) = decode(input);
     let mut descriptors = vec![];
     let mut error = 0;
     if let Some(p) = single {
@@ -277,6 +285,8 @@ mod tests {
             manual: 0.0,
             off: 0.0,
             high: 0.0,
+            fleet: 4.0,
+            explicit: false,
             stops: vec![1.0, 2.0, 3.0],
             tracks: vec![10.0, 20.0],
             patterns: vec![],

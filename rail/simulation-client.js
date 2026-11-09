@@ -11,7 +11,7 @@
     function start(){
       if(worker)return;
       if(node){const {Worker}=require('node:worker_threads');worker=new Worker(require('node:path').join(__dirname,'simulation-worker.js'));}
-      else worker=new Worker(new URL('simulation-worker.js?v=60',root.location.href));
+      else worker=new Worker(new URL('simulation-worker.js?v=61',root.location.href));
       if(options.retainRuntime)Core.recycleSimulation();
       const receive=data=>{
         if(!active||data.id!==active.id)return;

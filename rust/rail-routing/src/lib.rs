@@ -15,6 +15,7 @@ mod numbers;
 mod operations;
 mod projection;
 mod queues;
+mod service_validation;
 mod services;
 mod simulation;
 mod statistics;
