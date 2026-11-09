@@ -169,7 +169,7 @@ assert(forecast.riders > 0);
 assert.equal(forecast.diagnostics.memory.routing, 'rust-wasm-abi1');
 assert(forecast.diagnostics.memory.wasm.searches > 0);
 // Instance recycling cannot invalidate caller-owned compact output. Invalid inputs never produce empty forecasts.
-const bytes = fs.readFileSync(path.join(__dirname, '../rail/wasm/rail-core-v21.wasm'));
+const bytes = fs.readFileSync(path.join(__dirname, '../rail/wasm/rail-core-v22.wasm'));
 Router.create(bytes, {
   recycleBytes: 0
 });
@@ -215,7 +215,7 @@ async function browserLoader() {
     assert(!/function (searchPaths|pushHeap|popHeap|push|pop)\(/.test(source));
   }
   const module = new WebAssembly.Module(bytes);
-  assert.deepEqual(WebAssembly.Module.imports(module).map(x => x.module + '.' + x.name).sort(), ['rail_host.json_utf8', 'rail_math.exp', 'rail_math.hypot', 'rail_math.log', 'rail_math.log1p', 'rail_math.now', 'rail_math.pow', 'rail_math.sin']);
+  assert.deepEqual(WebAssembly.Module.imports(module).map(x => x.module + '.' + x.name).sort(), ['rail_host.json_utf8', 'rail_math.acos', 'rail_math.atan2', 'rail_math.exp', 'rail_math.hypot', 'rail_math.log', 'rail_math.log1p', 'rail_math.now', 'rail_math.pow', 'rail_math.random', 'rail_math.sin']);
   console.log(`MAP41 passed: ${comparisons} exact route trees, modern/legacy/through/loop fares, 6000-profile full-demand parity, owned buffers/recycling, trap recovery, 404/corrupt/ABI load retry; production has no JS search fallback.`);
 }
 browserLoader().catch(e => {

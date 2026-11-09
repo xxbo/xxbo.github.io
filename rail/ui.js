@@ -299,7 +299,7 @@
     updatedAt: null
   };
   const demandClient = RailWorkerClient.create({
-    createWorker: () => typeof Worker === 'function' ? new Worker('demand-worker.js?v=61') : null,
+    createWorker: () => typeof Worker === 'function' ? new Worker('demand-worker.js?v=62') : null,
     timeout: 45000,
     timeoutMessage: '后台需求计算超过45秒，已回收计算线程；旧需求继续运行。',
     errorMessage: '客流后台计算失败',
@@ -2352,8 +2352,10 @@
         break;
       case 'undo':
         if (undoState) {
+          const restoredState=N.restore(undoState.state);
+          if(restoredState.error){toast(restoredState.error);break;}
           networkRevision++;
-          s = undoState.state;
+          s = restoredState.state;
           const rt = undoState.runtime;
           forecast = undoState.forecast || forecast;
           undoState = null;
@@ -2806,7 +2808,7 @@
     }
     try {
       if (!centerWorker) {
-        centerWorker = new Worker('operations-worker.js?v=61');
+        centerWorker = new Worker('operations-worker.js?v=62');
         centerForecastSent = null;
       }
       centerWorker.onerror = e => fail(e.message || '后台诊断不可用');

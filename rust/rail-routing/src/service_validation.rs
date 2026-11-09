@@ -18,7 +18,7 @@ fn integer(v: f64) -> bool {
 fn point(r: &mut Read) -> (f64, f64) {
     (r.f(), r.f())
 }
-fn valid(input: &[f64]) -> bool {
+pub(super) fn valid(input: &[f64]) -> bool {
     let mut r = Read { v: input, at: 0 };
     assert_eq!(r.f(), 1.0);
     let n = r.u();

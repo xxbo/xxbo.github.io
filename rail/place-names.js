@@ -205,52 +205,17 @@
   const distance = (a, b) => Math.hypot(a.x - b.x, a.y - b.y) * .045;
 
   function suggest(s, p, seed = Math.random(), except = null) {
-    const candidates = places(s.region || 'tokyo').map(n => ({
-        ...n,
-        km: distance(n, p)
-      })).sort((a, b) => a.km - b.km),
-      closest = candidates[0],
-      near = candidates.filter(n => n.km <= Math.min(closest.km + .7, Math.max(1.2, closest.km))).slice(0,
-        4),
-      random = Math.abs(Math.sin(seed * 9283.31) * 43758.5453) % 1,
-      chosen = near[Math.floor(random * near.length)] || closest,
-      used = new Set(s.nodes.filter(n => n.id !== except && n.mergedInto === undefined).map(n => n.name)),
-      base = chosen.name;
-    if (!used.has(base)) return {
-      name: base,
-      source: 'nearby-place',
-      place: base,
-      distance: chosen.km
-    };
-    const dx = p.x - chosen.x,
-      dy = p.y - chosen.y,
-      dir = (dx < -.5 ? '西' : dx > .5 ? '东' : '') + (dy < -.5 ? '北' : dy > .5 ? '南' : ''),
-      suffixes = [dir || '中心', '东', '南', '西', '北', '东北', '东南', '西北', '西南', '中心'];
-    for (const suffix of [...new Set(suffixes)])
-      if (!used.has(base + suffix)) return {
-        name: base + suffix,
-        source: 'nearby-place',
-        place: base,
-        distance: chosen.km
-      };
-    let i = 2;
-    while (used.has(base + '·' + i)) i++;
-    return {
-      name: base + '·' + i,
-      source: 'nearby-place',
-      place: base,
-      distance: chosen.km
-    };
+    const E = node ? require('./editor-wasm') : root.RailEditor;
+    return E.query(s, 'suggestName', {
+      point: p,
+      seed,
+      except
+    });
   }
 
   function migrate(s) {
-    for (const n of s.nodes)
-      if (n.nameSource !== 'manual' && /^新站\s*\d+$/.test(n.name)) {
-        const a = suggest(s, n, (n.id + 1) * .173, n.id);
-        n.name = a.name;
-        n.nameSource = a.source;
-        n.nearbyPlace = a.place;
-      } return s;
+    const E = node ? require('./editor-wasm') : root.RailEditor;
+    return E.mutate(s, 'migrateNames');
   }
   const api = {
     places,

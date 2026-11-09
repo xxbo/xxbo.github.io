@@ -225,7 +225,7 @@ pub(super) fn decode(input: &[f64]) -> (usize, f64, usize, f64, Vec<Line>, Optio
     assert_eq!(r.at, input.len());
     (op, minute, selected, ordinal, lines, single)
 }
-fn run(input: &[f64]) -> Vec<f64> {
+pub(super) fn run(input: &[f64]) -> Vec<f64> {
     let (_, minute, selected, ordinal, lines, single) = decode(input);
     let mut descriptors = vec![];
     let mut error = 0;
