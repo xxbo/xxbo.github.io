@@ -1,0 +1,1180 @@
+{
+  "scope": "P2-1a compact service compiler MAP60",
+  "baselineJs": "498c5cd2af607e60dd1c75a8ba5863c08ac5d4fa",
+  "previousMain": "f3dc2134125206841d25e5d5d3b163a19018a4e0",
+  "method": "Separate processes, current/previous/js then reverse; each scenario 100 warmups and 7x300 expansions; median of 14 per-expansion window averages. Edited: first line peak fleet changes each expansion; warm: same network with alternating peak/offpeak. No concurrent test suite. Timing includes JS adapters and copies. Native call diagnostics include warmups and one cloned cold probe. Exact final JSON hash and aggregate checksum match all three versions.",
+  "rows": [
+    {
+      "lines": 10,
+      "stationsPerLine": 20,
+      "patternsPerLine": 1,
+      "edited": false,
+      "inputBytes": 5088,
+      "outputBytes": 6984,
+      "outputHash": "74febbc59c2e14fd2a642ad1776544279352027d7f788a2a5ce93172fff18559",
+      "nativeCalls": 3,
+      "jsMs": 0.022448948333333336,
+      "previousMs": 0.02470444500000002,
+      "currentMs": 0.04233052666666666,
+      "vsJsPercent": 88.56351771192838,
+      "vsPreviousPercent": 71.34781480282851
+    },
+    {
+      "lines": 10,
+      "stationsPerLine": 20,
+      "patternsPerLine": 1,
+      "edited": true,
+      "inputBytes": 5088,
+      "outputBytes": 6984,
+      "outputHash": "b5cfe5edc6141d743a2c601ddf29f10db32a7485f683357c90f91bc92c5c8dd3",
+      "nativeCalls": 2104,
+      "jsMs": 0.020174630000000016,
+      "previousMs": 0.023666456666666683,
+      "currentMs": 0.1057728866666667,
+      "vsJsPercent": 424.28662467002675,
+      "vsPreviousPercent": 346.9316558724393
+    },
+    {
+      "lines": 10,
+      "stationsPerLine": 20,
+      "patternsPerLine": 5,
+      "edited": false,
+      "inputBytes": 8928,
+      "outputBytes": 26256,
+      "outputHash": "3b3b9aef88b0b68bcd6b4fd1039f0202a3b5135c9ea7286027678083e782d9d8",
+      "nativeCalls": 3,
+      "jsMs": 0.08294247333333335,
+      "previousMs": 0.10658743000000007,
+      "currentMs": 0.0750750900000001,
+      "vsJsPercent": -9.485349323639557,
+      "vsPreviousPercent": -29.564780762609576
+    },
+    {
+      "lines": 10,
+      "stationsPerLine": 20,
+      "patternsPerLine": 5,
+      "edited": true,
+      "inputBytes": 8928,
+      "outputBytes": 26256,
+      "outputHash": "f22949d450fe5464d39b7b9ac46b0ef37a69e8748dd86817f7762ae7230e1713",
+      "nativeCalls": 2104,
+      "jsMs": 0.0686807916666668,
+      "previousMs": 0.10858006000000009,
+      "currentMs": 0.2521899199999998,
+      "vsJsPercent": 267.19134110155636,
+      "vsPreviousPercent": 132.26172466657283
+    },
+    {
+      "lines": 40,
+      "stationsPerLine": 20,
+      "patternsPerLine": 1,
+      "edited": false,
+      "inputBytes": 20208,
+      "outputBytes": 27864,
+      "outputHash": "fbd0d66ce6efb155a7d8443f7c5a9d0a4c7df04c7dc09888477d8347185531d7",
+      "nativeCalls": 3,
+      "jsMs": 0.043966453333333294,
+      "previousMs": 0.07040943499999988,
+      "currentMs": 0.13624367500000023,
+      "vsJsPercent": 209.8809766779771,
+      "vsPreviousPercent": 93.50201432521148
+    },
+    {
+      "lines": 40,
+      "stationsPerLine": 20,
+      "patternsPerLine": 1,
+      "edited": true,
+      "inputBytes": 20208,
+      "outputBytes": 27864,
+      "outputHash": "02edf90e91a49e2866a1860fb8d503dd3a993edf8c50e7c13ce94d58af57612c",
+      "nativeCalls": 2104,
+      "jsMs": 0.046688948333333355,
+      "previousMs": 0.07109059166666667,
+      "currentMs": 0.2964084366666665,
+      "vsJsPercent": 534.8578137816976,
+      "vsPreviousPercent": 316.9446754030155
+    },
+    {
+      "lines": 40,
+      "stationsPerLine": 20,
+      "patternsPerLine": 5,
+      "edited": false,
+      "inputBytes": 35568,
+      "outputBytes": 104736,
+      "outputHash": "74e7a09ef2ca25bc6755bcc954417670608296a7074969655392cb4c5de03d88",
+      "nativeCalls": 3,
+      "jsMs": 0.32284729833333337,
+      "previousMs": 0.4078096716666668,
+      "currentMs": 0.2726386016666667,
+      "vsJsPercent": -15.551840429163876,
+      "vsPreviousPercent": -33.14562635250237
+    },
+    {
+      "lines": 40,
+      "stationsPerLine": 20,
+      "patternsPerLine": 5,
+      "edited": true,
+      "inputBytes": 35568,
+      "outputBytes": 104736,
+      "outputHash": "4ae47df68ac094ae91a851f9710c0a06a4463786737cde4f6b1444c66d81cf78",
+      "nativeCalls": 2104,
+      "jsMs": 0.2863956033333337,
+      "previousMs": 0.399439008333333,
+      "currentMs": 0.9822331616666649,
+      "vsJsPercent": 242.96377117334828,
+      "vsPreviousPercent": 145.90316448186962
+    }
+  ],
+  "rawRuns": {
+    "js": [
+      {
+        "root": "/tmp/rail-js-baseline",
+        "node": "v24.22.1",
+        "rows": [
+          {
+            "edited": false,
+            "lines": 10,
+            "outputHash": "74febbc59c2e14fd2a642ad1776544279352027d7f788a2a5ce93172fff18559",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.022844713333333336,
+            "rawMs": [
+              0.02275684666666668,
+              0.022844713333333336,
+              0.02214104999999999,
+              0.02612812333333333,
+              0.02564897000000002,
+              0.025296773333333345,
+              0.020310293333333316
+            ],
+            "checksum": 84000
+          },
+          {
+            "edited": true,
+            "lines": 10,
+            "outputHash": "b5cfe5edc6141d743a2c601ddf29f10db32a7485f683357c90f91bc92c5c8dd3",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.021107563333333322,
+            "rawMs": [
+              0.02466688666666665,
+              0.020692203333333384,
+              0.023794509999999984,
+              0.021107563333333322,
+              0.023335216666666648,
+              0.01824792000000002,
+              0.013606059999999994
+            ],
+            "checksum": 92400
+          },
+          {
+            "edited": false,
+            "lines": 10,
+            "outputHash": "3b3b9aef88b0b68bcd6b4fd1039f0202a3b5135c9ea7286027678083e782d9d8",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.09136107333333333,
+            "rawMs": [
+              0.10376310333333331,
+              0.08496147666666673,
+              0.09136107333333333,
+              0.10733871666666649,
+              0.10782268000000007,
+              0.07243884999999996,
+              0.06622996333333334
+            ],
+            "checksum": 111300
+          },
+          {
+            "edited": true,
+            "lines": 10,
+            "outputHash": "f22949d450fe5464d39b7b9ac46b0ef37a69e8748dd86817f7762ae7230e1713",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.06802056333333326,
+            "rawMs": [
+              0.06758327000000008,
+              0.06802056333333326,
+              0.06833793999999993,
+              0.06772664999999999,
+              0.06698493333333336,
+              0.09093351000000004,
+              0.06884169666666688
+            ],
+            "checksum": 111860
+          },
+          {
+            "edited": false,
+            "lines": 40,
+            "outputHash": "fbd0d66ce6efb155a7d8443f7c5a9d0a4c7df04c7dc09888477d8347185531d7",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.046958603333333335,
+            "rawMs": [
+              0.04236338000000008,
+              0.04327877333333352,
+              0.046958603333333335,
+              0.05981563666666678,
+              0.048810456666666745,
+              0.046736399999999775,
+              0.05015391333333317
+            ],
+            "checksum": 147000
+          },
+          {
+            "edited": true,
+            "lines": 40,
+            "outputHash": "02edf90e91a49e2866a1860fb8d503dd3a993edf8c50e7c13ce94d58af57612c",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.0474683699999999,
+            "rawMs": [
+              0.056339066666666895,
+              0.04502732333333332,
+              0.0474683699999999,
+              0.04527603333333332,
+              0.04639709000000001,
+              0.0478318166666664,
+              0.052193823333333285
+            ],
+            "checksum": 155400
+          },
+          {
+            "edited": false,
+            "lines": 40,
+            "outputHash": "74e7a09ef2ca25bc6755bcc954417670608296a7074969655392cb4c5de03d88",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.3223558066666665,
+            "rawMs": [
+              0.3818285266666665,
+              0.3223558066666665,
+              0.37290501666666653,
+              0.32333879000000026,
+              0.26949771666666644,
+              0.27061440666666686,
+              0.2704291333333337
+            ],
+            "checksum": 426300
+          },
+          {
+            "edited": true,
+            "lines": 40,
+            "outputHash": "4ae47df68ac094ae91a851f9710c0a06a4463786737cde4f6b1444c66d81cf78",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.26988754666666714,
+            "rawMs": [
+              0.2696848733333339,
+              0.26718478000000007,
+              0.273189556666667,
+              0.26986891999999973,
+              0.26988754666666714,
+              0.3379965733333332,
+              0.3483999899999996
+            ],
+            "checksum": 426860
+          }
+        ]
+      },
+      {
+        "root": "/tmp/rail-js-baseline",
+        "node": "v24.22.1",
+        "rows": [
+          {
+            "edited": false,
+            "lines": 10,
+            "outputHash": "74febbc59c2e14fd2a642ad1776544279352027d7f788a2a5ce93172fff18559",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.014884149999999987,
+            "rawMs": [
+              0.014884149999999987,
+              0.014656400000000005,
+              0.0138291133333333,
+              0.02506205666666664,
+              0.02557573,
+              0.017992530000000027,
+              0.012710150000000009
+            ],
+            "checksum": 84000
+          },
+          {
+            "edited": true,
+            "lines": 10,
+            "outputHash": "b5cfe5edc6141d743a2c601ddf29f10db32a7485f683357c90f91bc92c5c8dd3",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.01577863999999996,
+            "rawMs": [
+              0.022005316666666677,
+              0.019657056666666648,
+              0.02228901666666668,
+              0.01572245,
+              0.01248490666666664,
+              0.01577863999999996,
+              0.012220776666666685
+            ],
+            "checksum": 92400
+          },
+          {
+            "edited": false,
+            "lines": 10,
+            "outputHash": "3b3b9aef88b0b68bcd6b4fd1039f0202a3b5135c9ea7286027678083e782d9d8",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.06968107666666669,
+            "rawMs": [
+              0.10903698666666665,
+              0.08534030333333334,
+              0.08092346999999998,
+              0.06968107666666669,
+              0.06733883000000002,
+              0.06806432333333325,
+              0.06942048666666664
+            ],
+            "checksum": 111300
+          },
+          {
+            "edited": true,
+            "lines": 10,
+            "outputHash": "f22949d450fe5464d39b7b9ac46b0ef37a69e8748dd86817f7762ae7230e1713",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.07066647666666673,
+            "rawMs": [
+              0.07082735333333327,
+              0.06906521000000017,
+              0.06851988666666671,
+              0.07212879333333319,
+              0.07066647666666673,
+              0.08887560000000008,
+              0.06850022000000006
+            ],
+            "checksum": 111860
+          },
+          {
+            "edited": false,
+            "lines": 40,
+            "outputHash": "fbd0d66ce6efb155a7d8443f7c5a9d0a4c7df04c7dc09888477d8347185531d7",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.043299826666666374,
+            "rawMs": [
+              0.04460129999999993,
+              0.04374804000000002,
+              0.04169164666666689,
+              0.043299826666666374,
+              0.04418486666666657,
+              0.04135817666666639,
+              0.04223834666666676
+            ],
+            "checksum": 147000
+          },
+          {
+            "edited": true,
+            "lines": 40,
+            "outputHash": "02edf90e91a49e2866a1860fb8d503dd3a993edf8c50e7c13ce94d58af57612c",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.04564792000000011,
+            "rawMs": [
+              0.044157859999999875,
+              0.04564792000000011,
+              0.05131568666666643,
+              0.046980806666666694,
+              0.053061766666666774,
+              0.04177374333333319,
+              0.04073920000000006
+            ],
+            "checksum": 155400
+          },
+          {
+            "edited": false,
+            "lines": 40,
+            "outputHash": "74e7a09ef2ca25bc6755bcc954417670608296a7074969655392cb4c5de03d88",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.32455189666666645,
+            "rawMs": [
+              0.3741005499999998,
+              0.3434726466666666,
+              0.35015004666666677,
+              0.32455189666666645,
+              0.29320372000000056,
+              0.28716265666666685,
+              0.2850774933333332
+            ],
+            "checksum": 426300
+          },
+          {
+            "edited": true,
+            "lines": 40,
+            "outputHash": "4ae47df68ac094ae91a851f9710c0a06a4463786737cde4f6b1444c66d81cf78",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.28986361666666655,
+            "rawMs": [
+              0.2945249566666666,
+              0.2899498166666664,
+              0.28986361666666655,
+              0.28340799333333355,
+              0.28747819000000013,
+              0.44813985666666667,
+              0.28531301666666725
+            ],
+            "checksum": 426860
+          }
+        ]
+      }
+    ],
+    "previous": [
+      {
+        "root": "/tmp/rail-p1-hot",
+        "node": "v24.22.1",
+        "rows": [
+          {
+            "edited": false,
+            "lines": 10,
+            "outputHash": "74febbc59c2e14fd2a642ad1776544279352027d7f788a2a5ce93172fff18559",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.029685249999999996,
+            "rawMs": [
+              0.03126449333333336,
+              0.029685249999999996,
+              0.029114586666666706,
+              0.034660943333333354,
+              0.03608748000000001,
+              0.01966760666666668,
+              0.020055543333333314
+            ],
+            "checksum": 84000
+          },
+          {
+            "edited": true,
+            "lines": 10,
+            "outputHash": "b5cfe5edc6141d743a2c601ddf29f10db32a7485f683357c90f91bc92c5c8dd3",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.02737246666666664,
+            "rawMs": [
+              0.03247084666666666,
+              0.02737246666666664,
+              0.024329513333333257,
+              0.029909419999999992,
+              0.02836442666666661,
+              0.02417391333333332,
+              0.019666923333333274
+            ],
+            "checksum": 92400
+          },
+          {
+            "edited": false,
+            "lines": 10,
+            "outputHash": "3b3b9aef88b0b68bcd6b4fd1039f0202a3b5135c9ea7286027678083e782d9d8",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.10470504999999984,
+            "rawMs": [
+              0.12193806333333337,
+              0.09923888333333337,
+              0.10470504999999984,
+              0.10365176666666666,
+              0.11361417666666664,
+              0.12248557000000006,
+              0.09293175333333333
+            ],
+            "checksum": 111300
+          },
+          {
+            "edited": true,
+            "lines": 10,
+            "outputHash": "f22949d450fe5464d39b7b9ac46b0ef37a69e8748dd86817f7762ae7230e1713",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.10218190333333345,
+            "rawMs": [
+              0.0998176566666666,
+              0.10218190333333345,
+              0.08585132333333338,
+              0.12331429999999993,
+              0.13053228999999988,
+              0.12246293666666665,
+              0.09595183666666685
+            ],
+            "checksum": 111860
+          },
+          {
+            "edited": false,
+            "lines": 40,
+            "outputHash": "fbd0d66ce6efb155a7d8443f7c5a9d0a4c7df04c7dc09888477d8347185531d7",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.07127452999999984,
+            "rawMs": [
+              0.08589298000000023,
+              0.07727386666666651,
+              0.06719524999999976,
+              0.08118368999999992,
+              0.07127452999999984,
+              0.06467048333333347,
+              0.06483339666666665
+            ],
+            "checksum": 147000
+          },
+          {
+            "edited": true,
+            "lines": 40,
+            "outputHash": "02edf90e91a49e2866a1860fb8d503dd3a993edf8c50e7c13ce94d58af57612c",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.06767901000000014,
+            "rawMs": [
+              0.06645587000000015,
+              0.06703824666666644,
+              0.06842406666666648,
+              0.06696093333333351,
+              0.06767901000000014,
+              0.0704229833333333,
+              0.06817977000000004
+            ],
+            "checksum": 155400
+          },
+          {
+            "edited": false,
+            "lines": 40,
+            "outputHash": "74e7a09ef2ca25bc6755bcc954417670608296a7074969655392cb4c5de03d88",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.36916241333333344,
+            "rawMs": [
+              0.35798968666666725,
+              0.4151209233333331,
+              0.36916241333333344,
+              0.3759020666666667,
+              0.3528804566666668,
+              0.35110951999999995,
+              0.4041431233333333
+            ],
+            "checksum": 426300
+          },
+          {
+            "edited": true,
+            "lines": 40,
+            "outputHash": "4ae47df68ac094ae91a851f9710c0a06a4463786737cde4f6b1444c66d81cf78",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.38841977000000044,
+            "rawMs": [
+              0.5373684900000004,
+              0.35064361666666627,
+              0.3551533100000006,
+              0.4425753966666677,
+              0.4619507199999998,
+              0.34705444333333313,
+              0.38841977000000044
+            ],
+            "checksum": 426860
+          }
+        ]
+      },
+      {
+        "root": "/tmp/rail-p1-hot",
+        "node": "v24.22.1",
+        "rows": [
+          {
+            "edited": false,
+            "lines": 10,
+            "outputHash": "74febbc59c2e14fd2a642ad1776544279352027d7f788a2a5ce93172fff18559",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.019914176666666634,
+            "rawMs": [
+              0.02869236333333333,
+              0.019914176666666634,
+              0.018060166666666645,
+              0.02436760000000002,
+              0.025041290000000015,
+              0.018022976666666655,
+              0.01698099666666664
+            ],
+            "checksum": 84000
+          },
+          {
+            "edited": true,
+            "lines": 10,
+            "outputHash": "b5cfe5edc6141d743a2c601ddf29f10db32a7485f683357c90f91bc92c5c8dd3",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.02246397999999999,
+            "rawMs": [
+              0.02315900000000004,
+              0.026280936666666622,
+              0.020107169999999997,
+              0.02246397999999999,
+              0.02053198333333332,
+              0.02286572000000007,
+              0.018496996666666612
+            ],
+            "checksum": 92400
+          },
+          {
+            "edited": false,
+            "lines": 10,
+            "outputHash": "3b3b9aef88b0b68bcd6b4fd1039f0202a3b5135c9ea7286027678083e782d9d8",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.10723284999999995,
+            "rawMs": [
+              0.12426425333333327,
+              0.12910703666666679,
+              0.1405408133333333,
+              0.10723284999999995,
+              0.08243309333333325,
+              0.10594201000000017,
+              0.09864802333333349
+            ],
+            "checksum": 111300
+          },
+          {
+            "edited": true,
+            "lines": 10,
+            "outputHash": "f22949d450fe5464d39b7b9ac46b0ef37a69e8748dd86817f7762ae7230e1713",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.11390193333333325,
+            "rawMs": [
+              0.11390193333333325,
+              0.13423705333333336,
+              0.1348620999999999,
+              0.13403023666666664,
+              0.10325818666666692,
+              0.08396298000000002,
+              0.08420240999999995
+            ],
+            "checksum": 111860
+          },
+          {
+            "edited": false,
+            "lines": 40,
+            "outputHash": "fbd0d66ce6efb155a7d8443f7c5a9d0a4c7df04c7dc09888477d8347185531d7",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.06954433999999993,
+            "rawMs": [
+              0.0844515933333336,
+              0.0658765066666668,
+              0.06520942999999989,
+              0.06358706666666648,
+              0.06954433999999993,
+              0.09999179999999987,
+              0.10372429333333344
+            ],
+            "checksum": 147000
+          },
+          {
+            "edited": true,
+            "lines": 40,
+            "outputHash": "02edf90e91a49e2866a1860fb8d503dd3a993edf8c50e7c13ce94d58af57612c",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.08085603333333324,
+            "rawMs": [
+              0.09840883,
+              0.07738489999999994,
+              0.07175820000000006,
+              0.07822917999999997,
+              0.08264888666666668,
+              0.08366796666666687,
+              0.08085603333333324
+            ],
+            "checksum": 155400
+          },
+          {
+            "edited": false,
+            "lines": 40,
+            "outputHash": "74e7a09ef2ca25bc6755bcc954417670608296a7074969655392cb4c5de03d88",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.45471782,
+            "rawMs": [
+              0.4517495699999995,
+              0.5477027199999998,
+              0.45471782,
+              0.5899559233333328,
+              0.41147622000000034,
+              0.5372394366666671,
+              0.4018036066666673
+            ],
+            "checksum": 426300
+          },
+          {
+            "edited": true,
+            "lines": 40,
+            "outputHash": "4ae47df68ac094ae91a851f9710c0a06a4463786737cde4f6b1444c66d81cf78",
+            "inputBytes": 0,
+            "outputBytes": 0,
+            "nativeCalls": 0,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.4104582466666655,
+            "rawMs": [
+              0.5267728133333336,
+              0.4820590400000007,
+              0.3620517166666665,
+              0.37799049666666784,
+              0.3617893400000003,
+              0.44497937999999976,
+              0.4104582466666655
+            ],
+            "checksum": 426860
+          }
+        ]
+      }
+    ],
+    "current": [
+      {
+        "root": "/tmp/rail-p2-services",
+        "node": "v24.22.1",
+        "rows": [
+          {
+            "edited": false,
+            "lines": 10,
+            "outputHash": "74febbc59c2e14fd2a642ad1776544279352027d7f788a2a5ce93172fff18559",
+            "inputBytes": 5088,
+            "outputBytes": 6984,
+            "nativeCalls": 3,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.05422769999999995,
+            "rawMs": [
+              0.042235616666666684,
+              0.047578659999999974,
+              0.042377929999999966,
+              0.054350323333333346,
+              0.05714529333333336,
+              0.05747034666666669,
+              0.05422769999999995
+            ],
+            "checksum": 84000
+          },
+          {
+            "edited": true,
+            "lines": 10,
+            "outputHash": "b5cfe5edc6141d743a2c601ddf29f10db32a7485f683357c90f91bc92c5c8dd3",
+            "inputBytes": 5088,
+            "outputBytes": 6984,
+            "nativeCalls": 2104,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.1184721133333333,
+            "rawMs": [
+              0.1490810266666666,
+              0.12896057333333336,
+              0.12559023333333338,
+              0.1184721133333333,
+              0.11317530999999993,
+              0.11032081333333338,
+              0.11257647000000001
+            ],
+            "checksum": 92400
+          },
+          {
+            "edited": false,
+            "lines": 10,
+            "outputHash": "3b3b9aef88b0b68bcd6b4fd1039f0202a3b5135c9ea7286027678083e782d9d8",
+            "inputBytes": 8928,
+            "outputBytes": 26256,
+            "nativeCalls": 3,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.08744744666666672,
+            "rawMs": [
+              0.10785619999999994,
+              0.09006615666666695,
+              0.08684720666666673,
+              0.08685969333333332,
+              0.08744744666666672,
+              0.08991051666666673,
+              0.08081406000000016
+            ],
+            "checksum": 111300
+          },
+          {
+            "edited": true,
+            "lines": 10,
+            "outputHash": "f22949d450fe5464d39b7b9ac46b0ef37a69e8748dd86817f7762ae7230e1713",
+            "inputBytes": 8928,
+            "outputBytes": 26256,
+            "nativeCalls": 2104,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.33343181999999993,
+            "rawMs": [
+              0.3860903933333331,
+              0.3288418799999999,
+              0.24369429000000006,
+              0.3270599633333328,
+              0.33343181999999993,
+              0.34854096333333323,
+              0.3532392066666663
+            ],
+            "checksum": 111860
+          },
+          {
+            "edited": false,
+            "lines": 40,
+            "outputHash": "fbd0d66ce6efb155a7d8443f7c5a9d0a4c7df04c7dc09888477d8347185531d7",
+            "inputBytes": 20208,
+            "outputBytes": 27864,
+            "nativeCalls": 3,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.20096081000000066,
+            "rawMs": [
+              0.20257122666666647,
+              0.20108684333333335,
+              0.20096081000000066,
+              0.20599089000000048,
+              0.16674914333333316,
+              0.1746818266666666,
+              0.14286146666666658
+            ],
+            "checksum": 147000
+          },
+          {
+            "edited": true,
+            "lines": 40,
+            "outputHash": "02edf90e91a49e2866a1860fb8d503dd3a993edf8c50e7c13ce94d58af57612c",
+            "inputBytes": 20208,
+            "outputBytes": 27864,
+            "nativeCalls": 2104,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.33751417666666533,
+            "rawMs": [
+              0.29661526333333316,
+              0.43379857666666716,
+              0.48857385333333314,
+              0.43169140333333417,
+              0.33751417666666533,
+              0.28846929333333415,
+              0.2962016099999998
+            ],
+            "checksum": 155400
+          },
+          {
+            "edited": false,
+            "lines": 40,
+            "outputHash": "74e7a09ef2ca25bc6755bcc954417670608296a7074969655392cb4c5de03d88",
+            "inputBytes": 35568,
+            "outputBytes": 104736,
+            "nativeCalls": 3,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.3340852099999999,
+            "rawMs": [
+              0.3458954999999999,
+              0.3340852099999999,
+              0.2244164433333329,
+              0.32346487999999984,
+              0.35529425666666614,
+              0.3432445733333331,
+              0.23018022666666638
+            ],
+            "checksum": 426300
+          },
+          {
+            "edited": true,
+            "lines": 40,
+            "outputHash": "4ae47df68ac094ae91a851f9710c0a06a4463786737cde4f6b1444c66d81cf78",
+            "inputBytes": 35568,
+            "outputBytes": 104736,
+            "nativeCalls": 2104,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 1.0021664600000015,
+            "rawMs": [
+              1.0788097799999998,
+              1.117149393333334,
+              0.9534042733333339,
+              0.9826586433333311,
+              1.0021664600000015,
+              1.0365418233333337,
+              0.8785169666666661
+            ],
+            "checksum": 426860
+          }
+        ]
+      },
+      {
+        "root": "/tmp/rail-p2-services",
+        "node": "v24.22.1",
+        "rows": [
+          {
+            "edited": false,
+            "lines": 10,
+            "outputHash": "74febbc59c2e14fd2a642ad1776544279352027d7f788a2a5ce93172fff18559",
+            "inputBytes": 5088,
+            "outputBytes": 6984,
+            "nativeCalls": 3,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.041676006666666675,
+            "rawMs": [
+              0.038544196666666676,
+              0.04228312333333335,
+              0.041988849999999994,
+              0.041676006666666675,
+              0.045661580000000014,
+              0.03432844666666673,
+              0.0336595433333333
+            ],
+            "checksum": 84000
+          },
+          {
+            "edited": true,
+            "lines": 10,
+            "outputHash": "b5cfe5edc6141d743a2c601ddf29f10db32a7485f683357c90f91bc92c5c8dd3",
+            "inputBytes": 5088,
+            "outputBytes": 6984,
+            "nativeCalls": 2104,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.07695475666666662,
+            "rawMs": [
+              0.10122496000000003,
+              0.07832741999999997,
+              0.08483315000000005,
+              0.07695475666666662,
+              0.07378384666666667,
+              0.06908767666666658,
+              0.07251039666666656
+            ],
+            "checksum": 92400
+          },
+          {
+            "edited": false,
+            "lines": 10,
+            "outputHash": "3b3b9aef88b0b68bcd6b4fd1039f0202a3b5135c9ea7286027678083e782d9d8",
+            "inputBytes": 8928,
+            "outputBytes": 26256,
+            "nativeCalls": 3,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.05393326333333334,
+            "rawMs": [
+              0.06933612000000001,
+              0.0544466033333335,
+              0.05213983000000004,
+              0.053474570000000006,
+              0.05393326333333334,
+              0.05463695666666676,
+              0.05085315999999997
+            ],
+            "checksum": 111300
+          },
+          {
+            "edited": true,
+            "lines": 10,
+            "outputHash": "f22949d450fe5464d39b7b9ac46b0ef37a69e8748dd86817f7762ae7230e1713",
+            "inputBytes": 8928,
+            "outputBytes": 26256,
+            "nativeCalls": 2104,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.2381294700000001,
+            "rawMs": [
+              0.2408193833333335,
+              0.25697340333333313,
+              0.2375804766666666,
+              0.22492686333333306,
+              0.24740643666666642,
+              0.2339726433333332,
+              0.2381294700000001
+            ],
+            "checksum": 111860
+          },
+          {
+            "edited": false,
+            "lines": 40,
+            "outputHash": "fbd0d66ce6efb155a7d8443f7c5a9d0a4c7df04c7dc09888477d8347185531d7",
+            "inputBytes": 20208,
+            "outputBytes": 27864,
+            "nativeCalls": 3,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.12600744,
+            "rawMs": [
+              0.12763271333333326,
+              0.125704533333333,
+              0.12474182999999964,
+              0.12600744,
+              0.12651296666666667,
+              0.12570858333333337,
+              0.1296258833333339
+            ],
+            "checksum": 147000
+          },
+          {
+            "edited": true,
+            "lines": 40,
+            "outputHash": "02edf90e91a49e2866a1860fb8d503dd3a993edf8c50e7c13ce94d58af57612c",
+            "inputBytes": 20208,
+            "outputBytes": 27864,
+            "nativeCalls": 2104,
+            "stationsPerLine": 20,
+            "patternsPerLine": 1,
+            "ms": 0.2763710266666665,
+            "rawMs": [
+              0.2763710266666665,
+              0.3921514166666672,
+              0.40120384333333353,
+              0.2715483133333335,
+              0.26662957999999964,
+              0.2873162200000002,
+              0.2655986566666669
+            ],
+            "checksum": 155400
+          },
+          {
+            "edited": false,
+            "lines": 40,
+            "outputHash": "74e7a09ef2ca25bc6755bcc954417670608296a7074969655392cb4c5de03d88",
+            "inputBytes": 35568,
+            "outputBytes": 104736,
+            "nativeCalls": 3,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.22885789999999967,
+            "rawMs": [
+              0.2156717599999994,
+              0.2569861333333332,
+              0.3351041533333334,
+              0.2882910700000002,
+              0.22885789999999967,
+              0.22752734333333288,
+              0.22772747333333276
+            ],
+            "checksum": 426300
+          },
+          {
+            "edited": true,
+            "lines": 40,
+            "outputHash": "4ae47df68ac094ae91a851f9710c0a06a4463786737cde4f6b1444c66d81cf78",
+            "inputBytes": 35568,
+            "outputBytes": 104736,
+            "nativeCalls": 2104,
+            "stationsPerLine": 20,
+            "patternsPerLine": 5,
+            "ms": 0.9661001266666669,
+            "rawMs": [
+              0.9929007533333334,
+              0.9818076799999986,
+              0.9607720333333327,
+              0.9421313300000005,
+              0.9661001266666669,
+              1.0368208100000007,
+              0.8988331500000004
+            ],
+            "checksum": 426860
+          }
+        ]
+      }
+    ]
+  }
+}
