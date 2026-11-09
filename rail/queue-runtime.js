@@ -210,46 +210,43 @@
     return unpack(request,Core.kernel(request.name,request.input));
   }
 
-  function pose(rt, job, data) {
-    for (let i = 0; i < job.motion.context.length; i++) {
-      const {
-        t
-      } = job.motion.context[i], at = i * 8, action = data[at];
-      if (action === 1) {
-        t.status = 'finished';
-        continue;
+  function poseTrain(rt,job,t,action,progress,index,ready,finalIndex,finalReady) {
+    if(action===1){t.status='finished';return;}
+    if(action>=2&&action<=5) {
+      t.progress=progress;
+      if(action>=3) {
+        t.index=index;t.status='dwell';t.ready=ready;t.progress=0;
+        if(action===4){t.index=finalIndex;t.ready=finalReady;t.laps=(t.laps||0)+1;}
+        else if(action===5)t.status='finished';
       }
-      if (action >= 2 && action <= 5) {
-        t.progress = data[at + 1];
-        if (action >= 3) {
-          t.index = data[at + 4];
-          t.status = 'dwell';
-          t.ready = data[at + 5];
-          t.progress = 0;
-          if (action === 4) {
-            t.index = data[at + 6];
-            t.ready = data[at + 7];
-            t.laps = (t.laps || 0) + 1;
-          } else if (action === 5) t.status = 'finished';
-        }
-      } else if (action === 6) t.status = 'signal';
-      else if (action === 7) {
-        const tr = job.track(rt, job.index, t, t.trackIds[t.dir === 1 ? t.index : t.index - 1]),
-          from = t.stops[t.index],
-          to = t.stops[t.index + t.dir],
-          block = tr.id + '|' + (from === tr.a ? 1 : -1);
-        rt.blocks[block] = data[at + 7];
-        t.status = 'moving';
-        t.departedAt = rt.minute;
-        t.arriveAt = data[at + 5];
-        t.segment = {
-          track: tr.id,
-          from,
-          to
-        };
-        t.progress = 0;
-      }
+    }else if(action===6)t.status='signal';
+    else if(action===7) {
+      const tr=job.track(rt,job.index,t,t.trackIds[t.dir===1?t.index:t.index-1]),
+        from=t.stops[t.index],to=t.stops[t.index+t.dir],block=tr.id+'|'+(from===tr.a?1:-1);
+      rt.blocks[block]=finalReady;t.status='moving';t.departedAt=rt.minute;t.arriveAt=ready;
+      t.segment={track:tr.id,from,to};t.progress=0;
     }
+  }
+  function pose(rt,job,data) {
+    for(let i=0;i<job.motion.context.length;i++) {
+      const at=i*8;
+      poseTrain(rt,job,job.motion.context[i].t,data[at],data[at+1],data[at+4],data[at+5],data[at+6],data[at+7]);
+    }
+  }
+  function compactPose(c,rt,job,data) {
+    let at=0;
+    while(at<data.length) {
+      const uid=data[at++],action=data[at++],t=c.trains.get(uid)?.t;
+      if(!t)throw Error('原生列车投影缺失对应对象');
+      if(action===1)t.status='finished';
+      else if(action===6)t.status='signal';
+      else if(action===2)t.progress=data[at++];
+      else if(action===3||action===5) {poseTrain(rt,job,t,action,0,data[at],data[at+1]);at+=2;}
+      else if(action===4) {poseTrain(rt,job,t,action,0,0,0,data[at],data[at+1]);at+=2;}
+      else if(action===7) {poseTrain(rt,job,t,action,0,0,data[at],0,data[at+1]);at+=2;}
+      else throw Error('未知原生列车投影操作');
+    }
+    if(at!==data.length)throw Error('原生列车投影长度无效');
   }
 
   function project(c, rt, s, job, data) {
@@ -259,12 +256,15 @@
   }
 
   function projectCommands(c, rt, s, job, data) {
-    if (data[0] !== 1) throw Error('队列事件协议版本错误');
+    if (data[0] !== 1 && data[0]!==2) throw Error('队列事件协议版本错误');
     const motionLength = data[6],
       opsLength = data[7] * 4,
       dirty = data[8];
     let at = 17;
-    if (motionLength) pose(rt, job, data.subarray(at, at + motionLength));
+    if(motionLength) {
+      const motion=data.subarray(at,at+motionLength);
+      if(data[0]===2)compactPose(c,rt,job,motion);else pose(rt,job,motion);
+    }
     at += motionLength;
     const ops = data.slice(at, at + opsLength);
     at += opsLength;
@@ -450,11 +450,11 @@
     const job={settlement,index,track,arrivals:[],gates:rt.arrivalMode==='integer'&&!!frames.sampling};
     let requests=[],needsKeys=false;
     let requested=new Set();
-    let result,stableFrame=null,stableMotion=null;
+    let result,stableFrame=null,stableMotion=null,stableSampling=null,preparedInNative=false;
     // A metadata miss has no game-side effects. Replay the same random seed/clock,
     // supply only the selected catalog templates, then commit one complete transaction.
     for(let attempt=0;attempt<4096;attempt++) {
-      if(Core.cycleToken()!==c.token) {c.keySent=0;stableFrame=null;stableMotion=null;}
+      if(Core.cycleToken()!==c.token) {c.keySent=0;stableFrame=null;stableMotion=null;stableSampling=null;preparedInNative=false;}
       const keyMode=needsKeys||c.keySent&&c.keySent<rt.defs.length?(c.keySent?2:1):0;
       const text=[],keyRows=[],profiles=[],encoder=new TextEncoder();
       let byteLength=0;
@@ -476,9 +476,9 @@
         templates.push(q.length,t.data.length,dwell,...q,...t.data);
       }
       // Re-encode sampling after a native arena recycle; never replay a delta into an empty cache.
-      const sampling=frames.sampling?SIM.timedFrame(catalog,s,frames.minute,frames.interval,
-        rt.arrivalRemainder||0,rt.rngState,job.gates):null;
-      const prep=Prepare.encode(frames.feedback,sampling,frames.dispatch)||new Float64Array([1,0,0,0,0]);
+      const sampling=frames.sampling?(stableSampling||(stableSampling=SIM.timedFrame(catalog,s,frames.minute,frames.interval,
+        rt.arrivalRemainder||0,rt.rngState,job.gates))):null;
+      const prep=preparedInNative?new Float64Array(0):(Prepare.encode(frames.feedback,sampling,frames.dispatch)||new Float64Array([1,0,0,0,0]));
       const rules=[frames.sampling?s.services.length:0];
       for(const l of frames.sampling?s.services:[]) rules.push(named(c,l.id),l.open??0,l.close??1440,+!!l.fleetManaged,l.fleet);
       const feedbackIds=(frames.feedback?.context.ls||[]).map(l=>named(c,l.id));
@@ -493,6 +493,7 @@
       result=yield {name:'engine_cycle',input,bytes};
       if(keyMode&&Core.cycleToken()===c.token)c.keySent=rt.defs.length;
       if(result[1]===0) break;
+      preparedInNative=Core.cycleToken()===c.token;
       needsKeys=needsKeys||!!result[2];
       requests=Array.from(result.subarray(11,11+result[3]));
       requested=new Set(requests);
@@ -553,7 +554,6 @@
     let at=4;
     for(let i=0;i<result[1];i++) {
       rt.minute=result[at++];rt.demandCarry=result[at++];const nq=result[at++],nf=result[at++];
-      job.motion.context=rt.trains.map(t=>({t,l:t.retiringRun||job.index.runs.get(t.service)}));
       let pending=project(c,rt,s,job,{queue:result.subarray(at,at+nq),finance:result.subarray(at+nq,at+nq+nf)});
       at+=nq+nf;
       while(pending) {

@@ -19,7 +19,7 @@ pub(super) struct Cycle {
     loaded: bool,
     keys: HashMap<Rc<str>, usize>,
     profiles: HashMap<usize, Profile>,
-    pending: Option<Vec<f64>>,
+    pending: Option<(Vec<f64>, f64)>,
 }
 fn string(bytes: &[u8], off: f64, len: f64) -> Rc<str> {
     Rc::from(
@@ -169,10 +169,18 @@ pub extern "C" fn engine_cycle() -> *const f64 {
         assert_eq!(r.at, input.len());
         assert_eq!(parts[0][0], 2.0);
         assert_eq!(parts[0][2], 0.0);
-        let prepared = state
-            .pending
-            .take()
-            .unwrap_or_else(|| crate::engine::prepare(prep, sampling_state, feedback_cache));
+        let (prepared, minute) = if let Some(pending) = state.pending.take() {
+            pending
+        } else {
+            let prepared = crate::engine::prepare(prep, sampling_state, feedback_cache);
+            let minute = if prepared[2] > 0.0 {
+                let off = 5 + int(prep[4]) + int(prep[1]);
+                prep[off + 8]
+            } else {
+                parts[0][4]
+            };
+            (prepared, minute)
+        };
         let nf = int(prepared[1]);
         let ns = int(prepared[2]);
         let nd = int(prepared[3]);
@@ -181,12 +189,6 @@ pub extern "C" fn engine_cycle() -> *const f64 {
         let dispatch = &prepared[4 + nf + ns..];
         assert_eq!(dispatch.len(), nd);
         let now = parts[0][4];
-        let minute = if ns > 0 {
-            let off = 5 + int(prep[4]) + int(prep[1]);
-            prep[off + 8]
-        } else {
-            now
-        };
         let day = ((minute % 1440.0) + 1440.0) % 1440.0;
         let mut open = HashSet::new();
         for row in rules[1..].chunks_exact(5) {
@@ -213,7 +215,7 @@ pub extern "C" fn engine_cycle() -> *const f64 {
             }
         }
         if !requests.is_empty() || needs_keys {
-            state.pending = Some(prepared);
+            state.pending = Some((prepared, minute));
             *output = reply(
                 1.0,
                 needs_keys,
@@ -347,7 +349,7 @@ pub extern "C" fn engine_cycle() -> *const f64 {
         if !finance.is_empty() {
             crate::engine::read(finance, settlement_state);
         }
-        let queue = crate::queues::run_patched(&packet, simulation_state, queue_state, 0, &patch);
+        let queue = crate::queues::run_compact(&packet, simulation_state, queue_state, &patch);
         let account = if queue[1] == 0.0 && !finance.is_empty() {
             crate::engine::settle(
                 finance,
@@ -357,6 +359,13 @@ pub extern "C" fn engine_cycle() -> *const f64 {
         } else {
             vec![]
         };
+        let mut view = vec![1.0, nf as f64, if ns > 0 { 4.0 } else { 0.0 }, nd as f64];
+        view.extend_from_slice(feedback);
+        if ns > 0 {
+            view.extend_from_slice(&sample[..4]);
+            crate::projection::omit_samples(ns - 4);
+        }
+        view.extend_from_slice(dispatch);
         *output = reply(
             0.0,
             false,
@@ -365,7 +374,7 @@ pub extern "C" fn engine_cycle() -> *const f64 {
             &spawned,
             serial,
             next,
-            &prepared,
+            &view,
             &queue,
             &account,
         );

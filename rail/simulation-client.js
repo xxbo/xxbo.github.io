@@ -5,16 +5,18 @@
   const Core=node?require('./routing-wasm'):root.RailRouting;
   function create(options={}) {
     let worker=null,closed=false,serial=0,active=null,tail=Promise.resolve(),local=!!options.forceLocal;
+    const transport={requests:0,inputBytes:0,outputBytes:0,maxInputBytes:0,maxOutputBytes:0};
     let tokens={simulation:0,queue:0,engine:0,sampling:0,cycle:0};
     function fail(error){if(active){const p=active;active=null;clearTimeout(p.timer);p.reject(error);}worker?.terminate();worker=null;closed=true;}
     function start(){
       if(worker)return;
       if(node){const {Worker}=require('node:worker_threads');worker=new Worker(require('node:path').join(__dirname,'simulation-worker.js'));}
-      else worker=new Worker(new URL('simulation-worker.js?v=51',root.location.href));
+      else worker=new Worker(new URL('simulation-worker.js?v=52',root.location.href));
       const receive=data=>{
         if(!active||data.id!==active.id)return;
         const p=active;active=null;clearTimeout(p.timer);tokens=data.tokens;
-        if(data.status)Core.reportWorkerStatus(data.status);
+        if(data.result) {transport.outputBytes+=data.result.byteLength;transport.maxOutputBytes=Math.max(transport.maxOutputBytes,data.result.byteLength);}
+        if(data.status)Core.reportWorkerStatus({...data.status,transport:{...transport}});
         if(data.error)p.reject(Error(data.error));else p.resolve(data.result);
       };
       if(node){worker.on('message',receive);worker.on('error',fail);worker.on('exit',code=>{if(!closed)fail(Error('Simulation worker exited: '+code));});}
@@ -30,6 +32,8 @@
       }
       return new Promise((resolve,reject)=>{
         const id=++serial;active={id,resolve,reject,timer:setTimeout(()=>fail(Error('后台模拟超时，已停止线程并保留最近存档')),options.timeout??30000)};
+        const inputBytes=request.input.byteLength+(request.bytes?.byteLength||0);
+        transport.requests++;transport.inputBytes+=inputBytes;transport.maxInputBytes=Math.max(transport.maxInputBytes,inputBytes);
         const transfer=[request.input.buffer];
         if(request.bytes)transfer.push(request.bytes.buffer);
         worker.postMessage({id,name:request.name,input:request.input,bytes:request.bytes},transfer);

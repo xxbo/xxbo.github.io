@@ -351,7 +351,7 @@ pub extern "C" fn engine_continue() -> *const f64 {
             } else {
                 packet.push(-1.0);
             }
-            let queue = crate::queues::run(&packet, simulation_state, queue_state, 0);
+            let queue = crate::queues::run_compact(&packet, simulation_state, queue_state, &[]);
             let account = if queue[1] == 0.0 {
                 settle(
                     &fin,

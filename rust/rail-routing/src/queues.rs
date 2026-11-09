@@ -816,6 +816,31 @@ pub(super) fn run_patched(
     prefix: usize,
     feedback: &[(usize, [f64; 4])],
 ) -> Vec<f64> {
+    execute(
+        input,
+        simulation_state,
+        queue_state,
+        prefix,
+        feedback,
+        false,
+    )
+}
+pub(super) fn run_compact(
+    input: &[f64],
+    simulation_state: &mut Option<crate::simulation::MotionState>,
+    queue_state: &mut Option<Queues>,
+    feedback: &[(usize, [f64; 4])],
+) -> Vec<f64> {
+    execute(input, simulation_state, queue_state, 0, feedback, true)
+}
+fn execute(
+    input: &[f64],
+    simulation_state: &mut Option<crate::simulation::MotionState>,
+    queue_state: &mut Option<Queues>,
+    prefix: usize,
+    feedback: &[(usize, [f64; 4])],
+    compact: bool,
+) -> Vec<f64> {
     let mut r = Read { v: input, at: 0 };
     let protocol = r.f();
     assert!(protocol == 1.0 || protocol == 2.0);
@@ -999,20 +1024,32 @@ pub(super) fn run_patched(
     let pending = request.is_some();
     let (j, station, amount) =
         request.map_or((-1.0, -1.0, 0.0), |(j, s, n)| (j as f64, s as f64, n));
-    let mut output = vec![0.0; prefix];
+    let motion_length = if compact {
+        crate::projection::length(&motion)
+    } else {
+        motion.len()
+    };
+    let mut output = Vec::with_capacity(
+        prefix + 17 + motion_length + if pending { ops.len() * 4 } else { 0 } + q.commands.len(),
+    );
+    output.resize(prefix, 0.0);
     output.extend_from_slice(&[
-        1.0,
+        if compact { 2.0 } else { 1.0 },
         if pending { 1.0 } else { 0.0 },
         at as f64,
         j,
         station,
         amount,
-        motion.len() as f64,
+        motion_length as f64,
         if pending { ops.len() as f64 } else { 0.0 },
         q.dirty as f64,
     ]);
     output.extend(q.counters);
-    output.extend(motion);
+    if compact {
+        crate::projection::write(&mut output, &order, &motion);
+    } else {
+        output.extend(motion);
+    }
     if pending {
         for op in ops {
             output.extend(op);

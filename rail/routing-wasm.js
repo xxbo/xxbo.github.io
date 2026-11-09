@@ -41,7 +41,7 @@
     peakMemoryBytes = 0;
   const recycleLimit = () => recycleBytes === 0 ? 0 : Math.max(recycleBytes,
     simulationRecycleBytes);
-  const asset = node ? null : new URL('wasm/rail-core-v11.wasm?v=51',
+  const asset = node ? null : new URL('wasm/rail-core-v12.wasm?v=52',
     root.document?.currentScript?.src || root.location.href).href;
 
   function install(module) {
@@ -55,7 +55,7 @@
     });
     if (next.exports.routing_abi() !== ABI || next.exports.demand_abi?.() !== 1 || next.exports
       .world_abi?.() !== 1 || next.exports.simulation_abi?.() !== 1 || next.exports.queue_abi?.
-      () !== 1 || next.exports.statistics_abi?.() !== 1 || next.exports.operations_abi?.() !== 1 || next.exports.engine_abi?.() !== 1 || next.exports.engine_prepare_abi?.() !== 1 || next.exports.cycle_abi?.() !== 1 || next.exports.engine_continue_abi?.() !== 1)
+      () !== 1 || next.exports.statistics_abi?.() !== 1 || next.exports.operations_abi?.() !== 1 || next.exports.engine_abi?.() !== 1 || next.exports.engine_prepare_abi?.() !== 1 || next.exports.cycle_abi?.() !== 1 || next.exports.engine_continue_abi?.() !== 1 || next.exports.projection_abi?.() !== 1)
       throw Error('寻路WASM接口版本不匹配');
     compiled = module;
     instance = next;
@@ -435,6 +435,9 @@
     paths,
     status: () => ({
       backend: 'Rust/WASM',
+      projectionAbi:1,projectionFullValues:instance?.exports.projection_full_values?.()||0,
+      projectionSentValues:instance?.exports.projection_sent_values?.()||0,
+      arrivalValuesOmitted:instance?.exports.projection_omitted_samples?.()||0,
       cycleAbi:1,loopAbi:1,loopCalls,loopSteps,cycleCalls,worker:workerStatus,
       demandAbi: 1,
       demandCalls,
@@ -480,7 +483,7 @@
     const fs = require('node:fs'),
       path = require('node:path');
     install(new WebAssembly.Module(fs.readFileSync(path.join(__dirname,
-      'wasm/rail-core-v11.wasm'))));
+      'wasm/rail-core-v12.wasm'))));
     module.exports = api;
   } else {
     root.RailRouting = api;

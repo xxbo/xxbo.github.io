@@ -5,6 +5,7 @@ mod demand;
 mod engine;
 mod numbers;
 mod operations;
+mod projection;
 mod queues;
 mod simulation;
 mod statistics;
