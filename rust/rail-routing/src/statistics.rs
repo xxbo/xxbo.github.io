@@ -187,6 +187,34 @@ impl Statistics {
             touched: false,
         }
     }
+    pub(super) fn feedback_values(&self, id: usize) -> [f64; 4] {
+        self.feedback
+            .get(&id)
+            .map_or([0.0; 4], |r| r.values[..4].try_into().unwrap())
+    }
+    pub(super) fn prune_hour(&mut self, now: f64) {
+        self.hour.retain(|&(minute, _)| minute > now.floor() - 60.0);
+    }
+    // A forward calendar step enters a fresh, empty slot. The preceding slot's
+    // assignments have already been emitted by finish(); keep all day totals,
+    // records and ordered line/station rows in place instead of reloading them.
+    pub(super) fn can_advance_slot(&self, now: f64) -> bool {
+        let start = 420.0 + (self.day - 1.0) * 1440.0;
+        let slot = ((now - start) / 15.0).floor();
+        slot >= 0.0 && slot < 96.0 && slot >= self.slot
+            && (slot == self.slot || self.flow_dirty == 0)
+    }
+    pub(super) fn advance_slot(&mut self, now: f64) {
+        let start = 420.0 + (self.day - 1.0) * 1440.0;
+        let slot = ((now - start) / 15.0).floor();
+        assert!(slot >= 0.0 && slot < 96.0, "day rollover requires host archive");
+        if slot != self.slot {
+            assert!(slot > self.slot, "calendar must advance monotonically");
+            assert_eq!(self.flow_dirty, 0, "flush the previous slot first");
+            self.slot = slot;
+            self.flow = [0.0; 3];
+        }
+    }
     pub(super) fn operating(&self, id: usize) -> f64 {
         self.lines.get(&id).map_or(f64::NAN, |row| row.values[8])
     }
@@ -562,6 +590,36 @@ pub extern "C" fn statistics_run() -> *const f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    fn sample() -> Statistics {
+        let mut input = vec![1.0, 0.05, 0.0];
+        input.extend([7.0; 7]);
+        input.extend([9.0; 6]);
+        input.extend([3.0; 3]);
+        input.extend([0.0; 4]); // hour, lines, feedback, stations
+        Statistics::read(&mut Read { v: &input, at: 0 }, 420.0)
+    }
+    #[test]
+    fn slot_rollover_preserves_totals_and_resets_only_flow() {
+        let mut s = sample();
+        s.advance_slot(434.999999);
+        assert_eq!(s.flow, [3.0; 3]);
+        s.advance_slot(435.0);
+        assert_eq!(s.slot, 1.0);
+        assert_eq!(s.flow, [0.0; 3]);
+        assert_eq!(s.network, [7.0; 7]);
+        assert_eq!(s.records, [9.0; 6]);
+        s.now = 435.0;
+        s.event(1, &[], 0.0, &[], 2.0, 0.0, None, None);
+        let out = s.finish();
+        assert!(out.chunks_exact(8).any(|r| r[..4] == [37.0, 1.0, 0.0, 2.0]));
+        s.advance_slot(450.0);
+        assert_eq!(s.flow, [0.0; 3]);
+    }
+    #[test]
+    #[should_panic(expected = "day rollover requires host archive")]
+    fn slot_rollover_keeps_day_archive_barrier() {
+        sample().advance_slot(1860.0);
+    }
     #[test]
     fn row_preserves_first_field_order_and_js_missing_values() {
         let mut r = Row::<9>::line();

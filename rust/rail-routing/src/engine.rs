@@ -2,9 +2,10 @@
 //! A reroute continuation commits finance only when the complete passenger step has finished.
 use crate::{int, queues::Read, CORE};
 pub(super) struct Settlement {
+    pub(super) carry: f64,
     token: f64,
-    economy: Vec<f64>,
-    loans: Vec<Vec<f64>>,
+    pub(super) economy: Vec<f64>,
+    pub(super) loans: Vec<Vec<f64>>,
     statistics: bool,
     weights: Vec<(usize, f64)>,
 }
@@ -24,6 +25,7 @@ pub(super) fn read(frame: &[f64], state: &mut Option<Settlement>) {
         let weights = (0..r.u()).map(|_| (r.u(), r.f())).collect();
         assert_eq!(r.at, frame.len());
         *state = Some(Settlement {
+            carry: frame[6],
             token: frame[1],
             economy,
             loans,
@@ -78,6 +80,7 @@ pub(super) fn settle(
     }
     let mut output = crate::operations::run(&input);
     state.economy.copy_from_slice(&output[8..17]);
+    state.carry = frame[6];
     let n = int(output[17]);
     let mut at = 18;
     state.loans.clear();
@@ -130,6 +133,9 @@ pub extern "C" fn engine_step() -> *const f64 {
         let financial = &input[2 + nq..];
         read(financial, settlement_state);
         let mut result = crate::queues::run(&input[2..2 + nq], simulation_state, queue_state, 3);
+        if input[2] == 3.0 {
+            result.extend_from_slice(&queue_state.as_ref().unwrap().view()[17..]);
+        }
         let qlen = result.len() - 3;
         let fin = if result[4] == 0.0 {
             settle(
@@ -241,7 +247,7 @@ pub(super) fn prepare(
 extern "C" {
     fn now() -> f64;
 }
-fn monotonic() -> f64 {
+pub(super) fn monotonic() -> f64 {
     #[cfg(target_arch = "wasm32")]
     unsafe {
         now()
@@ -251,7 +257,7 @@ fn monotonic() -> f64 {
         0.0
     }
 }
-fn day_operating(account: &[f64], previous: f64) -> f64 {
+pub(super) fn day_operating(account: &[f64], previous: f64) -> f64 {
     let at = 18 + int(account[17]) * 5;
     let p = at + 1 + int(account[at]);
     if account[p] > 0.0 {
@@ -322,7 +328,11 @@ pub extern "C" fn engine_continue() -> *const f64 {
             fin[7] = q.counter(6);
             fin[8] = q.counter(7);
             let mut packet = vec![
-                2.0,
+                if input.get(26) == Some(&1.0) {
+                    3.0
+                } else {
+                    2.0
+                },
                 input[0],
                 0.0,
                 0.0,
@@ -383,6 +393,9 @@ pub extern "C" fn engine_continue() -> *const f64 {
         }
         *output = vec![1.0, steps as f64, remaining, reason];
         output.extend(chunks);
+        if input.get(26) == Some(&1.0) {
+            output.extend(queue_state.as_ref().unwrap().view());
+        }
         output.as_ptr()
     })
 }

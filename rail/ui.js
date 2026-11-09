@@ -413,7 +413,7 @@
         speed,
         personalRecords,
         state: s,
-        runtime: O.snapshot(traffic),
+        runtime: await O.snapshotAsync(traffic),
         signature: M.signature(s)
       };
       saveStatus = '正在写入本地数据库…';
@@ -730,6 +730,7 @@
   async function commit(action, message) {
     if (calculating) return false;
     await M.whenIdle(traffic);
+    await O.materializeAsync(traffic);
     const paused = !playing,
       before = paused ? R.clone(s) : null,
       beforeTraffic = paused ? R.clone(O.snapshot(traffic)) : null,
@@ -938,6 +939,7 @@
         forecastDirty = true;
         return;
       }
+      await O.materializeAsync(traffic);
       O.rebase(traffic, s, next);
       delete next.preparedDefinitions;
       REVIEW.ready(s, traffic.minute);
@@ -2122,6 +2124,7 @@
           toast(r.error);
           break;
         }
+        await O.materializeAsync(traffic);
         O.reconcile(traffic, s);
         save();
         render();
@@ -2134,6 +2137,7 @@
           toast(r.error);
           break;
         }
+        await O.materializeAsync(traffic);
         O.reconcile(traffic, s);
         save();
         render();
@@ -3062,7 +3066,7 @@
       cache = forecast.diagnostics?.memory;
     const mb = value => value === null || value === undefined ? '未提供' : (value / 1024 / 1024).toFixed(1) +
       ' MB';
-    return `<details id="memory-details" class="console-details" ${$('memory-details')?.open?'open':''}><summary>内存与后台任务</summary><div class="detail-row"><span>寻路核心</span><b>Rust / WASM · 需求、列车、队列、统计与经营核</b></div><p class="station-note">堆内存为当前页面JS估计，Worker、图片与浏览器总内存需结合浏览器任务管理器；采样最多保留48条。</p><div class="detail-row"><span>模拟执行位置</span><b>${native.worker?'独立 Worker · Rust/WASM':'主线程 · Rust/WASM'}</b></div><div class="detail-row"><span>融合事务 / Rust 循环步数</span><b>${runtime.cycleCalls||0} / ${runtime.loopSteps||0}</b></div><div class="detail-row"><span>运动回传减少</span><b>${runtime.projectionFullValues?(100*(1-runtime.projectionSentValues/runtime.projectionFullValues)).toFixed(1)+'%':'—'}</b></div><div class="detail-row"><span>原生保留的到达明细</span><b>${(runtime.arrivalValuesOmitted||0)/2} 条</b></div><div class="detail-row"><span>模拟传入 / 传出累计</span><b>${mb(runtime.transport?.inputBytes)} / ${mb(runtime.transport?.outputBytes)}</b></div><div class="detail-row"><span>主线程 / 模拟 Worker WASM</span><b>${mb(native.mainMemoryBytes)} / ${mb(native.workerMemoryBytes)}</b></div><div class="detail-row"><span>运行分配内核调用</span><b>${runtime.simulationCalls||0} 次</b></div><div class="detail-row"><span>原生统计批次 / 单独调用</span><b>${runtime.statisticsBatches||0} / ${runtime.statisticsCalls||0}</b></div><div class="detail-row"><span>准备批次 / 覆盖缓存复用</span><b>${runtime.preparationCalls||0} / ${runtime.coverageCacheHits||0}</b></div><div class="detail-row"><span>运行结算步数</span><b>${runtime.engineSteps||0} 次 · ABI ${runtime.engineAbi||0}</b></div><div class="detail-row"><span>反馈与经营时钟调用</span><b>${runtime.operationsCalls||0} 次 · ABI ${runtime.operationsAbi||0}</b></div><div class="detail-row"><span>独立时序 / 原生到达批次</span><b>${runtime.temporalCalls||0} / ${runtime.timedArrivalCalls||0} · ABI ${runtime.temporalAbi||0}</b></div><div class="detail-row"><span>运行线程WASM / 峰值</span><b>${mb(runtime.memoryBytes)} / ${mb(runtime.peakMemoryBytes)}</b></div><div class="detail-row"><span>运行线程回收阈值</span><b>${mb(runtime.recycleLimitBytes)}</b></div><div class="detail-row"><span>页面JS堆 / 采样峰值</span><b>${mb(latest?.heap)} / ${mb(latest?.peak)}</b></div><div class="detail-row"><span>预测路径 / 实际使用出行组合</span><b>${forecast.flows.length} / ${traffic.defs.length}</b></div><div class="detail-row"><span>保存编码 / 待保存</span><b>${queue.active?1:0} / ${queue.pending?1:0}</b></div><div class="detail-row"><span>已合并保存请求</span><b>${queue.coalesced}</b></div>${cache?`<div class="detail-row"><span>整段预测调用</span><b>${cache.wasm?.forecastCalls||0} 次</b></div><div class="detail-row"><span>需求线程WASM线性内存</span><b>${mb(cache.wasm?.memoryBytes)}</b></div><div class="detail-row"><span>寻路树组缓存峰值 / 预算</span><b>${cache.routeTrees.peak} / ${cache.routeTrees.limit}</b></div><div class="detail-row"><span>路线策略缓存峰值 / 预算</span><b>${cache.strategies.peak} / ${cache.strategies.limit}</b></div>`:''}</details>`;
+    return `<details id="memory-details" class="console-details" ${$('memory-details')?.open?'open':''}><summary>内存与后台任务</summary><div class="detail-row"><span>寻路核心</span><b>Rust / WASM · 需求、列车、队列、统计与经营核</b></div><p class="station-note">堆内存为当前页面JS估计，Worker、图片与浏览器总内存需结合浏览器任务管理器；采样最多保留48条。</p><div class="detail-row"><span>运行状态</span><b>${traffic.nativeView?'Rust 持有明细 · 前端摘要':'兼容视图'}</b></div><div class="detail-row"><span>模拟执行位置</span><b>${native.worker?'独立 Worker · Rust/WASM':'主线程 · Rust/WASM'}</b></div><div class="detail-row"><span>融合事务 / Rust 循环步数</span><b>${runtime.cycleCalls||0} / ${runtime.loopSteps||0}</b></div><div class="detail-row"><span>运动回传减少</span><b>${runtime.projectionFullValues?(100*(1-runtime.projectionSentValues/runtime.projectionFullValues)).toFixed(1)+'%':'—'}</b></div><div class="detail-row"><span>原生保留的到达明细</span><b>${(runtime.arrivalValuesOmitted||0)/2} 条</b></div><div class="detail-row"><span>模拟传入 / 传出累计</span><b>${mb(runtime.transport?.inputBytes)} / ${mb(runtime.transport?.outputBytes)}</b></div><div class="detail-row"><span>主线程 / 模拟 Worker WASM</span><b>${mb(native.mainMemoryBytes)} / ${mb(native.workerMemoryBytes)}</b></div><div class="detail-row"><span>运行分配内核调用</span><b>${runtime.simulationCalls||0} 次</b></div><div class="detail-row"><span>原生统计批次 / 单独调用</span><b>${runtime.statisticsBatches||0} / ${runtime.statisticsCalls||0}</b></div><div class="detail-row"><span>准备批次 / 覆盖缓存复用</span><b>${runtime.preparationCalls||0} / ${runtime.coverageCacheHits||0}</b></div><div class="detail-row"><span>运行结算步数</span><b>${runtime.engineSteps||0} 次 · ABI ${runtime.engineAbi||0}</b></div><div class="detail-row"><span>反馈与经营时钟调用</span><b>${runtime.operationsCalls||0} 次 · ABI ${runtime.operationsAbi||0}</b></div><div class="detail-row"><span>独立时序 / 原生到达批次</span><b>${runtime.temporalCalls||0} / ${runtime.timedArrivalCalls||0} · ABI ${runtime.temporalAbi||0}</b></div><div class="detail-row"><span>运行线程WASM / 峰值</span><b>${mb(runtime.memoryBytes)} / ${mb(runtime.peakMemoryBytes)}</b></div><div class="detail-row"><span>运行线程状态保护</span><b>${runtime.runtimePinned?'活跃状态保留':mb(runtime.recycleLimitBytes)}</b></div><div class="detail-row"><span>页面JS堆 / 采样峰值</span><b>${mb(latest?.heap)} / ${mb(latest?.peak)}</b></div><div class="detail-row"><span>预测路径 / 实际使用出行组合</span><b>${forecast.flows.length} / ${traffic.defs.length}</b></div><div class="detail-row"><span>保存编码 / 待保存</span><b>${queue.active?1:0} / ${queue.pending?1:0}</b></div><div class="detail-row"><span>已合并保存请求</span><b>${queue.coalesced}</b></div>${cache?`<div class="detail-row"><span>整段预测调用</span><b>${cache.wasm?.forecastCalls||0} 次</b></div><div class="detail-row"><span>需求线程WASM线性内存</span><b>${mb(cache.wasm?.memoryBytes)}</b></div><div class="detail-row"><span>寻路树组缓存峰值 / 预算</span><b>${cache.routeTrees.peak} / ${cache.routeTrees.limit}</b></div><div class="detail-row"><span>路线策略缓存峰值 / 预算</span><b>${cache.strategies.peak} / ${cache.strategies.limit}</b></div>`:''}</details>`;
   }
 
   function diagnosticContent() {
@@ -3200,6 +3204,21 @@
     }).join('');
   }
 
+  let detailQuery=null;
+  function requestDetail() {
+    const view=inspection;
+    if(!traffic.nativeView||!view||!['station','train'].includes(view.type))return null;
+    const key=view.type+':'+view.id;
+    if(!detailQuery||detailQuery.key!==key||detailQuery.runtime!==traffic)detailQuery={key,runtime:traffic,pending:false,data:null,updated:-Infinity};
+    const cache=detailQuery;
+    if(!cache.pending&&performance.now()-cache.updated>=250) {
+      cache.pending=true;const rt=traffic;
+      O.detailsAsync(rt,view.type,view.id).then(data=>{
+        if(traffic===rt&&detailQuery===cache){cache.data=data;cache.updated=performance.now();cache.pending=false;renderActivity();}
+      }).catch(error=>{if(traffic===rt&&detailQuery===cache){cache.pending=false;cache.updated=performance.now();toast(error.message);}});
+    }
+    return cache.data;
+  }
   function inspect(type, id) {
     utilityPanel = null;
     hoverPoint = null;
@@ -3239,7 +3258,7 @@
   async function downloadLocalSave() {
     await M.whenIdle(traffic);
     syncRecords();
-    const data = LS.pack(s, O.snapshot(traffic), {
+    const data = LS.pack(s, await O.snapshotAsync(traffic), {
         playing,
         speed,
         personalRecords
@@ -3433,6 +3452,7 @@
     if (!inspection || choosingLocalFile || (inspection.type === 'records' && document.activeElement
         ?.matches('#activity-panel select') || document.activeElement?.id === 'station-name' || inspection
         .type === 'depot' && document.activeElement?.matches('input,select'))) return;
+    const nativeDetail=requestDetail();
     let title = '',
       body = '';
     if (inspection.type === 'reviews') {
@@ -3484,7 +3504,7 @@
       } else {
         const l = trainLine(t),
           dest = {};
-        for (const [token, n] of Object.entries(t.passengers)) {
+        for (const [token, n] of Object.entries(nativeDetail||t.passengers)) {
           const j = traffic.defs[+token.split(':')[0]];
           if (j) dest[j.to] = (dest[j.to] || 0) + n;
         }
@@ -3495,7 +3515,7 @@
     } else {
       const n = inspection.type === 'station' ? s.nodes[inspection.id] : inspection.id,
         local = C.local(n, .8, region, s),
-        st = inspection.type === 'station' ? O.station(traffic, n.id) : null,
+        st = inspection.type === 'station' ? (nativeDetail||O.station(traffic, n.id)) : null,
         assigned = forecast.catchment.stations[n.id];
       title = st ? n.name : '密度与开发详情';
       body =
@@ -3629,6 +3649,7 @@
   }
 
   function queueTotals() {
+    if(traffic.nativeView)return traffic.nativeView.stations;
     const counts = {};
     for (const [key, q] of Object.entries(traffic.queues)) {
       const id = +key.split('|')[2];

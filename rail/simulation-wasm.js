@@ -8,6 +8,17 @@
   const B = node ? require('./operations') : root.RailOperations;
   const F = node ? require('./fleet') : root.RailFleet;
   const catalogs = new WeakMap();
+  // Owned runtime catalogs use explicit revisions. Compatibility callers keep scans;
+  // avoid per-profile accessors/proxies, which cost more heap than their saved work.
+  function trackCatalog(catalog) {prepare(catalog).managed=true;}
+  function setDaily(catalog,index,value) {
+    if(!Number.isInteger(index)||index<0||index>=catalog.length||!Number.isFinite(value)||value<0)
+      throw Error('Invalid demand update');
+    if(Object.is(catalog[index].daily,value))return;
+    catalog[index].daily=value;
+    const c=prepare(catalog);c.revision=(c.revision||0)+1;
+    if(c.timed){c.timed.dirty.add(index);c.timed.revision=c.revision;}
+  }
 
   function call(values) {
     return Core.kernel('simulation_run', values);
@@ -18,8 +29,8 @@
     return map.get(id);
   }
 
-  function dispatchFrame(rt, s, index) {
-    if (!s.services.some(l => X.directions(l).some(dir => {
+  function dispatchFrame(rt, s, index, force = false) {
+    if (!force && !s.services.some(l => X.directions(l).some(dir => {
         const d = rt.departures[l.id + '|' + dir];
         return d && !(rt.minute + 1e-8 < d.next);
       }))) return null;
@@ -37,7 +48,7 @@
         const service = intern(services, l.id),
           parent = intern(parents, l.parentLine || l.id);
         // Defer expensive geometric metadata for departures the native scheduler will skip.
-        const due = d && !(rt.minute + 1e-8 < d.next),
+        const due = d && (force || !(rt.minute + 1e-8 < d.next)),
           h = due ? R.effectiveHeadway(s, l) : 0;
         records.push(service, parent, dir, d ? 1 : 0, d?.next || 0, due ? (d.headway || h) : 0, l
           .open ?? 0, l.close ?? 1440, l.fleet,
@@ -51,7 +62,7 @@
           d
         });
       }
-    if (!context.some(({
+    if (!force && !context.some(({
         d
       }) => d && !(rt.minute + 1e-8 < d.next))) return null;
     const input = new Float64Array(6 + trains.length + records.length);
@@ -205,7 +216,7 @@
 
   const deltaStates = new WeakMap();
 
-  function incremental(rt, s, index, track, identity, spawn = []) {
+  function incremental(rt, s, index, track, identity, spawn = [], templatesOnly = false) {
     let c = deltaStates.get(rt),
       reset = !c || c.plan !== s || Core.simulationToken() !== c.token;
     if (reset) {
@@ -221,12 +232,12 @@
       deltaStates.set(rt, c);
     }
     const templates = spawn.map(({l,dir,d}) => {
-      if(!d||rt.minute+1e-8<d.next)return {l,dir,skip:true};
+      if(!d||(!templatesOnly&&rt.minute+1e-8<d.next))return {l,dir,skip:true};
       const loop=l.stops[0]===l.stops.at(-1),dwell=loop?X.loopDwell(s,l):B.DWELL;
       const row=new Array(20).fill(0);
       row[0]=1;row[2]=dir===1?0:l.stops.length-1;row[3]=dir;row[4]=l.stops.length-1;
       row[9]=+loop;row[11]=+B.isOpen(l,rt.minute);row[12]=l.fleet/X.directions(l).length;
-      row[14]=dwell;row[18]=l.cars||6;row[19]=-1;
+      row[14]=dwell;row[15]=NaN;row[16]=NaN;row[18]=l.cars||6;row[19]=-1;
       const data=[intern(c.groups,l.id+'|'+dir),...row,l.trackIds.length];
       for(let i=0;i<l.trackIds.length;i++) {
         const tr=index.track.get(l.trackIds[i]);
@@ -238,6 +249,7 @@
       data.push(l.stops.length,...l.stops.map(id=>+called.has(id)));
       return {l,dir,dwell,loop,data};
     });
+    if(templatesOnly)return {templates,blocks:c.blocks.size};
     const changed = c.context.length !== rt.trains.length || rt.trains.some((t, i) => c.context[i]
       .t !== t);
     const parameters = c.minute !== Math.floor(rt.minute),
@@ -309,6 +321,8 @@
       a[11] = run?.open || 0;
       a[12] = run?.perDir || 0;
       a[14] = run?.dwell || 0;
+      a[15] = t.laps??NaN;
+      a[16] = t.segment ? t.trackIds.indexOf(t.segment.track)+(t.dir===-1?1:0) : NaN;
       updates.push([identity(t), intern(c.groups, t.service + '|' + t.dir)]);
       chunks.push(a);
       length += a.length + 2;
@@ -392,6 +406,7 @@
     }
     c = {
       length: catalog.length,
+      custom:catalog.some(j=>!!Object.getOwnPropertyDescriptor(j,'daily')?.get),
       factors,
       profiles,
       fi,
@@ -453,20 +468,28 @@
         names,
         meta: new Float64Array(meta),
         daily: new Float64Array(catalog.length),
-        input: new Float64Array(13 + names.length * 4)
+        input: new Float64Array(13 + names.length * 4),
+        dirty:new Set(), untracked:[], revision:c.revision||0, reads:0, sent:0
       };
+      for(let i=0;i<catalog.length;i++) {
+        const d=Object.getOwnPropertyDescriptor(catalog[i],'daily');
+        if(d?.get)c.timed.untracked.push(i);
+      }
     }
     const t = c.timed,
       load = Core.samplingToken() !== t.token,
       q = s.ridership;
     const changes = [];
-    for (let i = 0; i < catalog.length; i++) {
+    const indices=load||!c.managed?catalog.keys():new Set([...t.dirty,...t.untracked]);
+    for (const i of indices) {
       const daily = catalog[i].daily;
+      t.reads++;
       if (load || !Object.is(t.daily[i], daily)) {
         if (!load) changes.push(i, daily);
         t.daily[i] = daily;
       }
     }
+    t.dirty.clear(); t.sent+=load?catalog.length:changes.length/2;
     const input = new Float64Array(t.input.length + (load ? catalog.length + t.meta.length +
       catalog.length * 2 : 1 + changes.length));
     input.set([9, t.token, +load, catalog.length, c.factors.length, c.profiles.length, remainder,
@@ -507,6 +530,8 @@
     };
   }
   const api = {
+    trackCatalog,setDaily,
+    canCalendar:catalog=>!prepare(catalog).custom,
     timedArrivals,
     timedFrame,
     projectArrivals,
@@ -517,6 +542,11 @@
     motion,
     boarding,
     arrivals,
+    blockNames:rt=>Array.from(deltaStates.get(rt)?.blocks.keys()||[]),
+    demandStatus:catalog=>{
+      const t=catalogs.get(catalog)?.timed;
+      return t?{managed:!!catalogs.get(catalog)?.managed,revision:t.revision,reads:t.reads,sent:t.sent,untracked:t.untracked.length,pending:t.dirty.size}:null;
+    },
     status: Core.status
   };
   if (node) module.exports = api;

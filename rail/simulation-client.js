@@ -11,7 +11,8 @@
     function start(){
       if(worker)return;
       if(node){const {Worker}=require('node:worker_threads');worker=new Worker(require('node:path').join(__dirname,'simulation-worker.js'));}
-      else worker=new Worker(new URL('simulation-worker.js?v=52',root.location.href));
+      else worker=new Worker(new URL('simulation-worker.js?v=54',root.location.href));
+      if(options.retainRuntime)Core.recycleSimulation();
       const receive=data=>{
         if(!active||data.id!==active.id)return;
         const p=active;active=null;clearTimeout(p.timer);tokens=data.tokens;
@@ -24,8 +25,19 @@
     }
     function execute(request){
       if(closed)return Promise.reject(Error('模拟线程已关闭'));
-      if(!local) {try{start();}catch(error){local=true;}}
+      if(!local) {try{start();}catch(error){
+        worker?.terminate();worker=null;
+        local=true;options.retainRuntime=false;options.onLocal?.();
+        // First transaction still contains a complete recovery frame. Select full view
+        // projection when Worker isolation is unavailable, before native state commits.
+        if(request.name==='engine_cycle'&&request.input[0]===2&&request.input[25]) {
+          const v=request.input;v[25]=0;let at=30+v[9]+v[7]*3;
+          for(let i=0;i<v[8];i++)at+=5+v[at+4];
+          at+=v[12]+v[13]+v[10]+v[11];v[at]=2;
+        }
+      }}
       if(local) {
+        Core.pinRuntime(!!options.retainRuntime);
         const result=Core.kernel(request.name,request.input,null,null,request.bytes);
         tokens={simulation:Core.simulationToken(),queue:Core.queueToken(),engine:Core.engineToken(),sampling:Core.samplingToken(),cycle:Core.cycleToken()};
         return Promise.resolve(result);
@@ -36,7 +48,7 @@
         transport.requests++;transport.inputBytes+=inputBytes;transport.maxInputBytes=Math.max(transport.maxInputBytes,inputBytes);
         const transfer=[request.input.buffer];
         if(request.bytes)transfer.push(request.bytes.buffer);
-        worker.postMessage({id,name:request.name,input:request.input,bytes:request.bytes},transfer);
+        worker.postMessage({id,name:request.name,input:request.input,bytes:request.bytes,retainRuntime:!!options.retainRuntime},transfer);
       });
     }
     return {

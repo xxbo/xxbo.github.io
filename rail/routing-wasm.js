@@ -32,6 +32,7 @@
     recycles = 0;
   let transactionDepth=0;
   let remoteTokens=null,workerStatus=null;
+  let runtimePinned=false;
   let loopCalls=0,loopSteps=0,cycleCalls=0;
   let kernelNow=()=>performance.now();
   let recycleBytes = 64 * 1024 * 1024;
@@ -41,7 +42,7 @@
     peakMemoryBytes = 0;
   const recycleLimit = () => recycleBytes === 0 ? 0 : Math.max(recycleBytes,
     simulationRecycleBytes);
-  const asset = node ? null : new URL('wasm/rail-core-v12.wasm?v=52',
+  const asset = node ? null : new URL('wasm/rail-core-v14.wasm?v=54',
     root.document?.currentScript?.src || root.location.href).href;
 
   function install(module) {
@@ -55,7 +56,7 @@
     });
     if (next.exports.routing_abi() !== ABI || next.exports.demand_abi?.() !== 1 || next.exports
       .world_abi?.() !== 1 || next.exports.simulation_abi?.() !== 1 || next.exports.queue_abi?.
-      () !== 1 || next.exports.statistics_abi?.() !== 1 || next.exports.operations_abi?.() !== 1 || next.exports.engine_abi?.() !== 1 || next.exports.engine_prepare_abi?.() !== 1 || next.exports.cycle_abi?.() !== 1 || next.exports.engine_continue_abi?.() !== 1 || next.exports.projection_abi?.() !== 1)
+      () !== 1 || next.exports.statistics_abi?.() !== 1 || next.exports.operations_abi?.() !== 1 || next.exports.engine_abi?.() !== 1 || next.exports.engine_prepare_abi?.() !== 1 || next.exports.cycle_abi?.() !== 1 || next.exports.engine_continue_abi?.() !== 1 || next.exports.projection_abi?.() !== 1 || next.exports.calendar_abi?.() !== 1 || next.exports.runtime_query_abi?.() !== 1)
       throw Error('寻路WASM接口版本不匹配');
     compiled = module;
     instance = next;
@@ -201,7 +202,7 @@
         }
       });
       calls++;
-      if (!transactionDepth && wasm.memory.buffer.byteLength > recycleLimit()) {
+      if (!runtimePinned && !transactionDepth && wasm.memory.buffer.byteLength > recycleLimit()) {
         install(compiled);
         recycles++;
       }
@@ -275,7 +276,7 @@
   function kernel(name, values, read = null, context = null, bytes = null) {
     if (!['demand_ipf', 'demand_distribution', 'demand_mode', 'demand_strategy',
         'demand_capacity', 'world_run', 'world_policy', 'simulation_run', 'simulation_step',
-        'statistics_run', 'operations_run', 'temporal_run', 'engine_step', 'engine_prepare', 'engine_cycle', 'engine_continue'
+        'statistics_run', 'operations_run', 'temporal_run', 'engine_step', 'engine_prepare', 'engine_cycle', 'engine_continue', 'engine_loop', 'runtime_query'
       ].includes(name)) throw Error('未知需求核心操作');
     try {
       const wasm = exports();
@@ -286,7 +287,7 @@
       // Short object projections consume synchronously; persistent matrices own a copy.
       const data = read ? read(view, context) : view.slice();
       wasm.output_clear();
-      if(name==='engine_continue') {loopCalls++;loopSteps+=data[1];engineSteps+=data[1];queueSteps+=data[1];statisticsBatches+=data[1];simulationCalls++;
+      if(name==='engine_continue'||name==='engine_loop') {if(name==='engine_loop'&&values[7])activeSamplingToken=values[8+values[6]+4];loopCalls++;loopSteps+=data[1];engineSteps+=data[1];queueSteps+=data[1];statisticsBatches+=data[1];simulationCalls++;
       } else if(name==='engine_cycle') {
         cycleCalls++;
         activeCycleToken=values[1];
@@ -332,7 +333,7 @@
           Math.min(192 * 1024 * 1024, Math.ceil(wasm.memory.buffer.byteLength * 1.5 / 65536) *
             65536));
       }
-      if (!transactionDepth && wasm.memory.buffer.byteLength > recycleLimit()) {
+      if (!runtimePinned && !transactionDepth && wasm.memory.buffer.byteLength > recycleLimit()) {
         install(compiled);
         recycles++;
       }
@@ -370,7 +371,7 @@
         graph
       });
       wasm.output_clear();
-      if (!transactionDepth && wasm.memory.buffer.byteLength > recycleLimit()) {
+      if (!runtimePinned && !transactionDepth && wasm.memory.buffer.byteLength > recycleLimit()) {
         install(compiled);
         recycles++;
       }
@@ -389,7 +390,7 @@
       const wasm = exports();
       const result = wasm.demand_mode_scalar(...values);
       demandCalls++;
-      if (!transactionDepth && wasm.memory.buffer.byteLength > recycleLimit()) {
+      if (!runtimePinned && !transactionDepth && wasm.memory.buffer.byteLength > recycleLimit()) {
         install(compiled);
         recycles++;
       }
@@ -403,6 +404,7 @@
   }
   const api = {
     init,
+    pinRuntime:value=>{runtimePinned=!!value;},
     reportWorkerStatus:value=>{workerStatus=value;},
     withTokens:(tokens,fn)=>{const old=remoteTokens;remoteTokens=tokens;try{return fn();}finally{remoteTokens=old;}},
     withClock:(now,fn)=>{const old=kernelNow;kernelNow=now||old;try{return fn();}finally{kernelNow=old;}},
@@ -410,7 +412,7 @@
       transactionDepth++;
       try{return fn();}finally {
         transactionDepth--;
-        if(!transactionDepth&&instance.exports.memory.buffer.byteLength>recycleLimit()) {
+        if(!runtimePinned&&!transactionDepth&&instance.exports.memory.buffer.byteLength>recycleLimit()) {
           install(compiled);recycles++;
         }
       }
@@ -438,7 +440,7 @@
       projectionAbi:1,projectionFullValues:instance?.exports.projection_full_values?.()||0,
       projectionSentValues:instance?.exports.projection_sent_values?.()||0,
       arrivalValuesOmitted:instance?.exports.projection_omitted_samples?.()||0,
-      cycleAbi:1,loopAbi:1,loopCalls,loopSteps,cycleCalls,worker:workerStatus,
+      runtimePinned,calendarAbi:1,queryAbi:1,cycleAbi:1,loopAbi:1,loopCalls,loopSteps,cycleCalls,worker:workerStatus,
       demandAbi: 1,
       demandCalls,
       forecastCalls,
@@ -483,7 +485,7 @@
     const fs = require('node:fs'),
       path = require('node:path');
     install(new WebAssembly.Module(fs.readFileSync(path.join(__dirname,
-      'wasm/rail-core-v12.wasm'))));
+      'wasm/rail-core-v14.wasm'))));
     module.exports = api;
   } else {
     root.RailRouting = api;

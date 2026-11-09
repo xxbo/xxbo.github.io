@@ -60,7 +60,7 @@ pub(super) fn profile(purpose: usize, back: bool, minute: f64, external: usize) 
     };
     w / norm / 60.0
 }
-fn allocations(total: f64, weights: &[f64]) -> Vec<f64> {
+pub(super) fn allocations(total: f64, weights: &[f64]) -> Vec<f64> {
     let sum = weights.iter().fold(0.0, |a, b| a + b);
     if total == 0.0 || sum == 0.0 {
         return vec![0.0; weights.len()];

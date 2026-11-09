@@ -12,17 +12,17 @@
       queues = {},
       lineWait = {},
       plan = rt.plan || X.expand(s);
-    for (const [key, q] of Object.entries(rt.queues || {})) {
+    for (const [key, q] of Object.entries(rt.nativeView?.queues || rt.queues || {})) {
       const [run, , station] = key.split('|'), n = Object.values(q).reduce((a, b) => a + b, 0), line = plan
         .services.find(l => l.id === run)?.parentLine || run;
       queues[station] = (queues[station] || 0) + n;
       lineWait[line] = (lineWait[line] || 0) + n;
     }
-    for (const t of rt.transfers || []) queues[t.station] = (queues[t.station] || 0) + t.amount;
+    for (const t of rt.nativeView?.transfers || rt.transfers || []) queues[t.station] = (queues[t.station] || 0) + t.amount;
     for (const id of served) {
       const cap = Q.limits(s, id).capacity,
         inside = queues[id] || 0,
-        outside = Object.values(rt.outside?.[id] || {}).reduce((a, b) => a + b, 0),
+        outside = Object.values((rt.nativeView?.outside || rt.outside)?.[id] || {}).reduce((a, b) => a + b, 0),
         ratio = inside / cap;
       if (ratio >= .85 || outside > 0) items.push({
         key: 'station:' + id,

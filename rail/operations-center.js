@@ -157,10 +157,10 @@
         maxLoad = Math.max(0, ...trains.map(t => t.onboard / Math.max(1, t.capacity))),
         meanLoad = trains.length ? trains.reduce((v, t) => v + t.onboard / t.capacity, 0) / trains
         .length : null,
-        waiting = Object.entries(rt.queues || {}).reduce((v, [k, q]) => v + ((byRun.get(k.split('|')[0])
+        waiting = Object.entries(rt.nativeView?.queues || rt.queues || {}).reduce((v, [k, q]) => v + ((byRun.get(k.split('|')[0])
             ?.parentLine || k.split('|')[0]) === l.id ? Object.values(q).reduce((a, b) => a + b, 0) :
           0), 0),
-        outside = [...new Set(l.stops)].reduce((v, id) => v + Object.values(rt.outside?.[id] || {})
+        outside = [...new Set(l.stops)].reduce((v, id) => v + Object.values((rt.nativeView?.outside || rt.outside)?.[id] || {})
           .reduce((a, b) => a + b, 0), 0),
         m = minute % 1440,
         open = m >= l.open && m < l.close,

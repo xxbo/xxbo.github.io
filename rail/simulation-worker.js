@@ -9,7 +9,7 @@
     send=(data,transfer)=>parentPort.postMessage(data,transfer);
     listen=fn=>parentPort.on('message',fn);
   }else{
-    importScripts('routing-wasm.js?v=52');Core=self.RailRouting;
+    importScripts('routing-wasm.js?v=54');Core=self.RailRouting;
     send=(data,transfer)=>self.postMessage(data,transfer);
     listen=fn=>{self.onmessage=e=>fn(e.data);};
   }
@@ -18,8 +18,9 @@
   listen(async request=>{
     try{
       await Core.init();
-      if(!['engine_cycle','engine_continue','engine_step','simulation_step'].includes(request.name))
+      if(!['engine_cycle','engine_continue','engine_loop','engine_step','simulation_step','runtime_query'].includes(request.name))
         throw Error('Unknown simulation worker operation');
+      Core.pinRuntime(!!request.retainRuntime);
       const result=Core.kernel(request.name,request.input,null,null,request.bytes);
       send({id:request.id,result,tokens:tokens(),status:Core.status()},[result.buffer]);
     }catch(error){send({id:request.id,error:error.message,tokens:tokens()});}
