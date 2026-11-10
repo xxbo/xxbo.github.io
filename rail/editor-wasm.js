@@ -20,6 +20,8 @@
       const seed = R.newGame();
       configuration = {
         specs: F.SPECS,
+        balance: (node ? require('./game-balance') : root.RailBalance),
+        facilityTypes: (node ? require('./urban-growth') : root.RailUrban)?.TYPES || {},
         seedNodes: seed.nodes,
         identities: Object.fromEntries(seed.companies.map(c => [c.id, {
           name: c.name,
@@ -83,8 +85,9 @@
     return out;
   }
 
+  function ensure() { if (!Core.editorReady()) Core.kernel('editor_config', Wire.encode(config())); }
   function run(s, op, args, query = false) {
-    if (!Core.editorReady()) Core.kernel('editor_config', Wire.encode(config()));
+    ensure();
     const out = Wire.decode(Core.kernel('editor_run', Wire.encode({
       state: projection(s, op, query, args),
       op,
@@ -235,6 +238,7 @@
     return data[field];
   }
   const api = {
+    ensure,
     snapshot,
     query,
     command,

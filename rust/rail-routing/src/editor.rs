@@ -461,7 +461,7 @@ pub(super) fn station_insertion(s: &V, l: &V, p: &V, options: &V) -> Res<V> {
         ("shapes", arr(shapes)),
     ]))
 }
-fn fleet_upgrade(s: &mut V, cfg: &V) {
+pub(super) fn fleet_upgrade(s: &mut V, cfg: &V) {
     if s.num("routeModel") != 9.0 {
         return;
     }
@@ -540,10 +540,10 @@ fn fleet_upgrade(s: &mut V, cfg: &V) {
         }
     }
 }
-fn count(v: &V) -> bool {
+pub(super) fn count(v: &V) -> bool {
     integer(v) && v.n() >= 0.0 && v.n() <= 80.0 && v.n() % 2.0 == 0.0
 }
-fn valid_fleet_line(l: &V, cfg: &V) -> bool {
+pub(super) fn valid_fleet_line(l: &V, cfg: &V) -> bool {
     if !l.get("fleetManaged").truth() {
         return true;
     }
@@ -581,14 +581,18 @@ fn valid_fleet_line(l: &V, cfg: &V) -> bool {
         .iter()
         .all(|x| *x == 0.0 || *x >= minimum)
 }
-fn reserved(s: &V, spec: &V, except: &V) -> f64 {
+pub(super) fn reserved(s: &V, spec: &V, except: &V) -> f64 {
     s.get("services")
         .array()
         .iter()
-        .filter(|l| !eq(l.get("id"), except) && eq(l.get("stockSpec"), spec))
+        .filter(|l| {
+            l.get("fleetManaged").truth()
+                && !eq(l.get("id"), except)
+                && eq(l.get("stockSpec"), spec)
+        })
         .fold(0.0, |a, l| a + num(l.get("fleet")))
 }
-fn valid_fleet(s: &V, cfg: &V) -> bool {
+pub(super) fn valid_fleet(s: &V, cfg: &V) -> bool {
     let depot = s.get("depot");
     if !depot.truth() {
         return s
@@ -627,28 +631,7 @@ fn configure(s: &mut V, id: &V, values: &V, cfg: &V) -> Res<()> {
         }
         let d = values.get("dispatch");
         if d.truth() {
-            if !["manual", "auto"].contains(&d.get("mode").text())
-                || !["manual", "offPeak", "peak"]
-                    .iter()
-                    .all(|k| count(d.get(k)))
-            {
-                return Err(error("投放数量须为 0—80 的偶数列，双向运营各半分配。"));
-            }
-            if d.num("peak") < d.num("offPeak") {
-                return Err(error("高峰投放不能少于平峰。"));
-            }
-            l.set("dispatch", d.clone());
-            l.set(
-                "fleet",
-                if d.get("mode").text() == "auto" {
-                    n(max(d.num("peak"), d.num("offPeak")))
-                } else {
-                    d.get("manual").clone()
-                },
-            );
-            if !valid_fleet_line(&l, cfg) {
-                return Err(error("每个交路至少需要双向各 1 列，请增加投放或减少交路。"));
-            }
+            crate::assets::configure(&mut l, d, cfg)?;
             if s.get("depot").get("stock").zero(l.get("stockSpec").text())
                 - reserved(s, l.get("stockSpec"), l.get("id"))
                 < l.num("fleet")
@@ -962,7 +945,7 @@ fn validate_world_inner(s: &V, cfg: &V) -> Res<bool> {
     }
     Ok(true)
 }
-fn validate(s: &V, cfg: &V) -> bool {
+pub(super) fn validate(s: &V, cfg: &V) -> bool {
     validate_world(s, cfg)
         && valid_fleet(s, cfg)
         && s.get("services").array().iter().all(|l| {
@@ -1273,7 +1256,7 @@ fn remove_preset(s: &mut V, seed: &V) -> Res<()> {
     }
     Ok(())
 }
-fn command(s: &mut V, op: &str, args: &V, cfg: &V) -> Res<V> {
+pub(super) fn command(s: &mut V, op: &str, args: &V, cfg: &V) -> Res<V> {
     let id = args.get("id");
     match op {
         "restore" => Ok(obj(&[])),
@@ -1558,4 +1541,8 @@ pub extern "C" fn editor_run() -> *const f64 {
         c.output = value::write(&out);
         c.output.as_ptr()
     })
+}
+
+pub(super) fn with_config<T>(f: impl FnOnce(&V) -> T) -> T {
+    CONFIG.with(|cfg| f(cfg.borrow().as_ref().expect("editor config")))
 }

@@ -13,7 +13,9 @@ pub extern "C" fn transaction_run() -> *const f64 {
         let op = r.u();
         let input = value::read(&mut r);
         assert_eq!(r.at, c.input.len());
-        let output = if op == 30 {
+        let output = if op == 40 {
+            crate::editor::with_config(|cfg| crate::assets::run(&input, cfg))
+        } else if op == 30 {
             crate::connections::run(&input)
         } else if op < 20 {
             crate::urban::run(op, &input)
