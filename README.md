@@ -20,21 +20,14 @@ Successful sources replace their own snapshot. Failed sources preserve prior dat
 
 ## Deployment
 
-Pages source remains **GitHub Actions**. Validation and publication use three workflows:
+This repository now contains the news/dashboard only. The game lives at [xxbo/rail-city](https://github.com/xxbo/rail-city), with its own Rust validation, regression tests and Pages deployment.
 
-| Workflow | Trigger and responsibility |
-| --- | --- |
-| `Update rail game` (`rail-game.yml`) | Game/Rust/game-test changes or manual run on main; pinned Rust build/byte check, game regression and shared publication checks. No news collection. |
-| `Refresh dashboard` (`refresh-dashboard.yml`) | Dashboard/collector changes, existing schedule or manual run on main; dashboard JS/Python tests, data collection, snapshot commit and `dashboard-public` artifact. No Rust/game tests. |
-| `Publish validated site` (`publish-site.yml`) | Successful completion of either lane, or manual publication; serializes Pages, resolves **both** latest successful components, and assembles a complete site. |
+- `Refresh dashboard` keeps the existing collection schedule, dashboard JS/Python checks and 90-day `dashboard-public` artifact. It performs no Rust/game build.
+- `Publish validated site` listens only for successful dashboard runs, selects the latest trusted main artifact and deploys that exact validated news snapshot. No game checkout, cross-repository token or joint version selection is involved.
+- Version 2 artifact provenance is required; missing/expired/older-format artifacts fail publication while the current site remains live. Run `Refresh dashboard` to produce a current artifact. The snapshot is staged before the data bot rebases its commit.
+- `rail/index.html` is only a same-origin compatibility redirect to `/rail-city/`, retaining the query and hash. Game code, WASM, Rust sources and game tests have moved out. The new project path shares the original origin, IndexedDB database and local keys.
 
-The publisher takes `rail/` from the latest successful game run's immutable source SHA, and dashboard files/data from the latest successful news artifact (90-day retention). It resolves versions after acquiring the common deployment lock, so reordered/coalesced completion events converge to the latest validated pair. A failed game build does not prevent a validated news update using the previous good game, and a game update does not run the collector or replace news with an old checkout. `deployment.json` records both source SHAs and run IDs.
-
-On the initial transition only, missing pre-split components bootstrap from the already deployed MAP51 snapshot `b2b8fa682adc8da3d0dd958a343c08b31443a329`. Missing/expired artifacts from the new dashboard workflow fail publication and preserve the live site; run `Refresh dashboard` to recreate them. Artifact provenance is checked before copying files. The snapshot artifact is staged **before** rebasing the bot's data commit, keeping its tested UI and source SHA consistent.
-
-Changing only `rail/**`, `rust/**`, `scripts/*rail*` or rail fixtures triggers only the game lane. Shared publication helpers/workflow changes trigger both validation lanes. The common publisher is the only workflow with Pages deployment permission. No new credentials or Pages settings are required.
-
-Core Rust follow-up: [migration audit](rail/rust-migration-audit.md).
+The split does not change simulation rules or WASM bytes. It removes game dependencies from news CI and news dependencies from game CI. See [migration and cutover record](docs/game-migration.md).
 
 ## References
 
