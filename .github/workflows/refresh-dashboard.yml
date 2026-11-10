@@ -11,8 +11,7 @@ on:
       - '*.css'
       - '*.js'
       - 'scripts/**'
-      - '!scripts/*rail*'
-      - '!scripts/fixtures/rail-*'
+      - 'rail/index.html'
       - '.github/workflows/refresh-dashboard.yml'
       - '.github/workflows/publish-site.yml'
 permissions:
