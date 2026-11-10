@@ -299,7 +299,7 @@
     updatedAt: null
   };
   const demandClient = RailWorkerClient.create({
-    createWorker: () => typeof Worker === 'function' ? new Worker('demand-worker.js?v=62') : null,
+    createWorker: () => typeof Worker === 'function' ? new Worker('demand-worker.js?v=63') : null,
     timeout: 45000,
     timeoutMessage: '后台需求计算超过45秒，已回收计算线程；旧需求继续运行。',
     errorMessage: '客流后台计算失败',
@@ -1158,7 +1158,7 @@
       choicesOpen = panel.dataset.renderedLine === l.id && !!panel.querySelector('#line-choices')?.open;
     panel.dataset.renderedLine = l.id;
     const st = N.stats(s, forecast, l.id);
-    const salvage = deleteConfirm ? Math.max(0, -(M.preview(s, c => N.removeLine(c, l.id)).net || 0)) : 0;
+    const salvage = deleteConfirm ? Math.max(0, -(M.preview(s, M.command('network','removeLine',{id:l.id})).net || 0)) : 0;
     panel.innerHTML = lineView.content({
       state: s,
       forecast,
@@ -1211,9 +1211,9 @@
   }
   async function savePatterns() {
     const patterns = readPatterns();
-    await commit(c => N.configure(c, selected, {
+    await commit(M.command('network','configure',{id:selected,values:{
       patterns
-    }), '运营规则已应用，班次与客流已重新计算。');
+    }}), '运营规则已应用，班次与客流已重新计算。');
   }
 
   function addPattern() {
@@ -1535,9 +1535,9 @@
       total = legs.reduce((v, e) => v + e.km, 0),
       closed = points.length > 2 && X.distance(V.resolve(s, points[0]), V.resolve(s, points.at(-1))) <
       1e-6,
-      plan = mode === 'add' && draft.length >= 2 ? M.preview(s, c => N.addLine(c, draft, {
+      plan = mode === 'add' && draft.length >= 2 ? M.preview(s, M.command('network','addLine',{points:draft,options:{
         stockSpec: draftSpec
-      })) : null,
+      }})) : null,
       title = mode === 'add' ? '新建线路' : mode === 'insert' ? '增设车站' : '移除车站';
     bar.innerHTML =
       `<div class="panel-header"><div class="panel-heading"><h2>${title}</h2><button id="cancel-edit" class="panel-close" aria-label="关闭线路建设">×</button></div><div class="panel-subtitle">${closed?points.length-1:points.length} 站 · ${closed?'闭合环线 · ':''}全长 ${V.formatDistance(total)}</div></div><div class="panel-scroll build-content"><p class="build-instruction">${mode==='add'?'左键设站，右键固定转弯点。再次左键设置下一站。':mode==='insert'?'右键添加转弯固定点，左键设置新站。'+(draft.length?' 已固定 '+draft.length+' 个点。':''):'选择要移除的车站，相邻区段将自动连接。'}</p><div id="live-spacing" class="live-spacing">${mode==='add'&&!draft.length?'点击地图设置第一站':'移动鼠标查看下一段站距'}</div><div class="build-stations">${points.map((p,i)=>{const n=V.resolve(s,p),name=n.name||RailPlaceNames.suggest(s,n,n.nameSeed??.5).name;return `${i?`<div class="build-gap"><i></i><span>${V.formatDistance(legs[i-1].km)}</span></div>`:''}<div class="build-stop"><b>${i+1}</b><span>${esc(name)}</span>${mode==='remove'?`<button data-remove="${p}" ${points.length<=2?'disabled':''} aria-label="移除 ${esc(name)}">−</button>`:''}</div>`;}).join('')||'<div class="build-empty">从第一座车站开始</div>'}</div><p class="spacing-note">站距、费用和列车行进均按实际曲线计算。固定点不设站；60 米内自动接入同站。0–170°内角连续平滑，转弯范围随区间加大。</p>${mode==='add'?`<div class="config-row"><label for="draft-spec">线路规格</label><select id="draft-spec">${specOptions(draftSpec)}</select></div><p class="station-note">建成后车型与编组锁定。建设不附赠列车，请到车库购买并投放。</p><div class="build-quote"><span>预计投入</span><strong>${plan?.error?esc(plan.error):plan?money(Math.max(0,plan.net)):'—'}</strong></div>`:''}</div><div class="build-footer">${mode==='add'?`<button id="undo-draft" ${!draft.length?'disabled':''}>退一步</button><button id="confirm-add" class="primary" ${draft.filter(p=>!p?.waypoint).length<2||draft.at(-1)?.waypoint||plan?.error||plan?.net>s.economy.cash?'disabled':''}>完成线路</button>`:`${mode==='insert'&&draft.length?'<button id="undo-draft">撤销固定点</button>':''}<button id="finish-edit" class="primary">完成编辑</button>`}</div>`;
@@ -1709,7 +1709,7 @@
     if (calculating) return;
     if (mode === 'plan') {
       const p = V.resolve(s, point);
-      const result = await commit(c => U.plan(c, C.create(region), facilityKind, p),
+      const result = await commit(M.command('facility','plan',{kind:facilityKind,point:p,land:U.buildable(s,C.create(region),p)}),
         '市政设施已建成，周边开发倾向已更新。');
       if (result) {
         mode = null;
@@ -1747,17 +1747,17 @@
       return;
     }
     if (mode === 'insert') {
-      if (await commit(c => N.addStation(c, selected, point, {
+      if (await commit(M.command('network','addStation',{id:selected,point:point,options:{
           bends: draft,
           index: insertIndex ?? undefined
-        }), '已增加车站并重连线路。')) {
+        }}), '已增加车站并重连线路。')) {
         mode = null;
         render();
       }
       return;
     }
     if (mode === 'remove' && Number.isInteger(point)) {
-      await commit(c => N.removeStation(c, selected, point), '已移除车站，相邻区段已重连。');
+      await commit(M.command('network','removeStation',{id:selected,nodeId:point}), '已移除车站，相邻区段已重连。');
       return;
     }
     if (Number.isInteger(point)) {
@@ -1878,9 +1878,9 @@
         toast('至少保留一个交路。');
         return;
       }
-      await commit(c => N.configure(c, l.id, {
+      await commit(M.command('network','configure',{id:l.id,values:{
         patterns
-      }), '已删除交路。');
+      }}), '已删除交路。');
       return;
     }
     if (b.dataset.repay) {
@@ -1965,7 +1965,7 @@
       return;
     }
     if (b.dataset.remove !== undefined) {
-      await commit(c => N.removeStation(c, selected, +b.dataset.remove), '已移除车站，相邻区段已重连。');
+      await commit(M.command('network','removeStation',{id:selected,nodeId:+b.dataset.remove}), '已移除车站，相邻区段已重连。');
       return;
     }
     if (b.dataset.locate !== undefined) {
@@ -2054,13 +2054,13 @@
         break;
       case 'upgrade-facility': {
         const id = inspection.id;
-        const r = await commit(c => U.upgrade(c, id), '设施等级与覆盖范围已提升。');
+        const r = await commit(M.command('facility','upgrade',{id:id}), '设施等级与覆盖范围已提升。');
         if (r) inspect('facility', id);
         break;
       }
       case 'remove-facility': {
         const id = inspection.id;
-        const r = await commit(c => U.remove(c, id), '设施已拆除，周边服务与开发倾向已重算。');
+        const r = await commit(M.command('facility','remove',{id:id}), '设施已拆除，周边服务与开发倾向已重算。');
         if (r) inspect('urban', null);
         break;
       }
@@ -2076,7 +2076,7 @@
         inspect('alarms', null);
         break;
       case 'buy-stock': {
-        const r = await commit(c => F.purchase(c, depotSpec, depotQty), '已购入 ' + depotQty + ' 列 ' +
+        const r = await commit(M.command('fleet','purchase',{spec:depotSpec,count:depotQty}), '已购入 ' + depotQty + ' 列 ' +
           depotSpec);
         if (r) {
           renderActivity();
@@ -2094,9 +2094,9 @@
           offPeak: +$('dispatch-offpeak').value,
           peak: +$('dispatch-peak').value
         };
-        await commit(c => N.configure(c, selected, {
+        await commit(M.command('network','configure',{id:selected,values:{
           dispatch: d
-        }), '投放计划已更新，行车间隔已自动计算。');
+        }}), '投放计划已更新，行车间隔已自动计算。');
         break;
       }
       case 'world-toggle':
@@ -2167,9 +2167,9 @@
       case 'save-fares': {
         const fareBands = [...document.querySelectorAll('[data-fare-band]')].map(el => RailCurrency
           .fromCNY(+el.value));
-        await commit(c => N.configure(c, selected, {
+        await commit(M.command('network','configure',{id:selected,values:{
           fareBands
-        }), '票价已更新，客流与路线选择已重新计算。');
+        }}), '票价已更新，客流与路线选择已重新计算。');
         break;
       }
       case 'save-patterns':
@@ -2179,9 +2179,9 @@
         addPattern();
         break;
       case 'reset-patterns':
-        await commit(c => N.configure(c, selected, {
+        await commit(M.command('network','configure',{id:selected,values:{
           patterns: undefined
-        }), '已恢复普通全程交路。');
+        }}), '已恢复普通全程交路。');
         break;
       case 'overview-toggle':
         stationMenu = false;
@@ -2297,7 +2297,7 @@
         break;
       case 'confirm-delete': {
         const id = selected;
-        if (await commit(c => N.removeLine(c, id), '线路已删除，其他线路保留。')) {
+        if (await commit(M.command('network','removeLine',{id:id}), '线路已删除，其他线路保留。')) {
           selected = null;
           render();
         }
@@ -2330,9 +2330,9 @@
         renderEditBar();
         break;
       case 'confirm-add': {
-        const result = await commit(c => N.addLine(c, draft, {
+        const result = await commit(M.command('network','addLine',{points:draft,options:{
           stockSpec: draftSpec
-        }), '新线路已加入地图。');
+        }}), '新线路已加入地图。');
         if (result) {
           selected = result.id;
           mode = null;
@@ -2433,9 +2433,9 @@
       return;
     }
     if (id === 'loop-direction' && current()) {
-      await commit(c => N.configure(c, selected, {
+      await commit(M.command('network','configure',{id:selected,values:{
         loopDirection: e.target.value
-      }), '环线方向与客流路径已更新。');
+      }}), '环线方向与客流路径已更新。');
       return;
     }
     if (id === 'basemap-select') {
@@ -2477,9 +2477,9 @@
         value = h * 60 + m;
         if (id === 'close' && value === 0) value = 1440;
       }
-      await commit(c => N.configure(c, selected, {
+      await commit(M.command('network','configure',{id:selected,values:{
         [id]: value
-      }), '线路配置已更新。');
+      }}), '线路配置已更新。');
       renderPanel();
     }
   });
@@ -2808,7 +2808,7 @@
     }
     try {
       if (!centerWorker) {
-        centerWorker = new Worker('operations-worker.js?v=62');
+        centerWorker = new Worker('operations-worker.js?v=63');
         centerForecastSent = null;
       }
       centerWorker.onerror = e => fail(e.message || '后台诊断不可用');
@@ -2984,7 +2984,7 @@
       toast('线路计划已变化，请重新审核方案。');
       return;
     }
-    const result = await commit(c => N.configure(c, row.id, p.values), '投放计划已更新，现有乘客与运行列车保留。');
+    const result = await commit(M.command('network','configure',{id:row.id,values:p.values}), '投放计划已更新，现有乘客与运行列车保留。');
     if (result) {
       centerReview = null;
       renderOverview();

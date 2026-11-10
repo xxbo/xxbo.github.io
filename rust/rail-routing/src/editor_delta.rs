@@ -1,7 +1,7 @@
 //! Exact editor result projection. Unchanged values use source indices, never hashes.
 use super::editor_support::*;
 use crate::value::Value as V;
-const FIELDS: [&str; 7] = [
+const FIELDS: [&str; 9] = [
     "nodes",
     "tracks",
     "services",
@@ -9,6 +9,8 @@ const FIELDS: [&str; 7] = [
     "depot",
     "mapVersion",
     "routeModel",
+    "economy",
+    "urban",
 ];
 fn equal(a: &V, b: &V) -> bool {
     match (a, b) {

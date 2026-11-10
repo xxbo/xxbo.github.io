@@ -147,21 +147,7 @@
   function enableAutomatic(s, base, places = []) {
     const u = init(s);
     if (u.facilityMode === 'automatic') return false;
-    const refund = facilitiesValue(s);
-    for (const f of u.facilities) {
-      f.system = true;
-      f.name = f.name || TYPES[f.kind].name;
-    }
-    if (refund && s.economy) {
-      s.economy.cash += refund;
-      s.economy.infrastructureRebate = (s.economy.infrastructureRebate || 0) + refund;
-      s.economy.ledger.unshift({
-        minute: s.economy.minute,
-        type: '市政移交 · 退还设施投资',
-        amount: refund
-      });
-      s.economy.ledger = s.economy.ledger.slice(0, 80);
-    }
+    assets().mutate(s,'municipalTransfer');
     const anchors = [],
       hubs = H.forRegion(s.region),
       source = (places.length ? places : base.cells.filter(c => c.people > 100).sort((a, b) => b.people - a
@@ -257,68 +243,11 @@
     return c.populationValid || c.survey > .01;
   }
 
-  function facilitiesValue(s) {
-    return (s.urban?.facilities || []).filter(f => !f.system).reduce((v, f) => v + TYPES[f.kind].price[f
-      .level - 1], 0);
-  }
-
-  function plan(s, base, kind, p) {
-    const u = init(s);
-    if (u.facilityMode === 'automatic') return {
-      error: '城市设施由系统建设，请规划地铁接驳。'
-    };
-    if (!TYPES[kind] || !buildable(s, base, p)) return {
-      error: '请在可开发陆地区域规划设施。'
-    };
-    if (u.facilities.length >= 160) return {
-      error: '最多规划160座市政设施。'
-    };
-    if (u.facilities.some(f => f.kind === kind && dist(f, p) < .22)) return {
-      error: '同类设施过近，请升级已有设施或换一个位置。'
-    };
-    const f = {
-      id: 'u' + u.nextId++,
-      kind,
-      level: 1,
-      x: p.x,
-      y: p.y,
-      opened: s.economy?.minute ?? 420
-    };
-    u.facilities.push(f);
-    u.revision++;
-    return {
-      facilityId: f.id
-    };
-  }
-
-  function upgrade(s, id) {
-    if (s.urban?.facilityMode === 'automatic') return {
-      error: '设施由系统自动升级。'
-    };
-    const f = s.urban?.facilities.find(f => f.id === id);
-    if (!f) return {
-      error: '设施不存在。'
-    };
-    if (f.level >= 3) return {
-      error: '已达最高等级。'
-    };
-    f.level++;
-    s.urban.revision++;
-    return {};
-  }
-
-  function remove(s, id) {
-    const u = s.urban;
-    if (u?.facilityMode === 'automatic') return {
-      error: '系统城市设施不可拆除。'
-    };
-    if (!u?.facilities.some(f => f.id === id)) return {
-      error: '设施不存在。'
-    };
-    u.facilities = u.facilities.filter(f => f.id !== id);
-    u.revision++;
-    return {};
-  }
+  const assets = () => node ? require('./assets-wasm') : root.RailAssets;
+  const facilitiesValue = s => assets().query(s,'facilityValue');
+  function plan(s,base,kind,p) { return assets().mutate(s,'plan',{kind,point:p,land:buildable(s,base,p)}); }
+  const upgrade = (s,id) => assets().mutate(s,'upgradeFacility',{id});
+  const remove = (s,id) => assets().mutate(s,'removeFacility',{id});
 
   function stations(s) {
     return native(13,s);
