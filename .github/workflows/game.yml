@@ -1,0 +1,58 @@
+name: Rail City CI and Pages
+on:
+  workflow_dispatch:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Verify pinned Rust and WASM
+        run: |
+          rustup toolchain install 1.99.1 --profile minimal --target wasm32-unknown-unknown
+          node scripts/build_rail_wasm.cjs --check
+      - name: Verify simulation and standalone publication
+        run: node scripts/run_rail_tests.cjs
+      - name: Stage verified game
+        run: node scripts/publish_rail.cjs . _site
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rail-city-public
+          path: _site
+          include-hidden-files: true
+          retention-days: 14
+          if-no-files-found: error
+  deploy:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    concurrency:
+      group: rail-city-pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: rail-city-public
+          path: _site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

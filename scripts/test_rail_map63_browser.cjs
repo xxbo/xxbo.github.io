@@ -1,7 +1,7 @@
 /* Execute the actual page module order and WASM with browser globals, then perform user commands. */
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),vm=require('node:vm');
 const dir=path.join(__dirname,'../rail'),html=fs.readFileSync(path.join(dir,'index.html'),'utf8');
-const context=vm.createContext({performance,console,URL,WebAssembly,Float64Array,Uint8Array,Uint32Array,TextEncoder,TextDecoder,Blob,Response,DecompressionStream,atob,setTimeout,clearTimeout,location:{href:'https://test.invalid/rail/index.html'},fetch:async url=>({ok:true,arrayBuffer:async()=>{const p=new URL(url).pathname.replace(/^\/rail\//,''),b=fs.readFileSync(path.join(dir,p));return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength);}})});context.self=context;
+const context=vm.createContext({performance,console,URL,WebAssembly,Float64Array,Uint8Array,Uint32Array,TextEncoder,TextDecoder,Blob,Response,DecompressionStream,atob,setTimeout,clearTimeout,location:{href:'https://test.invalid/rail-city/index.html'},fetch:async url=>({ok:true,arrayBuffer:async()=>{const p=new URL(url).pathname.replace(/^\/rail-city\//,''),b=fs.readFileSync(path.join(dir,p));return b.buffer.slice(b.byteOffset,b.byteOffset+b.byteLength);}})});context.self=context;
 for(const [,src]of html.matchAll(/<script src="([^"]+)" defer><\/script>/g)){
  vm.runInContext(fs.readFileSync(path.join(dir,src.split('?')[0]),'utf8'),context,{filename:src});
  if(src.startsWith('management.js'))break;
