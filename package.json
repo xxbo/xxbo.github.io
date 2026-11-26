@@ -1,0 +1,19 @@
+{
+  "name": "daily-current-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "node server.ts",
+    "start": "node server.ts",
+    "build": "tsc --noEmit && node scripts/run_dashboard_tests.cjs",
+    "lint": "tsc --noEmit",
+    "test": "tsx --test src/server-routes.test.ts && node scripts/run_dashboard_tests.cjs"
+  },
+  "dependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.11",
+    "express": "^5.3.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}

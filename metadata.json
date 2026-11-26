@@ -1,0 +1,8 @@
+{
+  "name": "观潮 · XXBO 财经与新闻",
+  "description": "XXBO 的个人财经与新闻工作台：关注市场，理解变化。",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
