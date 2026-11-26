@@ -84,6 +84,7 @@ function renderRoute(scroll=true) {
   if(root==='health')content=dataHealthPage();
   $('#detail-page').innerHTML=content||'<div class="paper empty"><h2>这条内容已不在当前快照中</h2><p>定时更新可能替换旧条目。收藏或已打开过的报道会保留在当前浏览器。</p><a href="#/overview">返回今日概览 →</a></div>';
   $('#saved-count').textContent=Object.keys(state.saved).length;
+  if(typeof syncSavedBadges==='function')syncSavedBadges();
   if(scroll){window.scrollTo({top:0,behavior:'instant'});$('#detail-page').focus({preventScroll:true});}
 }
 document.addEventListener('click',e=>{const a=e.target.closest('a[href^="#/"]');if(a&&a.href.includes('/article/')&&!location.hash.includes('/article/'))returnRoute=location.hash.startsWith('#/')?location.hash:'#/overview';});
